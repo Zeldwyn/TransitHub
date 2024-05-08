@@ -3,6 +3,7 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput 
 import { useNavigation } from '@react-navigation/native';
 import { temporaryBullshit } from './functions';
 import { Feather } from '@expo/vector-icons';
+import { RadioButton } from 'react-native-paper';
 
 export default function RegisterDetails(){
     const navigation = useNavigation();
@@ -15,6 +16,7 @@ export default function RegisterDetails(){
     const [password, setPassword] = useState('');
     const [suggestions, setSuggestions] = useState(''); 
     const [showPassword, setShowPassword] = useState(false);
+    const [checked, setChecked] = React.useState('');
 
     const handleSubmit = async() => {
         console.log(firstName, lastName, password);
@@ -93,11 +95,26 @@ export default function RegisterDetails(){
         <Text style={styles.suggestionsText}>   
             {suggestions}
         </Text> 
+        <Text style={styles.text2}>User Type</Text>
+        <View style={styles.radioButtonContainer}>
+          <RadioButton
+            value="Transport Operator"
+            status={checked === 'Transport Operator' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('Transport Operator')}
+          />
+          <Text>Transport Operator</Text>
+        </View>
+        <View style={styles.radioButtonContainer}>
+          <RadioButton
+            value="Business Owner"
+            status={checked === 'Business Owner' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('Business Owner')}
+          />
+          <Text>Business Owner</Text>
+        </View>
 
-        {/* <Text style={styles.text2}>User Type</Text> */}
-
-        <CustomButton title="Submit" onPress={handleSubmit} />
-        {/* <CustomButton title="Submit" onPress={() => navigation.navigate('Login')} /> */}
+        {/* <CustomButton title="Submit" onPress={handleSubmit} /> */}
+        <CustomButton title="Submit" onPress={() => {navigation.navigate('Login'); console.log(checked)}} />
       </View>
     );
 };
@@ -170,4 +187,10 @@ const styles = StyleSheet.create({
     color: 'red', 
     fontSize: 12,
   }, 
+  radioButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
 });

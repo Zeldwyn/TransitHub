@@ -80,8 +80,8 @@ export default function Login(){
           <Text style={styles.suggestionsText}>   
             {validate}
           </Text> 
-          <CustomButton title="Submit" onPress={handleSubmit} />
-          {/* <CustomButton title="Submit" onPress={() => navigation.navigate('PremiumHome')} /> */}
+          {/* <CustomButton title="Submit" onPress={handleSubmit} /> */}
+          <CustomButton title="Submit" onPress={() => navigation.navigate('DrawerNavigator')} /> 
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}> 
             <Text style={styles.registerText}>   
               Don't have an account? Click here to Register

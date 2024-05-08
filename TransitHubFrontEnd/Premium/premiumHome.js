@@ -12,7 +12,7 @@ export default function PremiumHome(){
 
 
     return (        // Dli pa final ang navlist
-        <TouchableWithoutFeedback onPress={() => setShowNavList(false)}>
+        <TouchableWithoutFeedback>
           <View style={styles.container}>
             <TouchableOpacity style={styles.hamburger} onPress={() => setShowNavList(!showNavList)}>
               <Image

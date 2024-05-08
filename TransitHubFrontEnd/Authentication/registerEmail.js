@@ -49,8 +49,8 @@ export default function RegisterEmail() {
             onChangeText={(text) => setEmail(text)}
             placeholder="Enter Email"
         />
-        <CustomButton title='Submit' onPress={handleSubmit}/>
-        {/* <CustomButton title='Submit' onPress={() => navigation.navigate('OTP')}/> */}
+        {/* <CustomButton title='Submit' onPress={handleSubmit}/> */}
+        <CustomButton title='Submit' onPress={() => navigation.navigate('OTP')}/>
         </View>
     </KeyboardAvoidingView>
   );
