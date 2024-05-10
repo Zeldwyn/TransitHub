@@ -10,7 +10,7 @@ export default function OwnerHome(){
     const [showNavList, setShowNavList] = useState(false);
 
 
-    return (        // Dli pa final ang navlist
+    return (      
         <TouchableWithoutFeedback>
           <View style={styles.container}>
             <Text style={styles.text}>Welcome To</Text>
