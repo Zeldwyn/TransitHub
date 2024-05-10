@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login(){
     const navigation = useNavigation();
@@ -17,7 +18,7 @@ export default function Login(){
     const handleSubmit = async() => {
       console.log('Email nimo: ', email)
       console.log('Password nemo isda: ', password)
-      const respo = await fetch('http://192.168.1.8:8080/validate-Login', {
+      fetch('http://192.168.1.8:8080/validate-Login', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -28,13 +29,24 @@ export default function Login(){
           'password': password,
         }),
       })
-      if(respo.ok) {
-        console.log('wa balo')
-        navigation.navigate('PremiumHome');
-      } else {
-        console.log('sayop ka mego')
-        setValidate('Sayop imo login mego');
-      }
+      .then(response => response.json())
+          .then(data => {
+            console.log('Response from Express backend:', data);
+            if(data.isValid == false) {
+              setValidate('Invalid Credentials');
+            }
+            else {
+              AsyncStorage.setItem('Email',)
+              setValidate(''); 
+              if(data.userType === 'Business Owner')
+                navigation.navigate('DrawerNavigator');  
+              if(data.userType === 'Transport Operator')
+                navigation.navigate('RegisterEmail');
+            }
+          })
+          .catch(error => {
+            console.error('Error posting data to Express backend:', error);
+          });
     }
     const toggleShowPassword = () => {
       setShowPassword(!showPassword);
@@ -80,8 +92,8 @@ export default function Login(){
           <Text style={styles.suggestionsText}>   
             {validate}
           </Text> 
-          {/* <CustomButton title="Submit" onPress={handleSubmit} /> */}
-          <CustomButton title="Submit" onPress={() => navigation.navigate('DrawerNavigator')} /> 
+          <CustomButton title="Submit" onPress={handleSubmit} />
+          <CustomButton title="SubmitHatdog" onPress={() => navigation.navigate('DrawerNavigator')} /> 
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}> 
             <Text style={styles.registerText}>   
               Don't have an account? Click here to Register
@@ -168,6 +180,8 @@ const styles = StyleSheet.create({
   suggestionsText: { 
     color: 'red', 
     fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10
   }, 
   registerText: { 
     color: 'black', 

@@ -47,10 +47,10 @@ export default function DrawerNavigator(){
         options={{title: 'Help',drawerIcon: ({focused, size}) => (
         <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Settings" component={OwnerSettings} 
-        options={{title: 'Settings',drawerIcon: ({focused, size}) => (
-        <Ionicons name="settings-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
-      ),}} />
+      <Drawer.Screen name="Profile Settings" component={OwnerSettings} 
+        options={{title: 'Profile Settings',drawerIcon: ({focused, size}) => (
+        <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}} /> 
     </Drawer.Navigator>
   );
 };

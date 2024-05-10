@@ -5,8 +5,11 @@ import {Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, 
 export default function RegisterEmail() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
+  const [suggestions, setSuggestions] = useState('');
+
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
+
   const handleSubmit = async() => {
     console.log(email);
     fetch('http://192.168.1.8:8080/send-OTP', {
@@ -22,7 +25,11 @@ export default function RegisterEmail() {
       .then(response => response.json())
       .then(data => {
         console.log('Response from Express backend:', data);
-        navigation.navigate('OTP');
+        if(data.isValid == false)
+          setSuggestions('Email is already taken!')
+        else {
+          navigation.navigate('OTP');
+        } 
       })
       .catch(error => {
         console.error('Error posting data to Express backend:', error);
@@ -49,8 +56,11 @@ export default function RegisterEmail() {
             onChangeText={(text) => setEmail(text)}
             placeholder="Enter Email"
         />
-        {/* <CustomButton title='Submit' onPress={handleSubmit}/> */}
-        <CustomButton title='Submit' onPress={() => navigation.navigate('OTP')}/>
+        <Text style={styles.suggestionsText}>   
+            {suggestions}
+        </Text> 
+        <CustomButton title='Submit' onPress={handleSubmit}/>
+        <CustomButton title='SubmitHATDOG' onPress={() => navigation.navigate('OTP')}/>
         </View>
     </KeyboardAvoidingView>
   );
@@ -109,6 +119,12 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
     },
+    suggestionsText: { 
+      color: 'red', 
+      fontSize: 12,
+      marginTop: -10,
+      marginBottom: 5,
+    }, 
 });
 
 

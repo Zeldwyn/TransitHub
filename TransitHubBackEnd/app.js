@@ -10,22 +10,36 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// let storedOTP = "123456";
+let storedOTP = "123456";
 // let storedEmail = "johnmichael4@gmail.com";
-let storedOTP;
-let storedEmail;
+// let storedOTP;
+let storedEmail = "nimeqt1@gmail.com";
 
 app.post('/send-OTP', async (req, res) => { 
     const { email } = req.body;
-    storedEmail = email;
-    try {
-        storedOTP = generateOTP();
-        await sendOTP({ email, otp: storedOTP}); 
-        res.status(200).json({ message: 'OTP sent successfully' }); 
-    } catch (error) {
-        console.error(error); 
-        res.status(500).json({ error: 'Failed to send OTP' });
-    }
+    const sql = `SELECT email FROM premiumUser WHERE email = ?`;
+    pool.query(sql, [email], (err, result) => {
+        if (err) {
+            console.error('Server Side Error', err);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        } else {
+            if (result.length > 0) {
+                console.log('Email already taken');
+                res.status(200).json({ isValid: false});
+            } else {
+                console.log('Okay ra doy');
+                storedEmail = email;
+                try {
+                    storedOTP = generateOTP();
+                    sendOTP({ email, otp: storedOTP}); 
+                    res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
+                } catch (error) {
+                    console.error(error); 
+                    res.status(500).json({ error: 'Failed to send OTP' });
+                }
+            }
+        }
+    });
 });
 
 app.post('/verify-OTP', async (req, res) => {
@@ -33,9 +47,9 @@ app.post('/verify-OTP', async (req, res) => {
     // let otp = "123456";
     try {
         if(otp === storedOTP) {
-            res.status(200).json({ message: 'VALID OTP' });
+            res.status(200).json({ isValid: true });
         } else {
-            res.status(400).json({ error: 'Invalid OTP' });
+            res.status(400).json({ isValid: false });
         }
     } catch (error) {
         console.error(error);
@@ -53,23 +67,23 @@ app.post('/resend-OTP', async (req, res) => {
 });
 
 app.post('/add-PremiumUser', async (req, res) => {
-    const {firstName, lastName, password} = req.body;
+    const {firstName, lastName, password, userType} = req.body;
     
-    const sql = `INSERT INTO premiumUser (email, firstName, lastName, password) VALUES (?, ?, ?, ?)`;
-    pool.query(sql, [storedEmail, firstName, lastName, password], (err, result) => {
+    const sql = `INSERT INTO premiumUser (email, firstName, lastName, password, userType) VALUES (?, ?, ?, ?, ?)`;
+    pool.query(sql, [storedEmail, firstName, lastName, password, userType], (err, result) => {
         if (err) {
             console.error('Error adding premium user:', err);
-            res.status(200).json({ message: 'Login Successsful' }); 
+            res.status(400).json({ error: 'Fail' }); 
         } else {
             console.log('Premium user added successfully');
-            res.status(500).json({ error: 'Invalid Login Credentials' }); 
+            res.status(200).json({ message: 'Success' }); 
         }
     });
 });
 
 app.post('/validate-Login', async (req, res) => {
     const { email, password } = req.body;
-    const sql = `SELECT email, password FROM premiumUser WHERE email = ? AND password = ?`;
+    const sql = `SELECT email, password, userType FROM premiumUser WHERE email = ? AND password = ?`;
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
             console.error('Error validating login (Server Side Error):', err);
@@ -77,10 +91,10 @@ app.post('/validate-Login', async (req, res) => {
         } else {
             if (result.length > 0) {
                 console.log('Login successful');
-                res.status(200).json({ success: true });
+                res.status(200).json({ isValid: true, userType: result[0].userType});
             } else {
                 console.log('Invalid login credentials');
-                res.status(401).json({ success: false, error: 'Invalid login credentials' });
+                res.status(400).json({ isValid: false });
             }
         }
     });
