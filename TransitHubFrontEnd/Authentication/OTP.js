@@ -3,6 +3,7 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput 
 import { useNavigation } from '@react-navigation/native';
 
 export default function OTP(){
+    const [suggestions, setSuggestions] = useState(''); 
     const navigation = useNavigation();
 
     const windowWidth = Dimensions.get('window').width;
@@ -24,7 +25,13 @@ export default function OTP(){
           .then(response => response.json())
           .then(data => {
             console.log('Response from Express backend:', data);
-            navigation.navigate('RegisterDetails');
+            if(data.isValid == false) {
+              setSuggestions('Invalid OTP');
+            }
+            else {
+              navigation.navigate('RegisterDetails');  
+              setSuggestions(''); 
+            }
           })
           .catch(error => {
             console.error('Error posting data to Express backend:', error);
@@ -66,11 +73,14 @@ export default function OTP(){
             keyboardType='number-pad'
             
         />
+        <Text style={styles.suggestionsText}>   
+            {suggestions}
+        </Text> 
         <TouchableOpacity onPress={handleResendOTP}>
             <Text style={styles.text2}>Resend OTP</Text>
         </TouchableOpacity>
-        {/* <CustomButton title="Submit" onPress={handleSubmit} /> */}
-        <CustomButton title="Submit" onPress={() => navigation.navigate('RegisterDetails')} />
+        <CustomButton title="Submit" onPress={handleSubmit} />
+        <CustomButton title="SubmitHATDOG" onPress={() => navigation.navigate('RegisterDetails')} />
         <CustomButton title="Back" onPress={() => navigation.navigate('RegisterEmail')} />
       </View>
     );
@@ -130,4 +140,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20
   },
+  suggestionsText: { 
+    color: 'red', 
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 5,
+  }, 
 });

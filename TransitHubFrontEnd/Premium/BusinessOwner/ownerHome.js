@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
 export default function OwnerHome(){
     const navigation = useNavigation();
 

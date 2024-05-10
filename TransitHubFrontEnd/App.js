@@ -37,9 +37,6 @@ const MyStack = () => {
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}} />
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false}} />
       <Stack.Screen name="DrawerNavigator" component={DrawerNavigator} options={{ headerShown: false}} />
-      {/* <Stack.Screen name="GuestMap" component={GuestMap} options={{headerShown: false}}/>
-      <Stack.Screen name="TransactionRecords" component={TransactionRecords} options={{headerShown: false}}/>
-      <Stack.Screen name="Messages" component={Messages} options={{headerShown: false}}/>   */}
     </Stack.Navigator> 
   );
 }
