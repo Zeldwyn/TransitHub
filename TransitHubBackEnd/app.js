@@ -138,5 +138,28 @@ app.put('/update-UserDetails', async (req, res) => {
     });
 });
 
+app.get('/search-Operator', async (req, res) => {
+    const { search } = req.query;
+
+    try {
+        const sql = `SELECT email FROM premiumUser WHERE userType = 'Transport Operator' AND email LIKE ?`;
+        const query = `%${search}%`; 
+
+        pool.query(sql, query, (err, result) => {
+            if (err) {
+                console.error('Error executing SQL query:', err);
+                return res.status(500).send('Internal Server Error');
+            }
+
+            const emails = result.map(row => row.email);
+
+            return res.status(200).json(emails);
+        });
+    } catch (error) {
+        console.error('Error in search-Operator route:', error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
+ 
 module.exports = app;
 

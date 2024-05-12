@@ -11,6 +11,7 @@ export default function OwnerSettings(){
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [validate, setValidate] = useState(''); 
+    const hatdog = 'Nimegwapa';
     const valid = false;
     // const storedEmail = AsyncStorage.getItem('email');
     const storedEmail = "hatdog123@gmail.com";
@@ -80,7 +81,7 @@ export default function OwnerSettings(){
       <ScrollView>
         <View style={styles.container}>
 
-        <Text style={styles.text2}>First Name</Text>
+        <Text style={styles.text2}>{hatdog}</Text>
         <TextInput
             style={styles.input}
             value={firstName}
