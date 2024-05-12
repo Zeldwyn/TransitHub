@@ -1,21 +1,19 @@
 
-export const CheckPasswordValidity = (password) => {
-    var isValid = true;
-    if(password.trim() !== '') {
-      const minLength = 8;
-      const hasUppercase = /[A-Z]/.test(password);
-      const hasLowercase = /[a-z]/.test(password);
-      const hasSpecialChar = /[-_!@#$%^&*(),.?":{}|<>]/.test(password);
-      isValid = password.length >= minLength && hasUppercase && hasLowercase && hasSpecialChar;
-      console.log(password);
-      return(isValid);
-    } else {
-      return(true);
-    }
-};
-
-
-export const temporaryBullshit = (input) => {
+// export const CheckPasswordValidity = (password) => {
+//     var isValid = true;
+//     if(password.trim() !== '') {
+//       const minLength = 8;
+//       const hasUppercase = /[A-Z]/.test(password);
+//       const hasLowercase = /[a-z]/.test(password);
+//       const hasSpecialChar = /[-_!@#$%^&*(),.?":{}|<>]/.test(password);
+//       isValid = password.length >= minLength && hasUppercase && hasLowercase && hasSpecialChar;
+//       console.log(password);
+//       return(isValid);
+//     } else {
+//       return(true);
+//     }
+// };
+export const CheckPasswordValidity = (input) => {
     const hasWhitespace = input.includes(' ');
     if (hasWhitespace) {
         return('no white space maderpaker');
@@ -32,6 +30,7 @@ export const temporaryBullshit = (input) => {
     if (!/[^A-Za-z0-9]/.test(input)) { 
         return('Include at least one special character') ;
     }
+    return true; 
 };
 // export const temporaryBullshit2 = (input) => {
 //     const [strength, setStrength] = useState(''); 

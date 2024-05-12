@@ -86,7 +86,7 @@ app.post('/validate-Login', async (req, res) => {
     const sql = `SELECT email, password, userType FROM premiumUser WHERE email = ? AND password = ?`;
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
-            console.error('Error validating login (Server Side Error):', err);
+            console.error('Server Side Error', err);
             res.status(500).json({ success: false, error: 'Internal server error' });
         } else {
             if (result.length > 0) {
@@ -100,6 +100,43 @@ app.post('/validate-Login', async (req, res) => {
     });
 });
 
+app.post('/user-Details', async (req, res) => {
+    const { email } = req.body;
+    const sql = `SELECT firstName, lastName, password FROM premiumUser WHERE email = ?`;
+    pool.query(sql, [email] , (err, result) => {
+        if(err) {
+            console.error('Server Side Error', err);
+            res.status(500).json({ success: false, error: 'Internal server error' })
+        } else {
+            if(result.length > 0) {
+                console.log(result[0].firstName, result[0].lastName, result[0].password);
+                res.status(200).json({firstName: result[0].firstName, lastName: result[0].lastName, password: result[0].password});
+            } else {
+                console.log('User not found!');
+                res.status(400).json({success: false});
+            }
+        }
+    });
+});
+
+app.put('/update-UserDetails', async (req, res) => {
+    const { email, password } = req.body;
+    const sql = `UPDATE premiumUser SET password = ? WHERE email = ?`;
+    pool.query(sql, [password, email], (err, result) => {
+        if(err) {
+            console.error('Server Side Error', err);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        } else {
+            if(result.affectedRows > 0) {
+                console.log('User details updated successfully');
+                res.status(200).json({ success: true, message: 'User details updated successfully' });
+            } else {
+                console.log('User not found or no changes made');
+                res.status(400).json({ success: false, error: 'User not found or no changes made' });
+            }
+        }
+    });
+});
 
 module.exports = app;
 

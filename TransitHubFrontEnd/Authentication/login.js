@@ -35,8 +35,8 @@ export default function Login(){
             if(data.isValid == false) {
               setValidate('Invalid Credentials');
             }
-            else {
-              AsyncStorage.setItem('Email',)
+            else {      
+              AsyncStorage.setItem('email', email);
               setValidate(''); 
               if(data.userType === 'Business Owner')
                 navigation.navigate('DrawerNavigator');  

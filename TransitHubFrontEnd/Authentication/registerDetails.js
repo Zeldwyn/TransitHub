@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { temporaryBullshit } from './functions';
+import { CheckPasswordValidity } from './functions';
 import { Feather } from '@expo/vector-icons';
 import { RadioButton } from 'react-native-paper';
 
@@ -44,7 +44,7 @@ export default function RegisterDetails(){
     };
     const handlePassword = (text) => {
       setPassword(text)
-      setSuggestions(temporaryBullshit(text));
+      setSuggestions(CheckPasswordValidity(text));
     };
     const toggleShowPassword = () => {
       setShowPassword(!showPassword);

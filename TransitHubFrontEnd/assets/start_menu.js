@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-
 import { useNavigation } from '@react-navigation/native';
 
 export default function StartMenu () {
@@ -8,7 +7,7 @@ export default function StartMenu () {
 
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
-
+ 
   return (
     <View style={styles.container}>
       <Image
