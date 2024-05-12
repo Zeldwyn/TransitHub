@@ -13,7 +13,7 @@ app.use(cors());
 let storedOTP = "123456";
 // let storedEmail = "johnmichael4@gmail.com";
 // let storedOTP;
-let storedEmail = "nimeqt1@gmail.com";
+let storedEmail = "lisanime@gmail.com";
 
 app.post('/send-OTP', async (req, res) => { 
     const { email } = req.body;

@@ -20,7 +20,7 @@ export default function RegisterDetails(){
 
     const handleSubmit = async() => {
         console.log(firstName, lastName, password);
-        fetch('http://192.168.1.8:8080/add-PremiumUser', {
+        fetch('http://192.168.1.11:8080/add-PremiumUser', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -67,8 +67,7 @@ export default function RegisterDetails(){
             style={styles.input}
             value={firstName}
             onChangeText={(text) => setFirstName(text)}
-            placeholder="Enter First Name"
-            
+            placeholder="Enter First Name"          
         />
 
         <Text style={styles.text2}>Last Name</Text>

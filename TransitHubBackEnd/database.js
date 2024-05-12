@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '1234',
+    password: 'root',
     database: 'transithub'
 });
 
@@ -22,6 +22,7 @@ pool.getConnection((err, connection) => {
             firstName VARCHAR(50) NOT NULL,
             lastName VARCHAR(50) NOT NULL,
             password VARCHAR(100) NOT NULL,
+            userType VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `;

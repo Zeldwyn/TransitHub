@@ -21,7 +21,7 @@ export default function AddOperator() {
       return; 
     }
     try {
-      const response = await fetch(`http://192.168.1.8:8080/search-Operator?search=${query}`, {
+      const response = await fetch(`http://192.168.1.11:8080/search-Operator?search=${query}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -52,6 +52,11 @@ export default function AddOperator() {
     setModalVisible(false);
   };
 
+  const sendInvite = () => {
+    handleContainerPress();
+    setModalVisible(false);
+  };
+
   return (
       <TouchableWithoutFeedback onPress={handleContainerPress}>
         <View style={styles.container}>
@@ -77,7 +82,12 @@ export default function AddOperator() {
                 <View style={styles.modalContent}>
                   <ScrollView contentContainerStyle={styles.scrollViewContent}>
                     {searchResults.map((result, index) => (
+                    <View style={{flexDirection:'row'}}>
                       <Text key={index}>{result}</Text>
+                      <TouchableOpacity onPress={sendInvite} style={styles.inviteButtonContainer}>
+                        <Text style={styles.inviteButton}>Send Invite</Text>
+                      </TouchableOpacity> 
+                    </View>
                     ))}
                   </ScrollView>
                   <TouchableOpacity onPress={closeModal} style={styles.closeButtonContainer}>
@@ -146,7 +156,9 @@ modalContent: {
 },     
 scrollViewContent: {
   flexGrow: 1,
-  alignItems: 'baseline',
+  alignItems: 'flex-start',
+  flexDirection:'column',
+  justifyContent: 'space-around'
 },
 closeButtonContainer: {
   position: 'absolute',
@@ -155,6 +167,13 @@ closeButtonContainer: {
 },
 closeButton: {
   color: 'blue',
+},
+inviteButtonContainer: {
+  position:'relative',
+  alignSelf: 'flex-end'
+},
+inviteButton: {
+  color: 'maroon',
 },
 });
 
