@@ -1,13 +1,36 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import uuid from 'react-native-uuid';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Network from "expo-network";
 
 export default function StartMenu () {
   const navigation = useNavigation();
 
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
- 
+  useEffect(() => { 
+    AsyncStorage.getItem('deviceID')
+      .then((storedDeviceID) => {
+        if (!storedDeviceID) {
+          const newDeviceID = uuid.v4();
+          AsyncStorage.setItem('deviceID', newDeviceID);
+          console.log('Generated new deviceID:', newDeviceID);
+        } else {
+          console.log('DeviceID already exists:', storedDeviceID);
+        }
+      })
+      .catch((error) => {
+        console.error('Error retrieving deviceID:', error);
+      });
+    
+    const getIPAddress = async () => {
+        const ip = await Network.getIpAddressAsync();
+        console.log(ip);
+      };
+    getIPAddress();  
+  },[])
   return (
     <View style={styles.container}>
       <Image

@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const {sendOTP} = require('./mail');
-const {generateOTP} = require('./functions');
+const {generateOTP, isDeviceIDExists, getGuestID} = require('./functions');
 const {pool} = require('./database');
 
 const app = express();
@@ -161,6 +161,80 @@ app.get('/search-Operator', async (req, res) => {
     }
 });
  
+app.post('/add-GuestUser', async (req, res) => {
+    const { deviceID } = req.body;
+    isDeviceIDExists(deviceID, (exists) =>{
+        if(exists)
+            res.status(200).json({ message: 'DeviceID already exists' });
+        else {
+            const insertQuery = `INSERT INTO guestUser (deviceID) VALUES (?)`;
+            pool.query(insertQuery, [deviceID], (insertErr, insertResult) => {
+                if (insertErr) {
+                    console.error('Error adding Guest user:', insertErr);
+                    res.status(400).json({ error: 'Fail' }); 
+                } else {
+                    console.log('Guest user added successfully');
+                    res.status(200).json({ message: 'Success' }); 
+                }
+            });   
+        }   
+    })  
+});
+
+app.post('/add-Transaction', async (req, res) => {
+    const { deviceID, toLocation, fromLocation } = req.body;
+    const status = "Ongoing";
+    isDeviceIDExists(deviceID, (exists) =>{
+        if(!exists)
+            res.status(400).json({ message: 'DeviceID does not exists' });
+        else {
+            getGuestID(deviceID, (success, guestID) => {
+                if (success) {
+                    const sql = `INSERT INTO transaction (toLocation, fromLocation, status, guestID) VALUES (?, ?, ?, ?)`;
+                        pool.query(sql, [toLocation, fromLocation, status, guestID], (err, result) => {
+                            if (err) {
+                                console.error('Error adding transaction:', err);
+                                res.status(400).json({ error: 'Fail' }); 
+                            } else {
+                                console.log('Transaction user added successfully');
+                                res.status(200).json({ message: 'Success' }); 
+                            }
+                    });
+                } else {
+                    console.log('Device ID does not exist or error occurred.');
+                    res.status(400).json({ message: 'GuestID does not exists' });
+                }
+            });
+        }   
+    })  
+});
+
+app.post('/display-Transaction', async (req, res) => {
+    const { deviceID } = req.body;
+    isDeviceIDExists(deviceID, (exists) =>{
+        if(!exists)
+            res.status(400).json({ message: 'DeviceID does not exists' });
+        else {
+            getGuestID(deviceID, (success, guestID) => {
+                if (success) {
+                    const sql = `SELECT toLocation, fromLocation, status, created_at FROM transaction where guestID = ?`;
+                        pool.query(sql, [guestID], (err, result) => {
+                            if (err) {
+                                console.error('Error Hehe:', err);
+                                res.status(400).json({ error: 'Fail' }); 
+                            } else {
+                                console.log('Transaction user added successfully');   
+                                res.status(200).json({ result }); 
+                            }
+                    });
+                } else {
+                    console.log('Device ID does not exist or error occurred.');
+                    res.status(400).json({ message: 'GuestID does not exists' });
+                }
+            });
+        }   
+    })  
+});
+
 module.exports = app;
 
-// SELECT email, status WHERE ownerID = ownerID

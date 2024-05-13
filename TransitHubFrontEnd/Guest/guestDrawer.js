@@ -8,6 +8,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import GuestRecords from './guestRecords';
 import GuestMap from './guestMap';
 import GuestHelp from './guestHelp';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 function Hatdog() {
@@ -25,6 +26,30 @@ function Hatdog() {
 const Drawer = createDrawerNavigator();
 
 export default function GuestDrawer(){
+    React.useEffect(() => { 
+        const fetchGuestUser = async () => {
+            try {
+                const deviceID = await AsyncStorage.getItem('deviceID'); 
+                console.log('Device ID:', deviceID); 
+    
+                const response = await fetch('http://192.168.1.8:8080/add-GuestUser', {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'deviceID': deviceID, 
+                    }),
+                });
+                const data = await response.json(); 
+                console.log('Response from Express backend:', data); 
+            } catch (error) {
+                console.error('Error posting data to Express backend:', error); 
+            }
+        };
+        fetchGuestUser(); 
+    }, []);
     return (
             <Drawer.Navigator 
             initialRouteName="Home"
