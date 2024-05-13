@@ -18,7 +18,7 @@ export default function Login(){
     const handleSubmit = async() => {
       console.log('Email nimo: ', email)
       console.log('Password nemo isda: ', password)
-      fetch('http://192.168.1.11:8080/validate-Login', {
+      fetch('http://192.168.1.8:8080/validate-Login', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -39,7 +39,7 @@ export default function Login(){
               AsyncStorage.setItem('email', email);
               setValidate(''); 
               if(data.userType === 'Business Owner')
-                navigation.navigate('DrawerNavigator');  
+                navigation.navigate('OwnerDrawer');  
               if(data.userType === 'Transport Operator')
                 navigation.navigate('RegisterEmail');
             }

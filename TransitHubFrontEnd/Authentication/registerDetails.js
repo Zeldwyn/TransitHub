@@ -20,7 +20,7 @@ export default function RegisterDetails(){
 
     const handleSubmit = async() => {
         console.log(firstName, lastName, password);
-        fetch('http://192.168.1.11:8080/add-PremiumUser', {
+        fetch('http://192.168.1.8:8080/add-PremiumUser', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -30,6 +30,7 @@ export default function RegisterDetails(){
             'firstName': firstName,
             'lastName': lastName,
             'password': password,
+            'userType': checked,
           }),
         })
           .then(response => response.json())

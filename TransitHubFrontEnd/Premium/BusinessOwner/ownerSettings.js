@@ -11,8 +11,7 @@ export default function OwnerSettings(){
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [validate, setValidate] = useState(''); 
-
-    const valid = false;
+    // e uncomment ang asyncstorage if legit na transaction then e comment ang gi initialize nga storedEmail for testing
     // const storedEmail = AsyncStorage.getItem('email');
     const storedEmail = "hatdog123@gmail.com";
     const toggleShowPassword = () => {
@@ -59,6 +58,8 @@ export default function OwnerSettings(){
         },
         body: JSON.stringify({
           'email': storedEmail,
+          'firstName': firstName,
+          'lastName': lastName,
           'password': password,
         }),
       })
@@ -85,7 +86,7 @@ export default function OwnerSettings(){
         <TextInput
             style={styles.input}
             value={firstName}
-            editable={false}
+            onChangeText={(text) => setFirstName(text)}
             placeholder="Enter First Name"
         />
 
@@ -93,7 +94,7 @@ export default function OwnerSettings(){
         <TextInput
             style={styles.input}
             value={lastName}
-            editable={false}
+            onChangeText={(text) => setLastName(text)}
             placeholder="Enter Last Name"
         />
         <Text style={styles.text2}>Email</Text>
@@ -138,27 +139,25 @@ export default function OwnerSettings(){
     container: {
       flex: 1, 
       backgroundColor: '#0000',
-      alignItems: 'flex-start',
-      marginTop: 40,
-      marginLeft: 15,
-      
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 50,
     },
     text2: {
       fontSize: 15, 
-      marginLeft: 25,
+      alignItems: 'center',
       fontWeight: 'bold',
-      margin: 8,
+      marginBottom: 8, 
     },
     button: {
       backgroundColor: '#8A252C',
       padding: 10,
       width: 300,
       height: 40,
-      marginLeft: 22,
       borderRadius: 5,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 15,
+      marginTop: -20,
     },
     buttonText: {
       color: 'white',
@@ -168,7 +167,8 @@ export default function OwnerSettings(){
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center', 
-      width: 335,  
+      width: 325,  
+      marginBottom: 20, // Add margin to separate password input
     },
     eyeIcon: {
       position: 'absolute',
@@ -182,18 +182,17 @@ export default function OwnerSettings(){
       borderColor: 'black',
       backgroundColor: 'white',
       margin: 12,
-      marginLeft:22,
       borderWidth: 1,
       padding: 10,
       textAlign: 'left',
-      marginBottom: 20,
       color: 'black',
+      marginBottom:30,
     },
     suggestionsText: { 
       color: 'red', 
       fontSize: 12,
-      marginTop: -10,
-      marginBottom: 10
+      marginLeft: 25, // Adjust margin to align with text input
+      marginBottom: 10,
     }, 
   });
   

@@ -29,7 +29,7 @@ export default function StartMenu () {
       />
       <CustomButton title="Login" onPress={() => navigation.navigate('Login')} />
       <CustomButton title="Register" onPress={() => navigation.navigate('RegisterEmail')}/>
-      <CustomButton title="Guest" onPress={() => navigation.navigate('RegisterEmail')} />
+      <CustomButton title="Guest" onPress={() => navigation.navigate('GuestDrawer')} />
     </View>
   );
 };

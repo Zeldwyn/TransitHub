@@ -7,8 +7,10 @@ import StartMenu from './assets/start_menu';
 import OTP from './Authentication/OTP';
 import RegisterDetails from './Authentication/registerDetails';
 import Login from './Authentication/login';
-import DrawerNavigator from './Premium/BusinessOwner/ownerDrawer';
 import 'react-native-gesture-handler';
+import OwnerDrawer from './Premium/BusinessOwner/ownerDrawer';
+import GuestDrawer from './Guest/guestDrawer';
+// import PremiumMap from './Premium/premiumMap';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,9 @@ const MyStack = () => {
       <Stack.Screen name="RegisterDetails" component={RegisterDetails} options={{ headerShown: false}} />
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}} />
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false}} />
-      <Stack.Screen name="DrawerNavigator" component={DrawerNavigator} options={{ headerShown: false}} />
+      <Stack.Screen name="OwnerDrawer" component={OwnerDrawer} options={{ headerShown: false}} />
+      <Stack.Screen name="GuestDrawer" component={GuestDrawer} options={{ headerShown: false}} />
+      {/* <Stack.Screen name="PremiumMap" component={PremiumMap} options={{ headerShown: false}} /> */}
     </Stack.Navigator> 
   );
 }

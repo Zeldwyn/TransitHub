@@ -120,9 +120,9 @@ app.post('/user-Details', async (req, res) => {
 });
 
 app.put('/update-UserDetails', async (req, res) => {
-    const { email, password } = req.body;
-    const sql = `UPDATE premiumUser SET password = ? WHERE email = ?`;
-    pool.query(sql, [password, email], (err, result) => {
+    const { email, firstName, lastName, password  } = req.body;
+    const sql = `UPDATE premiumUser SET firstName = ?, lastName = ?, password = ? WHERE email = ?`;
+    pool.query(sql, [firstName, lastName, password, email], (err, result) => {
         if(err) {
             console.error('Server Side Error', err);
             res.status(500).json({ success: false, error: 'Internal server error' });
@@ -163,3 +163,4 @@ app.get('/search-Operator', async (req, res) => {
  
 module.exports = app;
 
+// SELECT email, status WHERE ownerID = ownerID

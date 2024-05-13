@@ -7,13 +7,13 @@ import AddOperator from './addOperator';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import OwnerMessage from './ownerMessage';
-import OwnerTransaction from './ownerTransaction';
 import OwnerSettings from './ownerSettings';
 import Help from '../help';
+import OwnerRecords from './ownerRecords';
 
 const Drawer = createDrawerNavigator();
 
-export default function DrawerNavigator(){
+export default function OwnerDrawer(){
   return (
     <Drawer.Navigator 
       initialRouteName="Home"
@@ -39,7 +39,7 @@ export default function DrawerNavigator(){
         options={{title: 'Message',drawerIcon: ({focused, size}) => (
         <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Records" component={OwnerTransaction} 
+      <Drawer.Screen name="Records" component={OwnerRecords} 
         options={{title: 'Records',drawerIcon: ({focused, size}) => (
         <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />

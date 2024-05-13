@@ -6,6 +6,7 @@ export default function AddOperator() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [invite, setInvite] = useState('Send Invite');
   const textInputRef = useRef(null);
 
   const handleContainerPress = () => {
@@ -21,7 +22,7 @@ export default function AddOperator() {
       return; 
     }
     try {
-      const response = await fetch(`http://192.168.1.11:8080/search-Operator?search=${query}`, {
+      const response = await fetch(`http://192.168.1.8:8080/search-Operator?search=${query}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -49,12 +50,13 @@ export default function AddOperator() {
 
   const closeModal = () => {
     handleContainerPress();
+    setInvite('Send Invite');
     setModalVisible(false);
   };
 
   const sendInvite = () => {
     handleContainerPress();
-    setModalVisible(false);
+    setInvite('Sent');
   };
 
   return (
@@ -82,10 +84,10 @@ export default function AddOperator() {
                 <View style={styles.modalContent}>
                   <ScrollView contentContainerStyle={styles.scrollViewContent}>
                     {searchResults.map((result, index) => (
-                    <View style={{flexDirection:'row'}}>
-                      <Text key={index}>{result}</Text>
-                      <TouchableOpacity onPress={sendInvite} style={styles.inviteButtonContainer}>
-                        <Text style={styles.inviteButton}>Send Invite</Text>
+                    <View style={{flexDirection:'row'}} key={index}>
+                      <Text>{result}</Text>
+                      <TouchableOpacity onPress={() => sendInvite(result)} style={styles.inviteButtonContainer}>
+                        <Text style={styles.inviteButton}>{invite}</Text>
                       </TouchableOpacity> 
                     </View>
                     ))}
@@ -169,8 +171,8 @@ closeButton: {
   color: 'blue',
 },
 inviteButtonContainer: {
-  position:'relative',
-  alignSelf: 'flex-end'
+  alignItems: 'flex-end',
+  marginLeft: 20,
 },
 inviteButton: {
   color: 'maroon',
