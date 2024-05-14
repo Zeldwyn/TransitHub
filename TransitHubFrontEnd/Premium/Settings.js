@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CheckPasswordValidity } from '../../Authentication/functions';
+import { CheckPasswordValidity } from '../Authentication/functions';
 
-export default function OwnerSettings(){
+export default function Settings(){
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [password, setPassword] = useState('');

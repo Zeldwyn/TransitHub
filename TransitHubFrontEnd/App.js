@@ -8,8 +8,9 @@ import OTP from './Authentication/OTP';
 import RegisterDetails from './Authentication/registerDetails';
 import Login from './Authentication/login';
 import 'react-native-gesture-handler';
-import OwnerDrawer from './Premium/BusinessOwner/ownerDrawer';
 import GuestDrawer from './Guest/guestDrawer';
+import OwnerDrawer from './Premium/ownerDrawer';
+import OperatorDrawer from './Premium/operatorDrawer';
 // import PremiumMap from './Premium/premiumMap';
 
 export default function App() {
@@ -39,6 +40,7 @@ const MyStack = () => {
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}} />
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false}} />
       <Stack.Screen name="OwnerDrawer" component={OwnerDrawer} options={{ headerShown: false}} />
+      <Stack.Screen name="OperatorDrawer" component={OperatorDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="GuestDrawer" component={GuestDrawer} options={{ headerShown: false}} />
       {/* <Stack.Screen name="PremiumMap" component={PremiumMap} options={{ headerShown: false}} /> */}
     </Stack.Navigator> 

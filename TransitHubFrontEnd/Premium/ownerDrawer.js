@@ -1,15 +1,27 @@
 import * as React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import 'react-native-gesture-handler';
-import {StyleSheet, Text, TouchableOpacity} from 'react-native';
-import OwnerHome from './ownerHome';
-import AddOperator from './addOperator';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import OwnerMessage from './ownerMessage';
-import OwnerSettings from './ownerSettings';
-import Help from '../help';
-import OwnerRecords from './ownerRecords';
+import OwnerHome from './Home';
+import AddOperator from './addOperator';
+import Message from './Message';
+import Records from './Records';
+import Settings from './Settings';
+
+function Hatdog() {
+  const navigation = useNavigation();
+  AsyncStorage.removeItem('email');
+  AsyncStorage.removeItem('userType');
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Button
+        onPress={() => navigation.navigate('Login')}
+        title="LOGOUTTTTTTTTTTTTTTTTT"
+      />
+    </View>
+  );
+}
 
 const Drawer = createDrawerNavigator();
 
@@ -35,11 +47,11 @@ export default function OwnerDrawer(){
         options={{title: 'Transport Operator',drawerIcon: ({focused, size}) => (
         <Ionicons name="person-add-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Message" component={OwnerMessage} 
+      <Drawer.Screen name="Message" component={Message} 
         options={{title: 'Message',drawerIcon: ({focused, size}) => (
         <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Records" component={OwnerRecords} 
+      <Drawer.Screen name="Records" component={Records} 
         options={{title: 'Records',drawerIcon: ({focused, size}) => (
         <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
@@ -47,10 +59,14 @@ export default function OwnerDrawer(){
         options={{title: 'Help',drawerIcon: ({focused, size}) => (
         <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Profile Settings" component={OwnerSettings} 
+      <Drawer.Screen name="Profile Settings" component={Settings} 
         options={{title: 'Profile Settings',drawerIcon: ({focused, size}) => (
         <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} /> 
+      <Drawer.Screen name="TEMPORARY LOGOUT" component={Hatdog} 
+        options={{title: 'TEMPORARY LOGOUT',drawerIcon: ({focused, size}) => (
+        <Feather name="command" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}} />    
     </Drawer.Navigator>
   );
 };

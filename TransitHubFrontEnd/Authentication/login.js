@@ -37,11 +37,12 @@ export default function Login(){
             }
             else {      
               AsyncStorage.setItem('email', email);
+              AsyncStorage.setItem('userType', data.userType);
               setValidate(''); 
               if(data.userType === 'Business Owner')
                 navigation.navigate('OwnerDrawer');  
               if(data.userType === 'Transport Operator')
-                navigation.navigate('RegisterEmail');
+                navigation.navigate('OperatorDrawer');
             }
           })
           .catch(error => {

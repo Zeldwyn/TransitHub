@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-export default function OwnerHome(){
+export default function Home(){
     const navigation = useNavigation();
 
     const windowWidth = Dimensions.get('window').width;

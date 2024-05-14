@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import uuid from 'react-native-uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Network from "expo-network";
 
 export default function StartMenu () {
+  const [ip, setIP] = useState('');
   const navigation = useNavigation();
 
   const windowWidth = Dimensions.get('window').width;
@@ -24,12 +24,6 @@ export default function StartMenu () {
       .catch((error) => {
         console.error('Error retrieving deviceID:', error);
       });
-    
-    const getIPAddress = async () => {
-        const ip = await Network.getIpAddressAsync();
-        console.log(ip);
-      };
-    getIPAddress();  
   },[])
   return (
     <View style={styles.container}>

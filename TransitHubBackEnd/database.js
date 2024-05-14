@@ -68,6 +68,12 @@ pool.getConnection((err, connection) => {
             guestID INT AUTO_INCREMENT PRIMARY KEY,
             deviceID VARCHAR (100) NOT NULL
         )
+        `,
+        `
+        CREATE TABLE IF NOT EXISTS guestUser (
+            guestID INT AUTO_INCREMENT PRIMARY KEY,
+            deviceID VARCHAR (100) NOT NULL
+        )
         `
     ];
     

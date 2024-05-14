@@ -21,7 +21,7 @@ function Hatdog() {
         />
       </View>
     );
-  }
+}
 
 const Drawer = createDrawerNavigator();
 
