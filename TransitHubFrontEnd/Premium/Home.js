@@ -21,16 +21,16 @@ export default function Home(){
                     width: windowWidth * 0.7, 
                     height: windowHeight * 0.2, 
                 }}
-                source={require('../../assets/img/blackText.png')}
+                source={require('../assets/img/blackText.png')}
             />
             <Text style={styles.text2}>What are you going to deliver today?</Text>
             <View style={styles.row}>
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                    <Image style={styles.options} source={require('../../assets/img/package.png')} />
+                    <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />
                 <TouchableOpacity onPress={() => navigation.navigate('StartMenu')}>
-                    <Image style={styles.options} source={require('../../assets/img/custom.png')} />
+                    <Image style={styles.options} source={require('../assets/img/custom.png')} />
                 </TouchableOpacity>
             </View>
         </View>
