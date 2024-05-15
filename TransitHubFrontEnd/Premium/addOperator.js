@@ -1,28 +1,23 @@
-import React, { useState, useRef } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View, Keyboard, Modal, Text, TouchableWithoutFeedback, ScrollView } from "react-native";
-import { Feather } from '@expo/vector-icons';
+import React, { useState, useRef, useEffect } from "react";
+import { StyleSheet, TextInput, TouchableOpacity, View, Keyboard, Modal, Text, TouchableWithoutFeedback, ScrollView, FlatList, Button } from "react-native";
 
 export default function AddOperator() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [invite, setInvite] = useState('Send Invite');
-  const textInputRef = useRef(null);
+  const [status, setStatus] = useState([]);
+  const [displayInvites, setDisplayInvites] = useState([]);
+  const [showResults, setShowResults] = useState(false);
 
-  const handleContainerPress = () => {
-      Keyboard.dismiss();
-      if (textInputRef.current) {
-        textInputRef.current.clear();
-      }
-  };
-  const handleSubmit = async (query) => {
-    if (query.trim() === '') {
-      setSearchResults(['Sorry, email does not exist!']);
-      setModalVisible(false);
-      return; 
+  const ownerID = 1;
+  const handleSubmit = async () => {
+    console.log('Search:', search);
+    if (search.trim() === '') {
+      setSearchResults(['Please enter a search term.']);
+      setShowResults(false);
+      return;
     }
     try {
-      const response = await fetch(`http://192.168.1.8:8080/search-Operator?search=${query}`, {
+      const response = await fetch(`http://192.168.1.8:8080/search-Operator?search=${search}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -34,151 +29,222 @@ export default function AddOperator() {
       }
       const data = await response.json();
       console.log('Response from Express backend:', data);
-  
-      if (data.length === 0) {
-        setSearchResults(['Sorry, email does not exist!']);
+      if (data.users.length === 0) {
+        setShowResults(false);
       } else {
-        setSearchResults(data);
+        setSearch('');
+        setSearchResults(data.users);
+        setStatus(data.status);
+        setShowResults(true);
       }
-      setModalVisible(true);
-  
     } catch (error) {
       console.error('Error fetching search results:', error);
     }
   };
-  
 
-  const closeModal = () => {
-    handleContainerPress();
-    setInvite('Send Invite');
-    setModalVisible(false);
+  const sendInvite = async(premiumUserID) => {
+    fetch(`http://192.168.1.8:8080/send-Invite`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          'ownerID': ownerID,
+          'premiumUserID': premiumUserID,
+        }),
+    })
+    .then(response => response.json())
+          .then(data => {
+            console.log('Response from Express backend:', data);
+            if(data.status == 1) {
+              console.log('Error sending invte');
+            } else if(data.status == 2) {
+              console.log('Sent Successfully');
+            } else if(data.status == 3) {
+              console.log('Invite already sent');
+            }
+          })
+          .catch(error => {
+            console.error('Error posting data to Express backend:', error);
+          });
   };
+  useEffect(() => {
+    fetch(`http://192.168.1.8:8080/display-Invites`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'ownerID': 1,
+      })
+    })
+    .then(response => response.json())
+      .then(data => {
+        setDisplayInvites(data.result);
+      })
+      .catch(error => {
+        console.error('Error posting data to Express backend:', error);
+      })
+  }, []);
 
-  const sendInvite = () => {
-    handleContainerPress();
-    setInvite('Sent');
-  };
+  const renderSearch = ({ item, index }) => (
+    <View style={styles.itemContainer}>
+      <View style={styles.textContainer}>
+      <Text style={styles.name}>{item.firstName} {item.lastName} </Text>
+        <Text style={styles.email}>{item.email}</Text>
+      </View>
+      <TouchableOpacity style={styles.inviteBtn} onPress={() => sendInvite(item.premiumUserID)}>
+        <Text style={styles.status}>{status[index] === 'Pending' ? 'Sent' : 'Invite' }</Text>
+      </TouchableOpacity>
+    </View> 
+  );
+
+  const renderInvite = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <View style={styles.textContainer}>
+      <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
+        <Text style={styles.email}>{item.email}</Text>
+      </View>
+        <Text style={item.status === 'Pending' ? styles.pending : styles.accepted}>{item.status}</Text>
+    </View>
+  );
 
   return (
-      <TouchableWithoutFeedback onPress={handleContainerPress}>
-        <View style={styles.container}>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                ref={textInputRef}
-                style={[styles.input, { flex: 1 }]}
-                value={search}
-                onChangeText={setSearch}
-                placeholder=" Search Email Here.."
-              />
-              <TouchableOpacity style={styles.eyeIcon} onPress={() => handleSubmit(search)}>
-                <Feather name="search" size={24} color="black" />
-              </TouchableOpacity>
-            </View>
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={modalVisible}
-              onRequestClose={closeModal}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                    {searchResults.map((result, index) => (
-                    <View style={{flexDirection:'row'}} key={index}>
-                      <Text>{result}</Text>
-                      <TouchableOpacity onPress={() => sendInvite(result)} style={styles.inviteButtonContainer}>
-                        <Text style={styles.inviteButton}>{invite}</Text>
-                      </TouchableOpacity> 
-                    </View>
-                    ))}
-                  </ScrollView>
-                  <TouchableOpacity onPress={closeModal} style={styles.closeButtonContainer}>
-                    <Text style={styles.closeButton}>Close</Text>
-                  </TouchableOpacity>              
-                </View>
-              </View>
-            </Modal>
-        </View>
-      </TouchableWithoutFeedback>
-    );
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search"
+          value={search}
+          onChangeText={setSearch}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSubmit}>
+          <Text style={styles.btnTxt}>Search</Text>
+        </TouchableOpacity>
+      </View>
+      {showResults ? (
+        <>
+        <Text style={styles.sentLabel}>Search Results</Text>
+        <FlatList
+          data={searchResults}
+          renderItem={renderSearch}
+          keyExtractor={(item) => item.email.toString()}
+        />
+        <TouchableOpacity style={styles.clearBtn} onPress={() => setShowResults(false)}>
+          <Text style={styles.btnTxt}>Clear</Text>
+        </TouchableOpacity>
+        </>
+      ) : (
+        <>
+        <Text style={styles.sentLabel}>Sent Invites</Text>
+        <FlatList
+          data={displayInvites}
+          renderItem={renderInvite}
+          keyExtractor={(item, index) => item.email.toString()}
+        />
+        </>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E3B130',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-},
-input: {
-    height: 40,
-    width: 300,
-    borderRadius: 5,
-    borderColor: 'white',
-    backgroundColor: 'orange',
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-    textAlign: 'left',
-},
-passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: "100%",
-    marginTop: 50,
-    position: 'relative', 
-},
-eyeIcon: {
-    position: 'absolute',
-    top: 20,
-    right: 25,
-},
-modalContainer: {
+container: {
   flex: 1,
-  justifyContent: 'center',
+  backgroundColor: '#f5f5f5',
+  margin: 3,
+},
+searchContainer: {
+  flexDirection: 'row',
   alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+  justifyContent: 'center',
+  paddingHorizontal: 10,
+  marginTop: 8,
 },
-modalContent: {
-  width: 400, 
-  height: 300, 
-  backgroundColor: 'white',
-  padding: 20,
+searchInput: {
+  flex: 1,
+  height: 40,
+  borderWidth: 1,
+  borderRadius: 5,
+  paddingHorizontal: 10,
+  marginRight: 10,
+  marginBottom: 8,
+},
+searchButton: {
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  backgroundColor: 'maroon',
+  borderRadius: 5,
+  marginBottom: 8,
+},
+btnTxt: {
+  color: '#fff',
+  fontWeight: 'bold',
+},
+status: {
+  color: '#fff',
+  fontWeight: 'bold',
+  width: 36,
+  textAlign: 'center'
+},
+clearBtn: {
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  backgroundColor: 'maroon',
+  borderRadius: 5,
+  marginBottom: 8,
+  alignItems: 'center'
+},
+inviteBtn: {
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  backgroundColor: 'maroon',
+  borderRadius: 5,
+  alignItems: 'center',
+  justifyContent: 'center',
+  alignSelf: 'flex-end',
+},
+itemContainer: {
+  flexDirection: 'row',
+  padding: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: 'maroon',
+  backgroundColor: '#fff',
+  marginVertical: 5,
+  marginHorizontal: 10,
   borderRadius: 10,
-  elevation: 10, 
-  shadowColor: '#000', 
-  shadowOffset: {
-    width: 0,
-    height: 2,
-  },
-  shadowOpacity: 0.25,
-  shadowRadius: 3.84,
-  alignItems: 'left',
-},     
-scrollViewContent: {
-  flexGrow: 1,
+  elevation: 3,
+},
+textContainer: {
+  flex: 1,
   alignItems: 'flex-start',
-  flexDirection:'column',
-  justifyContent: 'space-around'
+  justifyContent: 'center'
 },
-closeButtonContainer: {
-  position: 'absolute',
-  bottom: 20, // Adjust as needed
-  alignSelf: 'center', // Center horizontally
+pending: {
+  fontSize: 17,
+  color: 'orange',
+  fontWeight: 'bold',
+  alignSelf: 'center'
 },
-closeButton: {
-  color: 'blue',
+accepted: {
+  fontSize: 17,
+  color: 'green',
+  fontWeight: 'bold',
+  alignSelf: 'center'
 },
-inviteButtonContainer: {
-  alignItems: 'flex-end',
-  marginLeft: 20,
+sentLabel: {
+  fontWeight: 'bold', 
+  fontSize: 20, 
+  alignSelf: 'center', 
+  marginTop: 20, 
+  marginBottom: 20
 },
-inviteButton: {
-  color: 'maroon',
+email: {
+  fontSize: 12.5,
 },
+name: {
+  fontSize: 15,
+}
 });
-
-
-// HIMUON OG TOUCHABLE OPACITY ANG RESULT PARA MAPISLIT SIYA FOR SENDING INVITATION OR ADDING OKAY ?
-// NYA DISPLAY SA GI SENDAN OG INVITATION WITH LABEL PENDING AND ACCEPTED ?

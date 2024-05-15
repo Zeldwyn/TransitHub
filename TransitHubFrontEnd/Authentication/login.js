@@ -94,7 +94,7 @@ export default function Login(){
             {validate}
           </Text> 
           <CustomButton title="Submit" onPress={handleSubmit} />
-          <CustomButton title="SubmitHatdog" onPress={() => navigation.navigate('DrawerNavigator')} /> 
+          <CustomButton title="SubmitHatdog" onPress={() => navigation.navigate('OwnerDrawer')} /> 
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}> 
             <Text style={styles.registerText}>   
               Don't have an account? Click here to Register

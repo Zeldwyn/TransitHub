@@ -13,7 +13,7 @@ export default function Settings(){
     const [validate, setValidate] = useState(''); 
     // e uncomment ang asyncstorage if legit na transaction then e comment ang gi initialize nga storedEmail for testing
     // const storedEmail = AsyncStorage.getItem('email');
-    const storedEmail = "hatdog123@gmail.com";
+    const storedEmail = "nimeoperator143@gmail.com";
     const toggleShowPassword = () => {
       setShowPassword(!showPassword);
     };
