@@ -25,7 +25,7 @@ export default function Home(){
             />
             <Text style={styles.text2}>What are you going to deliver today?</Text>
             <View style={styles.row}>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Map')}>
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />

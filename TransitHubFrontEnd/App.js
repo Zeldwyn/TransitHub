@@ -11,7 +11,7 @@ import 'react-native-gesture-handler';
 import GuestDrawer from './Guest/guestDrawer';
 import OwnerDrawer from './Premium/ownerDrawer';
 import OperatorDrawer from './Premium/operatorDrawer';
-// import PremiumMap from './Premium/premiumMap';
+import Map from './Premium/Map';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ const MyStack = () => {
       <Stack.Screen name="OwnerDrawer" component={OwnerDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="OperatorDrawer" component={OperatorDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="GuestDrawer" component={GuestDrawer} options={{ headerShown: false}} />
-      {/* <Stack.Screen name="PremiumMap" component={PremiumMap} options={{ headerShown: false}} /> */}
+      <Stack.Screen name="Map" component={Map} options={{ headerShown: false}} />
     </Stack.Navigator> 
   );
 }
