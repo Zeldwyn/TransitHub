@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '1234',
+    password: '',
     database: 'transithub'
 });
 
@@ -53,6 +53,12 @@ pool.getConnection((err, connection) => {
         ) 
         `,
         `
+        CREATE TABLE IF NOT EXISTS guestUser (
+            guestID INT AUTO_INCREMENT PRIMARY KEY,
+            deviceID VARCHAR (100) NOT NULL
+        )
+        `,
+        `
         CREATE TABLE IF NOT EXISTS transaction (
             transactionID INT AUTO_INCREMENT PRIMARY KEY,
             toLocation VARCHAR (50) NOT NULL,
@@ -62,20 +68,8 @@ pool.getConnection((err, connection) => {
             guestID INT,
             FOREIGN KEY (guestID) REFERENCES guestUser(guestID)
         ) 
-        `,
         `
-        CREATE TABLE IF NOT EXISTS guestUser (
-            guestID INT AUTO_INCREMENT PRIMARY KEY,
-            deviceID VARCHAR (100) NOT NULL
-        )
-        `,
-        `
-        CREATE TABLE IF NOT EXISTS guestUser (
-            guestID INT AUTO_INCREMENT PRIMARY KEY,
-            deviceID VARCHAR (100) NOT NULL
-        )
-        `
-    ];
+    ];    
     
     pool.getConnection((err, connection) => {
         if (err) {
