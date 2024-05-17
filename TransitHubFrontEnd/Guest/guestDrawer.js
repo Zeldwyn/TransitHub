@@ -32,7 +32,7 @@ export default function GuestDrawer(){
                 const deviceID = await AsyncStorage.getItem('deviceID'); 
                 console.log('Device ID:', deviceID); 
     
-                const response = await fetch('http://192.168.1.8:8080/add-GuestUser', {
+                const response = await fetch('http://192.168.1.4:8080/add-GuestUser', {
                     method: 'POST',
                     headers: {
                         Accept: 'application/json',

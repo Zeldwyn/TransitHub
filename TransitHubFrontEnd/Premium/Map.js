@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Button, Image, Dimensions, Animated, TouchableO
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import axios from 'axios';
 
-export default function GuestMap() {
+export default function Map() {
   const [startingLocation, setStartingLocation] = useState(null);
   const [endingLocation, setEndingLocation] = useState(null);
   const [coordinates, setCoordinates] = useState([]);
@@ -102,6 +102,7 @@ export default function GuestMap() {
           longitudeDelta: 0.0421,
         }}
         onPress={handleMapPress}
+        //customMapStyle={customMapStyle}
       >
         {startingLocation && (
           <Marker coordinate={startingLocation} pinColor="blue" />
@@ -132,12 +133,12 @@ export default function GuestMap() {
               <Text style={styles.label}>Start:</Text>
               <View style={styles.row}>
                 <Text style={styles.locationText}>{startLocationName}</Text>
-                <Button title="Set" onPress={() => setIsSelectingStart(true)} />
+                <Button title="Set" onPress={() => setIsSelectingStart(true)} color="#8a252c"/>
               </View>
               <Text style={styles.label}>End:</Text>
               <View style={styles.row}>
                 <Text style={styles.locationText}>{endLocationName}</Text>
-                <Button title="Set" onPress={() => setIsSelectingEnd(true)} />
+                <Button title="Set" onPress={() => setIsSelectingEnd(true)} color="#8a252c" />
               </View>
             </>
           )}

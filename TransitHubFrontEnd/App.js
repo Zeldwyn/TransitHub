@@ -12,6 +12,7 @@ import GuestDrawer from './Guest/guestDrawer';
 import OwnerDrawer from './Premium/ownerDrawer';
 import OperatorDrawer from './Premium/operatorDrawer';
 import Map from './Premium/Map';
+import GuestMap from './Guest/guestMap';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,7 @@ const MyStack = () => {
       <Stack.Screen name="OperatorDrawer" component={OperatorDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="GuestDrawer" component={GuestDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="Map" component={Map} options={{ headerShown: false}} />
+      <Stack.Screen name="GuestMap" component={GuestMap} options={{headerShown: false}}/>
     </Stack.Navigator> 
   );
 }

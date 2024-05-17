@@ -29,7 +29,7 @@ export default function Home(){
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />
-                <TouchableOpacity onPress={() => navigation.navigate('StartMenu')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Map')}>
                     <Image style={styles.options} source={require('../assets/img/custom.png')} />
                 </TouchableOpacity>
             </View>
