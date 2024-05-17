@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const {sendOTP} = require('./mail');
-const {generateOTP, isDeviceIDExists, getGuestID} = require('./functions');
+const {generateOTP, isDeviceIDExists, getGuestID, isConversationExists, setUser, getPremiumID, isInviteExists, getOwnerOperatorID} = require('./functions');
 const {pool} = require('./database');
 
 const app = express();
@@ -10,11 +10,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-//let storedOTP = "123456";
-// let storedEmail = "johnmichael4@gmail.com";
+let storedOTP = "123456";
+// let storedEmail;
 // let storedOTP;
-//let storedEmail = "lisanime@gmail.com";
+let storedEmail = "nimehellokitty@gmail.com";
 
+// AUTHENTICATIONS
 app.post('/send-OTP', async (req, res) => { 
     const { email } = req.body;
     const sql = `SELECT email FROM premiumUser WHERE email = ?`;
@@ -27,7 +28,7 @@ app.post('/send-OTP', async (req, res) => {
                 console.log('Email already taken');
                 res.status(200).json({ isValid: false});
             } else {
-                console.log('Okay ra doy');
+                console.log('Email is available');
                 storedEmail = email;
                 try {
                     storedOTP = generateOTP();
@@ -56,6 +57,7 @@ app.post('/verify-OTP', async (req, res) => {
         res.status(500).json({ error: 'Failed to verify OTP' });
     }
 })
+
 app.post('/resend-OTP', async (req, res) => { 
     try {
         await sendOTP({ email: storedEmail, otp: storedOTP}); 
@@ -73,8 +75,18 @@ app.post('/add-PremiumUser', async (req, res) => {
     pool.query(sql, [storedEmail, firstName, lastName, password, userType], (err, result) => {
         if (err) {
             console.error('Error adding premium user:', err);
-            res.status(400).json({ error: 'Fail' }); 
+            res.status(500).json({ error: 'Fail' }); 
         } else {
+            getPremiumID(storedEmail, (exists, premiumUserID) => { 
+                if(exists) {
+                    setUser(userType, premiumUserID, (success) => {
+                        if(success)
+                            console.log('Successful setUser');
+                        else
+                            console.log('Unsuccessful setUser');
+                    })
+                }
+            })
             console.log('Premium user added successfully');
             res.status(200).json({ message: 'Success' }); 
         }
@@ -138,29 +150,6 @@ app.put('/update-UserDetails', async (req, res) => {
     });
 });
 
-app.get('/search-Operator', async (req, res) => {
-    const { search } = req.query;
-
-    try {
-        const sql = `SELECT email FROM premiumUser WHERE userType = 'Transport Operator' AND email LIKE ?`;
-        const query = `%${search}%`; 
-
-        pool.query(sql, query, (err, result) => {
-            if (err) {
-                console.error('Error executing SQL query:', err);
-                return res.status(500).send('Internal Server Error');
-            }
-
-            const emails = result.map(row => row.email);
-
-            return res.status(200).json(emails);
-        });
-    } catch (error) {
-        console.error('Error in search-Operator route:', error);
-        return res.status(500).send('Internal Server Error');
-    }
-});
- 
 app.post('/add-GuestUser', async (req, res) => {
     const { deviceID } = req.body;
     isDeviceIDExists(deviceID, (exists) =>{
@@ -180,7 +169,9 @@ app.post('/add-GuestUser', async (req, res) => {
         }   
     })  
 });
+//END
 
+//TRANSACTIONS
 app.post('/add-Transaction', async (req, res) => {
     const { deviceID, toLocation, fromLocation } = req.body;
     const status = "Ongoing";
@@ -235,6 +226,121 @@ app.post('/display-Transaction', async (req, res) => {
         }   
     })  
 });
+//END
+
+//MESSAGE
+app.post('/create-Conversation', async (req, res) => {
+    const { ownerID, operatorID } = req.body;
+    isConversationExists(ownerID, operatorID, (exists, conversationID) => {
+        if(!exists) {
+            const sql = `INSERT INTO conversation (ownerID, operatorID) VALUES (?, ?)`;
+                pool.query(sql, [ownerID, operatorID], (err, result) => {
+                if (err) {
+                    console.error('Error adding conversation:', err);
+                    res.status(400).json({ status: 'Fail' }); 
+                } else {
+                    console.log('Conversation user added successfully');
+                    res.status(200).json({ status: 'Success' }); 
+                }
+            });
+        } else {
+            res.status(200).json({conversatioID: conversationID});
+        }
+    });
+});
+//END
+
+//ADD OPERATOR
+app.get('/search-Operator', async (req, res) => {
+    const { search } = req.query;
+    const status = [];
+    try {
+        const sql = `SELECT email, firstName, lastName, premiumUserID FROM premiumUser WHERE userType = 'Transport Operator' AND email LIKE ?`;
+        const query = `%${search}%`; 
+        pool.query(sql, query, (err, usersResult) => {
+            if (err) {
+                console.error('Error executing SQL query for users:', err);
+                return res.status(500).send('Internal Server Error');
+            } else {
+                const userIds = usersResult.map(user => user.premiumUserID);
+                if (userIds.length === 0) {
+                    return res.status(200).json({ users: [], status: status });
+                }
+                let invitesProcessed = 0;
+                userIds.forEach(userId => {
+                    const view = `SELECT status FROM InviteView WHERE premiumUserID = ?`;
+                    pool.query(view, [userId], (err, invitesResult) => { 
+                        if(err) {
+                            console.error('Error executing SQL query for invites:', err);
+                        } else {
+                            invitesProcessed++;
+                            if (invitesResult.length > 0) {
+                                status.push(invitesResult[0].status);
+                            }
+                            if (invitesProcessed === userIds.length) {
+                                res.status(200).json({ users: usersResult, status: status });
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error in search-Operator route:', error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
+app.post('/send-Invite', async (req, res) => { 
+    const { ownerID, premiumUserID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'Transport Operator', (exists, temp) => {
+        if(exists) {
+            isInviteExists(ownerID, temp, (exists, ID) =>{ 
+                if(!exists) {
+                    const sql = `INSERT INTO invites (ownerID, operatorID, status) VALUES (?, ?, ?)`;
+                        console.log('OpIDINSIDE', temp);
+                        pool.query(sql, [ownerID, temp, "Pending"], (err, result) => {
+                        if (err) {
+                            console.error('Error sending invite', err);
+                            res.status(400).json({ status: 1 }); 
+                        } else {
+                            console.log('Invite sent successfully');
+                            res.status(200).json({ status: 2 }); 
+                        }
+                    });
+                } else {
+                    res.status(200).json({ status: 3})
+                }
+            });
+        }
+            
+    }); 
+});
+
+app.post('/display-Invites', async (req, res) => { 
+    const { ownerID } = req.body;
+    const sql = `SELECT * FROM InviteView WHERE ownerID = ?`;
+    pool.query(sql, [ownerID], (err, result) => {
+        if (err) {
+            console.error('Error:', err);
+            res.status(400).json({ error: 'Failed to retrieve invites' }); 
+        } else {
+            console.log('Invites retrieved successfully');   
+            res.status(200).json({ result }); 
+        }
+    });     
+});
+
+app.post('/tester', async (req, res) => {
+    const {id, usertype} = req.body;
+
+    getOwnerOperatorID(id, usertype, (exists, operatorID) =>{
+        res.status(200).json(operatorID)
+    })
+});
+//END
+
 
 module.exports = app;
 
+// if existing ang conversation with ownerID and operatorID di mo buhat new conversation e return ang conversation ID
+// create-Conversation

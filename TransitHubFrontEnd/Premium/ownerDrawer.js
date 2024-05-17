@@ -35,8 +35,8 @@ export default function OwnerDrawer(){
       initialRouteName="Home"
       screenOptions={{
         headerTitleAlign: 'center',
-        // drawerActiveBackgroundColor: '#E3B130',
-        drawerActiveTintColor: '#8A252C',
+        // drawerActiveBackgroundColor: 'black',
+        drawerActiveTintColor: 'black',
         drawerLabelStyle: {fontSize: 18, marginLeft: -15},
         // drawerContentStyle: {fontSize: 20},
         headerTitleStyle: {fontSize: 23, lineHeight: 60},
