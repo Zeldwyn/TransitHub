@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, View, Text, Button, Image, Dimensions, Animated, TouchableOpacity, Modal, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, View, Text, Button, Image, Dimensions, Animated, TouchableOpacity, Modal, TextInput } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import axios from 'axios';
 
@@ -15,13 +15,24 @@ export default function GuestMap() {
   const [endLocationName, setEndLocationName] = useState('Select an ending waypoint');
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showNextPage, setShowNextPage] = useState(false);
+  const [packageWeight, setPackageWeight] = useState('');
+  const [first2KmRate, setFirst2KmRate] = useState('');
+  const [succeedingKmRate, setSucceedingKmRate] = useState('');
 
-  const toggleInputArea = () => {
+  useEffect(() => {
+    const toValue = isInputAreaExpanded
+      ? (showNextPage ? Dimensions.get('window').height - 340 : Dimensions.get('window').height - 420)
+      : 100;
+
     Animated.timing(inputAreaHeight, {
-      toValue: isInputAreaExpanded ? 100 : Dimensions.get('window').height - 450,
+      toValue,
       duration: 150,
       useNativeDriver: false,
     }).start();
+  }, [isInputAreaExpanded, showNextPage]);
+
+  const toggleInputArea = () => {
     setIsInputAreaExpanded(!isInputAreaExpanded);
   };
 
@@ -40,7 +51,7 @@ export default function GuestMap() {
 
   const reverseGeocode = async (latitude, longitude) => {
     try {
-      const apiKey = '5b3ce3597851110001cf62489f4d31d1f47f4772961b6a9a70c4dfa9'; // Replace with your OpenRouteService API key
+      const apiKey = '5b3ce3597851110001cf62489f4d31d1f47f4772961b6a9a70c4dfa9';
       const url = `https://api.openrouteservice.org/geocode/reverse?api_key=${apiKey}&point.lat=${latitude}&point.lon=${longitude}`;
 
       const response = await axios.get(url);
@@ -64,7 +75,7 @@ export default function GuestMap() {
         return;
       }
 
-      const apiKey = '5b3ce3597851110001cf62489f4d31d1f47f4772961b6a9a70c4dfa9'; // Replace with your OpenRouteService API key
+      const apiKey = '5b3ce3597851110001cf62489f4d31d1f47f4772961b6a9a70c4dfa9';
       const profile = 'driving-car';
       const start = `${startingLocation.longitude},${startingLocation.latitude}`;
       const end = `${endingLocation.longitude},${endingLocation.latitude}`;
@@ -74,6 +85,7 @@ export default function GuestMap() {
       const response = await axios.get(url);
       const routeCoordinates = response.data.features[0].geometry.coordinates.map(coord => ({ latitude: coord[1], longitude: coord[0] }));
       setCoordinates(routeCoordinates);
+      setShowNextPage(true);
     } catch (error) {
       console.error('Error fetching route:', error);
     }
@@ -115,17 +127,51 @@ export default function GuestMap() {
             }}
             source={require('../assets/img/blackText.png')}
           />
-          <Text style={styles.label}>Start:</Text>
-          <View style={styles.row}>
-            <Text style={styles.locationText}>{startLocationName}</Text>
-            <Button title="Set" onPress={() => setIsSelectingStart(true)} />
-          </View>
-          <Text style={styles.label}>End:</Text>
-          <View style={styles.row}>
-            <Text style={styles.locationText}>{endLocationName}</Text>
-            <Button title="Set" onPress={() => setIsSelectingEnd(true)} />
-          </View>
-          <Button title="Confirm" onPress={getRoute} color="#8a252c" />
+          {!showNextPage && (
+            <>
+              <Text style={styles.label}>Start:</Text>
+              <View style={styles.row}>
+                <Text style={styles.locationText}>{startLocationName}</Text>
+                <Button title="Set" onPress={() => setIsSelectingStart(true)} />
+              </View>
+              <Text style={styles.label}>End:</Text>
+              <View style={styles.row}>
+                <Text style={styles.locationText}>{endLocationName}</Text>
+                <Button title="Set" onPress={() => setIsSelectingEnd(true)} />
+              </View>
+            </>
+          )}
+          {!showNextPage && <Button title="Confirm" onPress={getRoute} color="#8a252c" />}
+          {showNextPage && (
+            <>
+              <Text style={styles.pageText}>Weight of package(Kg):</Text>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={packageWeight}
+                onChangeText={setPackageWeight}
+              />
+              <Text style={styles.boldText}>Rate</Text>
+              <Text>First 2Km:</Text>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={first2KmRate}
+                onChangeText={setFirst2KmRate}
+              />
+              <Text>Succeeding Km:</Text>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={succeedingKmRate}
+                onChangeText={setSucceedingKmRate}
+              />
+              <View style={styles.buttonContainer}>
+                <Button title="Back" onPress={() => setShowNextPage(false)} color="#8a252c" />
+                <Button title="Confirm" onPress={() => console.log("Confirm")} color="#8a252c" />
+              </View>
+            </>
+          )}
         </TouchableOpacity>
       </Animated.View>
       <Modal
@@ -175,12 +221,13 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection:
+      'row',
     alignItems: 'center',
     marginBottom: 10,
   },
   locationText: {
-    flex:1,
+    flex: 1,
     borderColor: '#ccc',
     borderWidth: 1,
     padding: 10,
@@ -189,20 +236,39 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 10,
   },
-  // Updated styles for the error modal
+  nextPageContainer: {
+    padding: 10,
+  },
+  pageText: {
+    marginBottom: 10,
+  },
+  inputBox: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
-    elevation: 5, // shadow for Android
-    shadowColor: '#000', // shadow for iOS
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -211,4 +277,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+
 });
