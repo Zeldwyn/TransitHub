@@ -7,11 +7,35 @@ export default function GuestHelp() {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
   const [feedback, setFeedback] = useState('');
+  const [rate, setRate] = useState('');
 
   const handleFeedbackSubmit = () => {
-    console.log('Feedback submitted:', feedback);
-    setFeedback('');
-  };
+    console.log(rate,feedback)
+    fetch('http://192.168.1.11:8080/add-Feedback', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            "feedbackMessage": feedback,
+            "rate": rate,
+          }),
+        })
+        .then(response => response.json())
+          .then(data => {
+            if (data.status === 'Success') {
+              console.log('Feedback submitted successfully');
+            } else {
+              console.log('Failed to submit feedback');
+            }
+            setRate('');
+            setFeedback('');
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      };
 
   return (
     <TouchableWithoutFeedback>
@@ -28,12 +52,22 @@ export default function GuestHelp() {
       <View style={styles.contentContainer}>
       <Text style={styles.text}>Please rate your experience</Text>
       <View style={styles.emoji}>
-      <MaterialCommunityIcons name="emoticon-excited-outline" size={45} color="black"/>
-      <MaterialCommunityIcons name="emoticon-happy-outline" size={45} color="black" />
-      <MaterialCommunityIcons name="emoticon-sad-outline" size={45} color="black" />
-      <MaterialCommunityIcons name="emoticon-cry-outline" size={45} color="black" />
-      <MaterialCommunityIcons name="emoticon-angry-outline" size={45} color="black" />
-      </View>
+          <TouchableOpacity onPress={() => setRate(5)}>
+            <MaterialCommunityIcons name="emoticon-excited-outline" size={45} color={rate === 5 ? 'maroon' : 'black'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setRate(4)}>
+            <MaterialCommunityIcons name="emoticon-happy-outline" size={45} color={rate === 4 ? 'maroon' : 'black'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setRate(3)}>
+            <MaterialCommunityIcons name="emoticon-sad-outline" size={45} color={rate === 3 ? 'maroon' : 'black'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setRate(2)}>
+            <MaterialCommunityIcons name="emoticon-cry-outline" size={45} color={rate === 2 ? 'maroon' : 'black'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setRate(1)}>
+            <MaterialCommunityIcons name="emoticon-angry-outline" size={45} color={rate === 1 ? 'maroon' : 'black'} />
+          </TouchableOpacity>
+        </View>
       <Text style={styles.text}>How can we help you?</Text>
       <TextInput
             style={styles.textInput}

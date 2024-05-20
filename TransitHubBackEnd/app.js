@@ -346,6 +346,21 @@ app.put('/accept-Invites', async (req, res) => {
     })
 });
 
+//FEEDBACK
+app.post('/add-Feedback', async (req, res) => {
+    const { feedbackMessage, rate } = req.body;
+    const sql = `INSERT INTO feedback (feedbackMessage, rate) VALUES (?, ?)`;
+    pool.query(sql, [feedbackMessage, rate], (err, result) => {
+        if (err) {
+            console.error('Error:', err);
+            res.status(400).json({ error: 'Failed to add Feedback.' }); 
+        } else {
+            console.log('Feedback added successfully');   
+            res.status(200).json({ status: 'Success' }); 
+        }
+    });   
+});
+
 app.post('/tester', async (req, res) => {
     const { operatorID } = req.body;
     const sql = `SELECT * FROM OperatorInviteView WHERE operatorID = ?`;
