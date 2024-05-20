@@ -48,7 +48,7 @@ function isInviteExists(ownerID, operatorID, callback) {
             callback(false);
         } else {
             if(res.length > 0) {
-                console.log('Conversation Exists:', res[0].conversationID);
+                console.log('Invite Exists:', res[0].conversationID);
                 callback(true, res[0].conversationID);
             } else {
                 callback(false);
@@ -75,13 +75,7 @@ function getGuestID(deviceID, callback) {
 };
 
 function setUser(userType, premiumUserID, callback) {
-    let type;
-    if(userType == "Transport Operator") 
-        type = "operator";
-    else if (userType == "Business Owner")
-        type = "owner";
-
-    const sql = `INSERT INTO ${type} (premiumUserID) VALUES (?)`;
+    const sql = `INSERT INTO ${userType} (premiumUserID) VALUES (?)`;
     pool.query(sql, [premiumUserID], (err, res) => {
         if (err) {
             console.log('Server Side Error:', err);
@@ -109,26 +103,22 @@ function getPremiumID(email, callback) {
 };
 
 function getOwnerOperatorID(premiumUserID, userType, callback) {
-    let type;
     let idName;
-    if(userType == "Transport Operator") {
-        type = "operator";
+    if(userType == "operator") 
         idName = "operatorID";
-    }   
-    else if (userType == "Business Owner") {
-        type = "owner";
+    else if (userType == "owner") 
         idName = "ownerID";
-    }
-    const sql = `SELECT ${idName} FROM ${type} WHERE premiumUserID = ?`;
+    
+    const sql = `SELECT ${idName} FROM ${userType} WHERE premiumUserID = ?`;
     pool.query(sql, [premiumUserID], (err, res) => {
         if (err) {
             console.log('Server Side Error:', err);
             callback(false);
         } else {
             if(res.length > 0) { 
-                if(type == "owner")
+                if(userType == "owner")
                     callback(true, res[0].ownerID);
-                if(type == "operator")
+                if(userType == "operator")
                     callback(true, res[0].operatorID);
             } else {
                 callback(false);

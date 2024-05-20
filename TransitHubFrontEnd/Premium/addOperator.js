@@ -1,19 +1,49 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useRef, useEffect } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View, Keyboard, Modal, Text, TouchableWithoutFeedback, ScrollView, FlatList, Button } from "react-native";
 
 export default function AddOperator() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [status, setStatus] = useState([]);
   const [displayInvites, setDisplayInvites] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [clickedButtons ,setClickedButtons] = useState({});
+  const [pID, setPID] = useState('');
+  
+  useEffect(() => {
+    const getUserID = async() => {
+        const id = await AsyncStorage.getItem('premiumUserID')
+        console.log("ID: ", id); 
+        setPID(id);         
+    }
+    getUserID();
+  },[]);
 
-  const ownerID = 1;
+  useEffect(() => {
+    fetch(`http://192.168.1.8:8080/sent-Invites`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'premiumUserID': pID,
+      })
+    })
+    .then(response => response.json())
+      .then(data => {
+        setDisplayInvites(data.result);
+      })
+      .catch(error => {
+        console.error('Error posting data to Express backend:', error);
+      })
+  });
+
   const handleSubmit = async () => {
     console.log('Search:', search);
     if (search.trim() === '') {
-      setSearchResults(['Please enter a search term.']);
-      setShowResults(false);
+      setSearchResults([]);
+      setShowResults(true);
       return;
     }
     try {
@@ -29,12 +59,14 @@ export default function AddOperator() {
       }
       const data = await response.json();
       console.log('Response from Express backend:', data);
-      if (data.users.length === 0) {
+      if (data.length === 0) {
         setShowResults(false);
       } else {
         setSearch('');
-        setSearchResults(data.users);
-        setStatus(data.status);
+            const filteredResults = data.filter(item => {
+                return !displayInvites.some(invite => invite.operatorID === item.operatorID);
+            });
+        setSearchResults(filteredResults);
         setShowResults(true);
       }
     } catch (error) {
@@ -42,7 +74,7 @@ export default function AddOperator() {
     }
   };
 
-  const sendInvite = async(premiumUserID) => {
+  const sendInvite = async(operatorID) => {
     fetch(`http://192.168.1.8:8080/send-Invite`, {
         method: 'POST',
         headers: {
@@ -50,8 +82,8 @@ export default function AddOperator() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          'ownerID': ownerID,
-          'premiumUserID': premiumUserID,
+          'ownerID': 1,
+          'operatorID': operatorID,
         }),
     })
     .then(response => response.json())
@@ -68,35 +100,20 @@ export default function AddOperator() {
           .catch(error => {
             console.error('Error posting data to Express backend:', error);
           });
+      setClickedButtons(prevState => ({
+        ...prevState,
+        [operatorID]: true
+      }));
   };
-  useEffect(() => {
-    fetch(`http://192.168.1.8:8080/display-Invites`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        'ownerID': 1,
-      })
-    })
-    .then(response => response.json())
-      .then(data => {
-        setDisplayInvites(data.result);
-      })
-      .catch(error => {
-        console.error('Error posting data to Express backend:', error);
-      })
-  }, []);
-
+  
   const renderSearch = ({ item, index }) => (
     <View style={styles.itemContainer}>
       <View style={styles.textContainer}>
       <Text style={styles.name}>{item.firstName} {item.lastName} </Text>
         <Text style={styles.email}>{item.email}</Text>
       </View>
-      <TouchableOpacity style={styles.inviteBtn} onPress={() => sendInvite(item.premiumUserID)}>
-        <Text style={styles.status}>{status[index] === 'Pending' ? 'Sent' : 'Invite' }</Text>
+      <TouchableOpacity style={styles.inviteBtn} onPress={() => sendInvite(item.operatorID)} >
+        <Text style={styles.status}>{clickedButtons[item.operatorID] ? "Sent" : "Invite"}</Text>
       </TouchableOpacity>
     </View> 
   );
@@ -142,7 +159,7 @@ export default function AddOperator() {
         <FlatList
           data={displayInvites}
           renderItem={renderInvite}
-          keyExtractor={(item, index) => item.email.toString()}
+          keyExtractor={(item, index) => item.operatorID.toString()}
         />
         </>
       )}

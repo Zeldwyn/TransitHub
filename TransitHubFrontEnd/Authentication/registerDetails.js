@@ -20,7 +20,7 @@ export default function RegisterDetails(){
 
     const handleSubmit = async() => {
         console.log(firstName, lastName, password);
-        fetch('http://192.168.1.4:8080/add-PremiumUser', {
+        fetch('http://192.168.1.8:8080/add-PremiumUser', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -98,17 +98,17 @@ export default function RegisterDetails(){
         <Text style={styles.text2}>User Type</Text>
         <View style={styles.radioButtonContainer}>
           <RadioButton
-            value="Transport Operator"
-            status={checked === 'Transport Operator' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('Transport Operator')}
+            value="operator"
+            status={checked === 'operator' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('operator')}
           />
           <Text>Transport Operator</Text>
         </View>
         <View style={styles.radioButtonContainer}>
           <RadioButton
-            value="Business Owner"
-            status={checked === 'Business Owner' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('Business Owner')}
+            value="owner"
+            status={checked === 'owner' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('owner')}
           />
           <Text>Business Owner</Text>
         </View>

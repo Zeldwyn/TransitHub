@@ -16,9 +16,7 @@ export default function Login(){
     const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async() => {
-      console.log('Email nimo: ', email)
-      console.log('Password nemo isda: ', password)
-      fetch('http://192.168.1.4:8080/validate-Login', {
+      fetch('http://192.168.1.8:8080/validate-Login', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -38,10 +36,11 @@ export default function Login(){
             else {      
               AsyncStorage.setItem('email', email);
               AsyncStorage.setItem('userType', data.userType);
+              AsyncStorage.setItem('premiumUserID', data.id.toString());
               setValidate(''); 
-              if(data.userType === 'Business Owner')
+              if(data.userType === 'owner')
                 navigation.navigate('OwnerDrawer');  
-              if(data.userType === 'Transport Operator')
+              if(data.userType === 'operator')
                 navigation.navigate('OperatorDrawer');
             }
           })
@@ -94,7 +93,8 @@ export default function Login(){
             {validate}
           </Text> 
           <CustomButton title="Submit" onPress={handleSubmit} />
-          <CustomButton title="SubmitHatdog" onPress={() => navigation.navigate('OwnerDrawer')} /> 
+          <CustomButton title="SubmitOwner" onPress={() => {navigation.navigate('OwnerDrawer'); AsyncStorage.setItem('userType', "owner");}} /> 
+          <CustomButton title="SubmitOperator" onPress={() => {navigation.navigate('OperatorDrawer'); AsyncStorage.setItem('userType', "operator");}} /> 
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}> 
             <Text style={styles.registerText}>   
               Don't have an account? Click here to Register

@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: '1234',
     database: 'transithub'
 });
 
@@ -95,13 +95,26 @@ pool.getConnection((err, connection) => {
         )
         `,
         `
-        CREATE OR REPLACE VIEW InviteView AS
-            SELECT pu.firstName, pu.lastName, pu.email, i.status, i.ownerID, i.operatorID, pu.premiumUserID
-            FROM premiumUser pu
-            JOIN operator o ON pu.premiumUserID = o.premiumUserID
-            JOIN invites i ON o.operatorID = i.operatorID;         
+        CREATE TABLE IF NOT EXISTS feedback (
+            feedbackID INT PRIMARY KEY,
+            feedbackMessage VARCHAR (500) NOT NULL,
+            rate INT
+        )
+        `,
         `
-          
+        CREATE OR REPLACE VIEW 
+        operatorDetails AS SELECT p.firstName, p.lastName, p.email, o.operatorID 
+        FROM premiumUser p 
+        JOIN operator o ON p.premiumUserID = o.premiumUserID;    
+        `,
+        `
+        CREATE OR REPLACE VIEW operatorInviteDetails AS
+        SELECT  p.firstName, p.lastName, p.email, o.operatorID, i.status, i.ownerID, ow.premiumUserID AS ownerPremiumUserID, o.premiumUserID AS operatorPremiumUserID     
+        FROM premiumUser p
+        JOIN operator o ON p.premiumUserID = o.premiumUserID
+        JOIN invites i ON o.operatorID = i.operatorID  
+        JOIN owner ow ON i.ownerID = ow.ownerID;
+        `
     ];    
     
     pool.getConnection((err, connection) => {

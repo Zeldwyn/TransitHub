@@ -10,10 +10,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let storedOTP = "123456";
-// let storedEmail;
-// let storedOTP;
-let storedEmail = "nimehellokitty@gmail.com";
+// let storedOTP = "123456";
+let storedEmail;
+let storedOTP;
+// let storedEmail = "nimetagiya@gmail.com";
 
 // AUTHENTICATIONS
 app.post('/send-OTP', async (req, res) => { 
@@ -31,7 +31,8 @@ app.post('/send-OTP', async (req, res) => {
                 console.log('Email is available');
                 storedEmail = email;
                 try {
-                    storedOTP = generateOTP();
+                    // storedOTP = generateOTP();
+                    storedOTP = '123456';
                     sendOTP({ email, otp: storedOTP}); 
                     res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
                 } catch (error) {
@@ -95,7 +96,7 @@ app.post('/add-PremiumUser', async (req, res) => {
 
 app.post('/validate-Login', async (req, res) => {
     const { email, password } = req.body;
-    const sql = `SELECT email, password, userType FROM premiumUser WHERE email = ? AND password = ?`;
+    const sql = `SELECT email, password, userType, premiumUserID FROM premiumUser WHERE email = ? AND password = ?`;
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
             console.error('Server Side Error', err);
@@ -103,7 +104,7 @@ app.post('/validate-Login', async (req, res) => {
         } else {
             if (result.length > 0) {
                 console.log('Login successful');
-                res.status(200).json({ isValid: true, userType: result[0].userType});
+                res.status(200).json({ isValid: true, userType: result[0].userType, id: result[0].premiumUserID});
             } else {
                 console.log('Invalid login credentials');
                 res.status(400).json({ isValid: false });
@@ -253,37 +254,15 @@ app.post('/create-Conversation', async (req, res) => {
 //ADD OPERATOR
 app.get('/search-Operator', async (req, res) => {
     const { search } = req.query;
-    const status = [];
     try {
-        const sql = `SELECT email, firstName, lastName, premiumUserID FROM premiumUser WHERE userType = 'Transport Operator' AND email LIKE ?`;
-        const query = `%${search}%`; 
-        pool.query(sql, query, (err, usersResult) => {
+        const sql = `SELECT * FROM OperatorDetails WHERE email LIKE ?`;
+        const query = `%${search}%`;
+        pool.query(sql, [query], (err, results) => {
             if (err) {
-                console.error('Error executing SQL query for users:', err);
+                console.error('Error executing query:', err);
                 return res.status(500).send('Internal Server Error');
-            } else {
-                const userIds = usersResult.map(user => user.premiumUserID);
-                if (userIds.length === 0) {
-                    return res.status(200).json({ users: [], status: status });
-                }
-                let invitesProcessed = 0;
-                userIds.forEach(userId => {
-                    const view = `SELECT status FROM InviteView WHERE premiumUserID = ?`;
-                    pool.query(view, [userId], (err, invitesResult) => { 
-                        if(err) {
-                            console.error('Error executing SQL query for invites:', err);
-                        } else {
-                            invitesProcessed++;
-                            if (invitesResult.length > 0) {
-                                status.push(invitesResult[0].status);
-                            }
-                            if (invitesProcessed === userIds.length) {
-                                res.status(200).json({ users: usersResult, status: status });
-                            }
-                        }
-                    });
-                });
             }
+            return res.json(results);
         });
     } catch (error) {
         console.error('Error in search-Operator route:', error);
@@ -291,35 +270,30 @@ app.get('/search-Operator', async (req, res) => {
     }
 });
 app.post('/send-Invite', async (req, res) => { 
-    const { ownerID, premiumUserID } = req.body;
-    getOwnerOperatorID(premiumUserID, 'Transport Operator', (exists, temp) => {
-        if(exists) {
-            isInviteExists(ownerID, temp, (exists, ID) =>{ 
-                if(!exists) {
-                    const sql = `INSERT INTO invites (ownerID, operatorID, status) VALUES (?, ?, ?)`;
-                        console.log('OpIDINSIDE', temp);
-                        pool.query(sql, [ownerID, temp, "Pending"], (err, result) => {
-                        if (err) {
-                            console.error('Error sending invite', err);
-                            res.status(400).json({ status: 1 }); 
-                        } else {
-                            console.log('Invite sent successfully');
-                            res.status(200).json({ status: 2 }); 
-                        }
-                    });
-                } else {
+    const { ownerID, operatorID } = req.body;
+        isInviteExists(ownerID, operatorID, (exists, ID) =>{ 
+            if(!exists) {
+                const sql = `INSERT INTO invites (ownerID, operatorID, status) VALUES (?, ?, ?)`;
+                console.log('OpIDINSIDE', operatorID);
+                pool.query(sql, [ownerID, operatorID, "Pending"], (err, result) => {
+                    if (err) {
+                        console.error('Error sending invite', err);
+                        res.status(400).json({ status: 1 }); 
+                    } else {
+                        console.log('Invite sent successfully');
+                        res.status(200).json({ status: 2 }); 
+                    }
+                });
+            } else {
                     res.status(200).json({ status: 3})
-                }
-            });
-        }
-            
-    }); 
+            }
+        });         
 });
 
-app.post('/display-Invites', async (req, res) => { 
-    const { ownerID } = req.body;
-    const sql = `SELECT * FROM InviteView WHERE ownerID = ?`;
-    pool.query(sql, [ownerID], (err, result) => {
+app.post('/sent-Invites', async (req, res) => { 
+    const { premiumUserID } = req.body;
+    const sql = `SELECT * FROM operatorInviteDetails WHERE ownerPremiumUserID = ?`;
+    pool.query(sql, [premiumUserID], (err, result) => {
         if (err) {
             console.error('Error:', err);
             res.status(400).json({ error: 'Failed to retrieve invites' }); 
@@ -330,12 +304,60 @@ app.post('/display-Invites', async (req, res) => {
     });     
 });
 
-app.post('/tester', async (req, res) => {
-    const {id, usertype} = req.body;
-
-    getOwnerOperatorID(id, usertype, (exists, operatorID) =>{
-        res.status(200).json(operatorID)
+app.post('/received-Invites', async (req, res) => { 
+    const { premiumUserID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'operator', (exists, operatorID) => { 
+        if(exists) {
+            const sql = `SELECT * FROM operatorInviteDetails WHERE operatorID = ?`;
+            pool.query(sql, [operatorID], (err, result) => {
+                if (err) {
+                    console.error('Error:', err);
+                    res.status(400).json({ error: 'Failed to retrieve invites' }); 
+                } else {
+                    console.log('Invites retrieved successfully');   
+                    res.status(200).json({ result }); 
+                }
+            });
+        }
     })
+});
+
+app.put('/accept-Invites', async (req, res) => { 
+    const { ownerID, premiumUserID } = req.body;
+    const sql = `UPDATE operator SET ownerID = ? WHERE premiumUserID = ? `;
+    pool.query(sql, [ownerID, premiumUserID], (err, result) => {
+        if (err) {
+            console.error('Error Accepting Invitation:', err);
+            res.status(400).json({ status: 'Fail' }); 
+        } else {
+            getOwnerOperatorID(premiumUserID, 'operator', (exists, operatorID) => { 
+                if(exists) {
+                    const sql2 = `UPDATE invites SET status = ? WHERE operatorID = ?`;
+                    pool.query(sql2, ['Accepted', operatorID], (err, result) => {
+                        if (err) {
+                            console.log('Err',err);
+                            res.status(400).json({ status: 'Fail Updating Invites to Accepted' }); 
+                        }
+                        else res.status(200).json({ status: 'Success'});
+                    })
+                }
+            })
+        }
+    })
+});
+
+app.post('/tester', async (req, res) => {
+    const { operatorID } = req.body;
+    const sql = `SELECT * FROM OperatorInviteView WHERE operatorID = ?`;
+    pool.query(sql, [operatorID], (err, result) => {
+        if (err) {
+            console.error('Error:', err);
+            res.status(400).json({ error: 'Failed to retrieve invites' }); 
+        } else {
+            console.log('Invites retrieved successfully');   
+            res.status(200).json({ result }); 
+        }
+    });   
 });
 //END
 
