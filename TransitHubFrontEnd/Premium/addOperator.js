@@ -17,7 +17,7 @@ export default function AddOperator() {
       return;
     }
     try {
-      const response = await fetch(`http://192.168.1.8:8080/search-Operator?search=${search}`, {
+      const response = await fetch(`http://192.168.1.3:8080/search-Operator?search=${search}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -43,7 +43,7 @@ export default function AddOperator() {
   };
 
   const sendInvite = async(premiumUserID) => {
-    fetch(`http://192.168.1.8:8080/send-Invite`, {
+    fetch(`http://192.168.1.3:8080/send-Invite`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -70,7 +70,7 @@ export default function AddOperator() {
           });
   };
   useEffect(() => {
-    fetch(`http://192.168.1.8:8080/display-Invites`, {
+    fetch(`http://192.168.1.3:8080/display-Invites`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

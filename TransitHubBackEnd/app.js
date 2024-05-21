@@ -10,10 +10,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-let storedOTP = "123456";
-// let storedEmail;
-// let storedOTP;
-let storedEmail = "nimehellokitty@gmail.com";
+//let storedOTP = "123456";
+ let storedEmail;
+ let storedOTP;
+//let storedEmail = "nimehellokitty@gmail.com";
 
 // AUTHENTICATIONS
 app.post('/send-OTP', async (req, res) => { 

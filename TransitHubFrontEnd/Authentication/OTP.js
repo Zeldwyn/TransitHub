@@ -12,7 +12,7 @@ export default function OTP(){
     const [otp, setOtp] = useState('');
     const handleSubmit = async() => {
         console.log(otp);
-        fetch('http://192.168.1.4:8080/verify-OTP', {
+        fetch('http://192.168.1.3:8080/verify-OTP', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -38,7 +38,7 @@ export default function OTP(){
           });
     }
     const handleResendOTP = async() => {
-        fetch('http://192.168.1.4:8080/resend-OTP', {
+        fetch('http://192.168.1.3:8080/resend-OTP', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
