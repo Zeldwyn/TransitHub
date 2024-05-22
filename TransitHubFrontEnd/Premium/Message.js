@@ -5,7 +5,7 @@ export default function Message ()  {
   const [persons, setPersons] = useState([
     { id: '1', name: 'Tawin', lastMessage: 'Hello!', lastMessageTime: '2024-05-14 12:30' },
     { id: '2', name: 'Jing', lastMessage: 'How are you?', lastMessageTime: '2024-05-13 14:15' },
-    { id: '3', name: 'Delx', lastMessage: 'Let’s meet up.', lastMessageTime: '2024-05-12 16:45' },
+    { id: '3', name: 'Del', lastMessage: 'Let’s meet up.', lastMessageTime: '2024-05-12 16:45' },
     { id: '4', name: 'Nime', lastMessage: 'Eyyyy!', lastMessageTime: '2024-05-12 16:45' },
   ]);
 

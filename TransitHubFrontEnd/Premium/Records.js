@@ -6,7 +6,7 @@ export default function Records() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://192.168.1.11:8080/display-Transaction', {
+    fetch('http://192.168.1.3:8080/display-Transaction', {
       method: 'POST',
       headers: {
         Accept: 'application/json',

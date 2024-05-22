@@ -12,13 +12,13 @@ export default function Settings(){
     const [email, setEmail] = useState('');
     const [validate, setValidate] = useState(''); 
     // e uncomment ang asyncstorage if legit na transaction then e comment ang gi initialize nga storedEmail for testing
-    // const storedEmail = AsyncStorage.getItem('email');
-    const storedEmail = "nimeoperator143@gmail.com";
+    const storedEmail = AsyncStorage.getItem('email');
+    //const storedEmail = "nimeoperator143@gmail.com";
     const toggleShowPassword = () => {
       setShowPassword(!showPassword);
     };
     useEffect(() => {
-      fetch(`http://192.168.1.8:8080/user-Details`, {
+      fetch(`http://192.168.1.3:8080/user-Details`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -50,7 +50,7 @@ export default function Settings(){
         handleChange();
     };
     const handleChange = async() => {
-        fetch(`http://192.168.1.8:8080/update-UserDetails`, {
+        fetch(`http://192.168.1.5:8080/update-UserDetails`, {
         method: 'PUT',
         headers: {
           Accept: 'application/json',

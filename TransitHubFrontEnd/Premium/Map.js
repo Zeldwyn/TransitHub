@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, Text, Button, Image, Dimensions, Animated, TouchableOpacity, Modal, TextInput } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
 export default function Map() {
@@ -15,22 +16,38 @@ export default function Map() {
   const [endLocationName, setEndLocationName] = useState('Select an ending waypoint');
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showNextPage, setShowNextPage] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [packageWidth, setPackageWidth] = useState('');
+  const [packageHeight, setPackageHeight] = useState('');
   const [packageWeight, setPackageWeight] = useState('');
+  const [packageWidthUnit, setPackageWidthUnit] = useState('inches');
+  const [packageHeightUnit, setPackageHeightUnit] = useState('inches');
+  const [packageWeightUnit, setPackageWeightUnit] = useState('Kg');
   const [first2KmRate, setFirst2KmRate] = useState('');
   const [succeedingKmRate, setSucceedingKmRate] = useState('');
+  const [isConfirmDisabled, setIsConfirmDisabled] = useState(true);
 
   useEffect(() => {
     const toValue = isInputAreaExpanded
-      ? (showNextPage ? Dimensions.get('window').height - 340 : Dimensions.get('window').height - 420)
+      ? (currentPage === 1 || currentPage === 4
+        ? Dimensions.get('window').height - 420
+        : currentPage === 2
+          ? Dimensions.get('window').height - 320
+          : currentPage === 3
+            ? Dimensions.get('window').height - 470
+            : 100)
       : 100;
-
+  
     Animated.timing(inputAreaHeight, {
       toValue,
       duration: 150,
       useNativeDriver: false,
     }).start();
-  }, [isInputAreaExpanded, showNextPage]);
+  }, [isInputAreaExpanded, currentPage]);
+
+  useEffect(() => {
+    checkInputsFilled();
+  }, [startLocationName, endLocationName, packageWidth, packageHeight, packageWeight, first2KmRate, succeedingKmRate, currentPage]);
 
   const toggleInputArea = () => {
     setIsInputAreaExpanded(!isInputAreaExpanded);
@@ -85,9 +102,136 @@ export default function Map() {
       const response = await axios.get(url);
       const routeCoordinates = response.data.features[0].geometry.coordinates.map(coord => ({ latitude: coord[1], longitude: coord[0] }));
       setCoordinates(routeCoordinates);
-      setShowNextPage(true);
+      setCurrentPage(2);
     } catch (error) {
       console.error('Error fetching route:', error);
+    }
+  };
+
+  const checkInputsFilled = () => {
+    if (currentPage === 1) {
+      setIsConfirmDisabled(!startLocationName || !endLocationName);
+    } else if (currentPage === 2) {
+      setIsConfirmDisabled(!packageWidth || !packageHeight || !packageWeight);
+    } else if (currentPage === 3) {
+      setIsConfirmDisabled(!first2KmRate || !succeedingKmRate);
+    } else {
+      setIsConfirmDisabled(false);
+    }
+  };
+
+  const renderPageContent = () => {
+    switch (currentPage) {
+      case 1:
+        return (
+          <>
+            <Text style={styles.label}>Start:</Text>
+            <View style={styles.row}>
+              <Text style={styles.locationText}>{startLocationName}</Text>
+              <Button title="Set" onPress={() => setIsSelectingStart(true)} color="#8a252c"/>
+            </View>
+            <Text style={styles.label}>End:</Text>
+            <View style={styles.row}>
+              <Text style={styles.locationText}>{endLocationName}</Text>
+              <Button title="Set" onPress={() => setIsSelectingEnd(true)} color="#8a252c" />
+            </View>
+            <Button title="Confirm" onPress={getRoute} color="#8a252c" disabled={isConfirmDisabled} />
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <Text style={styles.pageText}>Package Width:</Text>
+            <View style={styles.row}>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={packageWidth}
+                onChangeText={setPackageWidth}
+              />
+              <Picker
+                selectedValue={packageWidthUnit}
+                style={{ height: 50, width: 103 }}
+                onValueChange={(widthunit) => setPackageWidthUnit(widthunit)}
+              >
+                <Picker.Item label="In" value="inch" />
+                <Picker.Item label="Cm" value="centimeter" />
+              </Picker>
+            </View>
+            <Text style={styles.pageText}>Package height:</Text>
+            <View style={styles.row}>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={packageHeight}
+                onChangeText={setPackageHeight}
+              />
+              <Picker
+                selectedValue={packageHeightUnit}
+                style={{ height: 50, width: 103 }}
+                onValueChange={(heightunit) => setPackageHeightUnit(heightunit)}
+              >
+                <Picker.Item label="In" value="inch" />
+                <Picker.Item label="cm" value="centimeter" />
+              </Picker>
+            </View>
+            <Text style={styles.pageText}>Package Weight:</Text>
+            <View style={styles.row}>
+              <TextInput
+                style={styles.inputBox}
+                keyboardType="numeric"
+                value={packageWeight}
+                onChangeText={setPackageWeight}
+              />
+              <Picker
+                selectedValue={packageWeightUnit}
+                style={{ height: 50, width: 103 }}
+                onValueChange={(weightunit) => setPackageWeightUnit(weightunit)}
+              >
+                <Picker.Item label="Kg" value="kilogram" />
+                <Picker.Item label="Lb" value="pound" />
+              </Picker>
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button title="Previous" onPress={() => setCurrentPage(1)} color="#8a252c" />
+              <Button title="Confirm" onPress={() => setCurrentPage(3)} color="#8a252c" disabled={isConfirmDisabled} />
+            </View>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <Text>First 2Km:</Text>
+            <TextInput
+              style={styles.inputBox}
+              keyboardType="numeric"
+              value={first2KmRate}
+              onChangeText={setFirst2KmRate}
+            />
+            <Text>Succeeding Km:</Text>
+            <TextInput
+              style={styles.inputBox}
+              keyboardType="numeric"
+              value={succeedingKmRate}
+              onChangeText={setSucceedingKmRate}
+            />
+            <View style={styles.buttonContainer}>
+              <Button title="Previous" onPress={() => setCurrentPage(2)} color="#8a252c" />
+              <Button title="Confirm" onPress={() => setCurrentPage(4)} color="#8a252c" disabled={isConfirmDisabled} />
+            </View>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            <Text>Duration:</Text>
+            <Text>Distance:</Text>
+            <Text>Total Fee:</Text>
+            <Button title="Previous" onPress={() => setCurrentPage(3)} color="#8a252c" />
+          </>
+        );
+      default:
+        return null;
     }
   };
 
@@ -102,7 +246,6 @@ export default function Map() {
           longitudeDelta: 0.0421,
         }}
         onPress={handleMapPress}
-        //customMapStyle={customMapStyle}
       >
         {startingLocation && (
           <Marker coordinate={startingLocation} pinColor="blue" />
@@ -128,51 +271,7 @@ export default function Map() {
             }}
             source={require('../assets/img/blackText.png')}
           />
-          {!showNextPage && (
-            <>
-              <Text style={styles.label}>Start:</Text>
-              <View style={styles.row}>
-                <Text style={styles.locationText}>{startLocationName}</Text>
-                <Button title="Set" onPress={() => setIsSelectingStart(true)} color="#8a252c"/>
-              </View>
-              <Text style={styles.label}>End:</Text>
-              <View style={styles.row}>
-                <Text style={styles.locationText}>{endLocationName}</Text>
-                <Button title="Set" onPress={() => setIsSelectingEnd(true)} color="#8a252c" />
-              </View>
-            </>
-          )}
-          {!showNextPage && <Button title="Confirm" onPress={getRoute} color="#8a252c" />}
-          {showNextPage && (
-            <>
-              <Text style={styles.pageText}>Weight of package(Kg):</Text>
-              <TextInput
-                style={styles.inputBox}
-                keyboardType="numeric"
-                value={packageWeight}
-                onChangeText={setPackageWeight}
-              />
-              <Text style={styles.boldText}>Rate</Text>
-              <Text>First 2Km:</Text>
-              <TextInput
-                style={styles.inputBox}
-                keyboardType="numeric"
-                value={first2KmRate}
-                onChangeText={setFirst2KmRate}
-              />
-              <Text>Succeeding Km:</Text>
-              <TextInput
-                style={styles.inputBox}
-                keyboardType="numeric"
-                value={succeedingKmRate}
-                onChangeText={setSucceedingKmRate}
-              />
-              <View style={styles.buttonContainer}>
-                <Button title="Back" onPress={() => setShowNextPage(false)} color="#8a252c" />
-                <Button title="Confirm" onPress={() => console.log("Confirm")} color="#8a252c" />
-              </View>
-            </>
-          )}
+          {renderPageContent()}
         </TouchableOpacity>
       </Animated.View>
       <Modal
@@ -222,8 +321,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   row: {
-    flexDirection:
-      'row',
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
@@ -244,10 +342,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputBox: {
+    width: "70%",
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     marginBottom: 10,
+    height: 40,
   },
   boldText: {
     fontWeight: 'bold',
@@ -278,5 +378,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-
 });
