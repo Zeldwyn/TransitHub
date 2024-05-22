@@ -11,7 +11,7 @@ export default function Help() {
 
   const handleFeedbackSubmit = () => {
     console.log(rate,feedback)
-    fetch('http://192.168.1.11:8080/add-Feedback', {
+    fetch('http://192.168.1.8:8080/add-Feedback', {
           method: 'POST',
           headers: {
             Accept: 'application/json',

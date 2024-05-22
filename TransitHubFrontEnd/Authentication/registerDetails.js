@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, KeyboardAvoidingView, ScrollView, SafeAreaView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { CheckPasswordValidity } from './functions';
 import { Feather } from '@expo/vector-icons';
@@ -7,9 +7,6 @@ import { RadioButton } from 'react-native-paper';
 
 export default function RegisterDetails(){
     const navigation = useNavigation();
-
-    const windowWidth = Dimensions.get('window').width;
-    const windowHeight = Dimensions.get('window').height;
 
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -51,147 +48,130 @@ export default function RegisterDetails(){
       setShowPassword(!showPassword);
     };
     return (
-      <View style={styles.container}>
-        <Image
-          style={{
-            ...styles.logo,
-            width: windowWidth * 0.8,
-            height: windowWidth * 0.8,
-          }}
-          source={require('../assets/img/blackText.png')}
-        />
+      <SafeAreaView style={{backgroundColor: '#E3B130', minHeight: '100%'}}>
+        <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'android' ? 'height' : null}>
+          <ScrollView showsVerticalScrollIndicator={false}> 
+          <Image
+            style={{ alignSelf: 'center', width: 350, height: 350, marginTop: -40}}
+            source={require('../assets/img/blackText.png')}
+          />
 
-        <Text style={styles.text}>Input user details</Text>
+          <Text style={{fontSize: 20, alignSelf: 'center', marginBottom: 20, marginTop: -100}}>Input user details</Text>
 
-        <Text style={styles.text2}>First Name</Text>
-        <TextInput
-            style={styles.input}
-            value={firstName}
-            onChangeText={(text) => setFirstName(text)}
-            placeholder="Enter First Name"          
-        />
-
-        <Text style={styles.text2}>Last Name</Text>
-        <TextInput
-            style={styles.input}
-            value={lastName}
-            onChangeText={(text) => setLastName(text)}
-            placeholder="Enter Last Name"
-        />
-
-        <Text style={styles.text2}>Password</Text>
-        <View style={styles.passwordContainer}>
+          <Text style={styles.inputLabel}>First Name</Text>
           <TextInput
-              style={[styles.input, {flex: 1}]}
-              value={password}
-              onChangeText={handlePassword}
-              placeholder="Enter Password"
-              secureTextEntry={!showPassword}
+              style={styles.input}
+              value={firstName}
+              onChangeText={(text) => setFirstName(text)}
+              placeholder="Enter First Name"          
           />
-          <TouchableOpacity onPress={toggleShowPassword} style={styles.eyeIcon}>
-            {showPassword ? <Feather name="eye-off" size={24} color="black" /> : <Feather name="eye" size={24} color="black" />}
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.suggestionsText}>   
-            {suggestions}
-        </Text> 
-        <Text style={styles.text2}>User Type</Text>
-        <View style={styles.radioButtonContainer}>
-          <RadioButton
-            value="operator"
-            status={checked === 'operator' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('operator')}
-          />
-          <Text>Transport Operator</Text>
-        </View>
-        <View style={styles.radioButtonContainer}>
-          <RadioButton
-            value="owner"
-            status={checked === 'owner' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('owner')}
-          />
-          <Text>Business Owner</Text>
-        </View>
 
-        {/* <CustomButton title="Submit" onPress={handleSubmit} /> */}
-        {/* <CustomButton title="Submit" onPress={() => {navigation.navigate('Login'); console.log(checked)}} /> */}
-        <CustomButton title="Submit" onPress={() => { handleSubmit(); console.log(checked);}} />
-      </View>
+          <Text style={styles.inputLabel}>Last Name</Text>
+          <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={(text) => setLastName(text)}
+              placeholder="Enter Last Name"
+          />
+
+          <Text style={styles.inputLabel}>Password</Text>
+          <View>
+            <TextInput
+                style={[styles.input, {flex: 1}]}
+                value={password}
+                onChangeText={handlePassword}
+                placeholder="Enter Password"
+                secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={toggleShowPassword} style={styles.eyeIcon}>
+              {showPassword ? <Feather name="eye-off" size={24} color="black" /> : <Feather name="eye" size={24} color="black" />}
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.suggestion}>   
+              {suggestions}
+          </Text> 
+
+          <Text style={[styles.inputLabel, {marginTop: -15}]}>User Type</Text>
+          <View style={styles.radioButtonContainer}>
+            <RadioButton
+              value="operator"
+              status={checked === 'operator' ? 'checked' : 'unchecked'}
+              onPress={() => setChecked('operator')}
+            />
+            <Text style={{fontSize: 16.5}}>Transport Operator</Text>
+          </View>
+          <View style={styles.radioButtonContainer}>
+            <RadioButton
+              value="owner"
+              status={checked === 'owner' ? 'checked' : 'unchecked'}
+              onPress={() => setChecked('owner')}
+            />
+            <Text style={{fontSize: 16.5}}>Business Owner</Text>
+          </View>
+          {/*Change to handle submit if for working backend*/}
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}> 
+            <Text style={styles.buttonText}>Submit</Text>
+          </TouchableOpacity>
+  
+          </ScrollView>
+        </KeyboardAvoidingView>  
+      </SafeAreaView>
     );
 };
 
-const CustomButton = ({ title, onPress }) => {
-    return (
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>{title}</Text>
-      </TouchableOpacity>
-    );
-  };
-  
 const styles = StyleSheet.create({
-  container: {
-    flex: 1, 
-    backgroundColor: '#E3B130',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    fontSize: 20, 
-    margin: 20,
-    marginTop: -80,
-  },
-  text2: {
-    fontSize: 20, 
-    margin: 10,
-  },
-  button: {
-    backgroundColor: '#8A252C',
-    padding: 10,
-    width: 300,
-    height: 40,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 15,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  logo: {
-    marginTop: -200,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center', 
-    width: 320,  
-  },
-  eyeIcon: {
-    position: 'absolute',
-    top: 20, // Adjust the top position as needed
-    right: 25, // Adjust the right position as needed
-  },
-  input: {
-    height: 40,
-    width: 300,
-    borderRadius: 5,
-    borderColor: 'white',
-    backgroundColor: 'white',
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-    textAlign: 'center',
-    marginBottom: 20
-  },
-  suggestionsText: { 
-    color: 'red', 
-    fontSize: 12,
-  }, 
-  radioButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
+inputLabel: {
+  fontSize: 18,
+  margin: 8,
+  alignSelf: 'center'
+},
+input: {
+  height: 40, 
+  width: 300, 
+  backgroundColor: 'white', 
+  alignSelf: 'center', 
+  borderColor: 'white', 
+  borderRadius: 5, 
+  textAlign: 'center',
+  marginBottom: 20,
+  color: 'black'
+},
+eyeIcon: {
+  position: 'absolute',
+  top: 10,
+  right: 80,
+},
+button: {
+  backgroundColor: 'maroon',
+  borderRadius: 5,
+  width: 300,
+  height: 40,
+  alignItems: 'center',
+  alignSelf: 'center',
+  justifyContent: 'center',
+  marginTop: 20,
+},
+buttonText: {
+  color: '#fff',
+  fontWeight: 'normal',
+  fontSize: 18,
+  textAlign: 'center'
+},
+buttonText: {
+  color: 'white',
+  fontSize: 16,
+},
+suggestion: {
+  color: 'red',
+  fontSize: 12,
+  marginTop: -10,
+  marginBottom: 10,
+},
+radioButtonContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 10,
+},
 });

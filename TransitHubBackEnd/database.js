@@ -96,7 +96,7 @@ pool.getConnection((err, connection) => {
         `,
         `
         CREATE TABLE IF NOT EXISTS feedback (
-            feedbackID INT PRIMARY KEY,
+            feedbackID INT AUTO_INCREMENT PRIMARY KEY,
             feedbackMessage VARCHAR (500) NOT NULL,
             rate INT
         )

@@ -11,7 +11,7 @@ export default function GuestHelp() {
 
   const handleFeedbackSubmit = () => {
     console.log(rate,feedback)
-    fetch('http://192.168.1.11:8080/add-Feedback', {
+    fetch('http://192.168.1.8:8080/add-Feedback', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -96,20 +96,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emoji: {
-        color: 'maroon',
-        flexDirection:'row',
-        justifyContent: 'center',
+    color: 'maroon',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   contentContainer: {
     padding: 10,
     height: 'auto',
     margin: 14,
     marginTop: 170,
-    backgroundColor:'#fff',
+    backgroundColor: '#fff',
     color: 'white',
     borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   text: {
     fontSize: 16,

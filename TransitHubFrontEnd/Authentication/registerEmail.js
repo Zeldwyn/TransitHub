@@ -1,18 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import {Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView } from 'react-native';
 
 export default function RegisterEmail() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [suggestions, setSuggestions] = useState('');
 
-  const windowWidth = Dimensions.get('window').width;
-  const windowHeight = Dimensions.get('window').height;
-
   const handleSubmit = async() => {
     console.log(email);
-    fetch('http://192.168.1.4:8080/send-OTP', {
+    fetch('http://192.168.1.8:8080/send-OTP', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -36,95 +33,77 @@ export default function RegisterEmail() {
       });
   }
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "padding" : "height"}
-      style={styles.container}
-    >
-        <View style={styles.inner}>
-        <Image
-            style={{
-            ...styles.logo,
-            width: windowWidth * 0.8,
-            height: windowWidth * 0.8,
-            }}
+    <SafeAreaView style={{backgroundColor: '#E3B130', minHeight: '100%'}}> 
+      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'android' ? 'height' : null}> 
+        <ScrollView showsVerticalScrollIndicator={false}> 
+          <Image
+            style={{ alignSelf: 'center', width: 350, height: 350, }}
             source={require('../assets/img/blackText.png')}
-        />
-        <Text style={styles.text}>Register using Google Email</Text>
-        <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={(text) => setEmail(text)}
-            placeholder="Enter Email"
-        />
-        <Text style={styles.suggestionsText}>   
-            {suggestions}
-        </Text> 
-        <CustomButton title='Submit' onPress={handleSubmit}/>
-        <CustomButton title='SubmitHATDOG' onPress={() => navigation.navigate('OTP')}/>
-        </View>
-    </KeyboardAvoidingView>
+          />    
+          <Text style={{fontSize: 18, alignSelf: 'center', marginBottom: 20, marginTop: -50}}>Register using Google Email</Text>
+          <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={(text) => setEmail(text)}
+              placeholder="Enter Email"
+          />
+          <Text style={styles.suggestion}>   
+              {suggestions}
+          </Text> 
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <Text style={styles.buttonText}>Submit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{
+            backgroundColor: 'maroon',
+            borderRadius: 5,
+            width: 300,
+            height: 40,
+            alignItems: 'center',
+            alignSelf: 'center',
+            justifyContent: 'center',
+            marginTop: 10,
+          }} onPress={() => navigation.navigate('OTP')} >
+            <Text style={styles.buttonText}>Submit Without Backend</Text>
+          </TouchableOpacity>    
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-const CustomButton = ({ title, onPress }) => {
-  return (
-    <TouchableOpacity style={styles.btn} onPress={onPress}>
-      <Text style={styles.btnTxt}>{title}</Text>
-    </TouchableOpacity>
-  );
-};
+
 
 const styles = StyleSheet.create({
-    container: {
-    flex: 1,
-    backgroundColor: '#E3B130',
-    },
-    inner: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 10,
-    },
-    logo: {
-        marginTop: -250,
-        marginBottom: 30,
-    },
-    text: {
-        fontSize: 20,
-        marginTop: -100,
-        marginBottom: 20,
-    },
-    input: {
-        height: 40,
-        width: 350,
-        borderRadius: 5,
-        borderColor: 'white',
-        backgroundColor: 'white',
-        margin: 12,
-        borderWidth: 1,
-        padding: 10,
-        textAlign: 'center',
-        marginBottom: 20
-    },
-    btn: {
-        backgroundColor: '#8A252C',
-        padding: 10,
-        width: 350,
-        height: 40,
-        borderRadius: 5,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 15,
-    },
-    btnTxt: {
-        color: 'white',
-        fontSize: 16,
-    },
-    suggestionsText: { 
-      color: 'red', 
-      fontSize: 12,
-      marginTop: -10,
-      marginBottom: 5,
-    }, 
+input: {
+  height: 40, 
+  width: 300, 
+  backgroundColor: 'white', 
+  alignSelf: 'center', 
+  borderColor: 'white', 
+  borderRadius: 5, 
+  textAlign: 'center'
+},
+suggestion: {
+  color: 'red',
+  fontSize: 12,
+  marginTop: -10,
+  marginBottom: 10, 
+},
+button: {
+  backgroundColor: 'maroon',
+  borderRadius: 5,
+  width: 300,
+  height: 40,
+  alignItems: 'center',
+  alignSelf: 'center',
+  justifyContent: 'center',
+  marginTop: 90,
+},
+buttonText: {
+  color: '#fff',
+  fontWeight: 'normal',
+  fontSize: 18,
+  textAlign: 'center'
+},
 });
 
 
