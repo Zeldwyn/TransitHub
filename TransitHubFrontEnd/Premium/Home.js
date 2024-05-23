@@ -28,7 +28,7 @@ export default function Home(){
     }, []);
 
     useEffect(() => {
-        fetch(`http://192.168.1.8:8080/received-Invites`, {
+        fetch(`http://192.168.1.6:8080/received-Invites`, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -52,7 +52,7 @@ export default function Home(){
         Alert.alert(
         "Confirmation","Are you sure you want to accept?",
         [{text: "Cancel", style: 'destructive'}, {text: "Accept", onPress: () => {
-            fetch(`http://192.168.1.8:8080/accept-Invites`, {
+            fetch(`http://192.168.1.6:8080/accept-Invites`, {
                 method: 'PUT',
                 headers: {
                 Accept: 'application/json',

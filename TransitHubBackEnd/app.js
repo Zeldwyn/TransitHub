@@ -31,8 +31,8 @@ app.post('/send-OTP', async (req, res) => {
                 console.log('Email is available');
                 storedEmail = email;
                 try {
-                    // storedOTP = generateOTP();
-                    storedOTP = '123456';
+                    storedOTP = generateOTP();
+                    //storedOTP = '123456';
                     sendOTP({ email, otp: storedOTP}); 
                     res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
                 } catch (error) {

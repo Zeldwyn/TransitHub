@@ -17,7 +17,7 @@ export default function RegisterDetails(){
 
     const handleSubmit = async() => {
         console.log(firstName, lastName, password);
-        fetch('http://192.168.1.8:8080/add-PremiumUser', {
+        fetch('http://192.168.1.6:8080/add-PremiumUser', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -110,7 +110,9 @@ export default function RegisterDetails(){
             <Text style={{fontSize: 16.5}}>Business Owner</Text>
           </View>
           {/*Change to handle submit if for working backend*/}
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}> 
+          
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}> 
+          {/*<TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}> */}
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
   

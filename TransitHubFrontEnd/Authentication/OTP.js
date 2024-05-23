@@ -10,7 +10,7 @@ export default function OTP(){
     const [otp, setOtp] = useState('');
     const handleSubmit = async() => {
         console.log(otp);
-        fetch('http://192.168.1.8:8080/verify-OTP', {
+        fetch('http://192.168.1.6:8080/verify-OTP', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -36,7 +36,7 @@ export default function OTP(){
           });
     }
     const handleResendOTP = async() => {
-        fetch('http://192.168.1.8:8080/resend-OTP', {
+        fetch('http://192.168.1.6:8080/resend-OTP', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -72,7 +72,7 @@ export default function OTP(){
             <Text style={{alignSelf: 'center', fontSize: 15, marginTop: 30}}>Resend OTP</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.button} >
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.button,{marginTop: 10}]} onPress={() => navigation.navigate('RegisterDetails')}>

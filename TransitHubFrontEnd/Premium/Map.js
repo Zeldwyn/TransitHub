@@ -25,7 +25,11 @@ export default function Map() {
   const [packageWeightUnit, setPackageWeightUnit] = useState('Kg');
   const [first2KmRate, setFirst2KmRate] = useState('');
   const [succeedingKmRate, setSucceedingKmRate] = useState('');
+  const [fuelSurcharge, setFuelSurcharge] = useState('');
   const [isConfirmDisabled, setIsConfirmDisabled] = useState(true);
+  const [duration, setDuration] = useState('');
+  const [distance, setDistance] = useState('');
+  const [totalFee, setTotalFee] = useState('');
 
   useEffect(() => {
     const toValue = isInputAreaExpanded
@@ -34,7 +38,7 @@ export default function Map() {
         : currentPage === 2
           ? Dimensions.get('window').height - 320
           : currentPage === 3
-            ? Dimensions.get('window').height - 470
+            ? Dimensions.get('window').height - 400
             : 100)
       : 100;
   
@@ -47,7 +51,8 @@ export default function Map() {
 
   useEffect(() => {
     checkInputsFilled();
-  }, [startLocationName, endLocationName, packageWidth, packageHeight, packageWeight, first2KmRate, succeedingKmRate, currentPage]);
+    calculateTotalFee();
+  }, [startLocationName, endLocationName, packageWidth, packageHeight, packageWeight, first2KmRate, succeedingKmRate, fuelSurcharge, currentPage])
 
   const toggleInputArea = () => {
     setIsInputAreaExpanded(!isInputAreaExpanded);
@@ -65,6 +70,7 @@ export default function Map() {
       setIsSelectingEnd(false);
     }
   };
+  
 
   const reverseGeocode = async (latitude, longitude) => {
     try {
@@ -100,12 +106,69 @@ export default function Map() {
       const url = `https://api.openrouteservice.org/v2/directions/${profile}?api_key=${apiKey}&start=${start}&end=${end}`;
 
       const response = await axios.get(url);
+      const route = response.data.features[0].properties.segments[0];
       const routeCoordinates = response.data.features[0].geometry.coordinates.map(coord => ({ latitude: coord[1], longitude: coord[0] }));
       setCoordinates(routeCoordinates);
+      setDuration(route.duration);
+      setDistance(route.distance / 1000); 
+
+      calculateTotalFee(route.distance / 1000); 
       setCurrentPage(2);
     } catch (error) {
       console.error('Error fetching route:', error);
     }
+  };
+
+  const calculateTotalFee = () => {
+    try {
+      const first2KmFee = parseFloat(first2KmRate);
+      const succeedingKmFee = parseFloat(succeedingKmRate);
+      const fuelSurchargeFee = parseFloat(fuelSurcharge);
+  
+      let fee = 0;
+  
+      const convertedWidth = convertDimensionToInches(packageWidth, packageWidthUnit);
+      const convertedHeight = convertDimensionToInches(packageHeight, packageHeightUnit);
+      const convertedWeight = convertWeightToKg(packageWeight, packageWeightUnit);
+  
+      if (distance <= 2) {
+        fee = first2KmFee;
+      } else {
+        fee = first2KmFee + (distance - 2) * succeedingKmFee;
+      }
+  
+      fee += fuelSurchargeFee;
+      fee += calculatePackageFee(convertedWidth, convertedHeight, convertedWeight);
+  
+      setTotalFee(fee.toFixed(2));
+    } catch (error) {
+      console.error('Error calculating total fee:', error);
+    }
+  };
+  
+  
+  const convertDimensionToInches = (value, unit) => {
+    switch (unit) {
+      case 'centimeter':
+        return value / 2.54;
+      default:
+        return value; 
+    }
+  };
+  
+  const convertWeightToKg = (value, unit) => {
+    switch (unit) {
+      case 'pound':
+        return value / 2.20462; 
+      default:
+        return value; 
+    }
+  };
+  
+  const calculatePackageFee = (width, height, weight) => {
+    const volume = width * height * weight; 
+    const feePerCubicUnit = 0.1; 
+    return volume * feePerCubicUnit; 
   };
 
   const checkInputsFilled = () => {
@@ -114,7 +177,7 @@ export default function Map() {
     } else if (currentPage === 2) {
       setIsConfirmDisabled(!packageWidth || !packageHeight || !packageWeight);
     } else if (currentPage === 3) {
-      setIsConfirmDisabled(!first2KmRate || !succeedingKmRate);
+      setIsConfirmDisabled(!first2KmRate || !succeedingKmRate || !fuelSurcharge);
     } else {
       setIsConfirmDisabled(false);
     }
@@ -201,6 +264,13 @@ export default function Map() {
       case 3:
         return (
           <>
+            <Text>Fuel Surcharge:</Text>
+            <TextInput
+              style={styles.inputBox}
+              keyboardType="numeric"
+              value={fuelSurcharge}
+              onChangeText={setFuelSurcharge}
+            />
             <Text>First 2Km:</Text>
             <TextInput
               style={styles.inputBox}
@@ -224,9 +294,9 @@ export default function Map() {
       case 4:
         return (
           <>
-            <Text>Duration:</Text>
-            <Text>Distance:</Text>
-            <Text>Total Fee:</Text>
+            <Text>Duration: {duration ? `${(duration / 60).toFixed(2)} minutes` : ''}</Text>
+            <Text>Distance: {distance ? `${distance.toFixed(2)} km` : ''}</Text>
+            <Text>Total Fee: {totalFee ? `₱${totalFee}` : ''}</Text>
             <Button title="Previous" onPress={() => setCurrentPage(3)} color="#8a252c" />
           </>
         );

@@ -13,7 +13,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async () => {
-    fetch('http://192.168.1.8:8080/validate-Login', {
+    fetch('http://192.168.1.6:8080/validate-Login', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -79,7 +79,7 @@ export default function Login() {
           </TouchableOpacity>
         </View>
         <Text style={styles.suggestion}>{validate}</Text>
-          <TouchableOpacity style={styles.button} >
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OwnerDrawer'); AsyncStorage.setItem('userType', "owner"); }}>

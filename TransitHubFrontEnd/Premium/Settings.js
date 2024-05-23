@@ -18,7 +18,7 @@ export default function Settings(){
       setShowPassword(!showPassword);
     };
     useEffect(() => {
-      fetch(`http://192.168.1.3:8080/user-Details`, {
+      fetch(`http://192.168.1.6:8080/user-Details`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -50,7 +50,7 @@ export default function Settings(){
         handleChange();
     };
     const handleChange = async() => {
-        fetch(`http://192.168.1.5:8080/update-UserDetails`, {
+        fetch(`http://192.168.1.6:8080/update-UserDetails`, {
         method: 'PUT',
         headers: {
           Accept: 'application/json',
