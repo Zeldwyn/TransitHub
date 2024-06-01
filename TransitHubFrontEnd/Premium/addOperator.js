@@ -27,7 +27,7 @@ export default function AddOperator() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        'premiumUserID': pID,
+        'premiumUserID': parseInt(pID),
       })
     })
     .then(response => response.json())
@@ -37,7 +37,7 @@ export default function AddOperator() {
       .catch(error => {
         console.error('Error posting data to Express backend:', error);
       })
-  });
+  }, [pID]);
 
   const handleSubmit = async () => {
     console.log('Search:', search);
@@ -82,7 +82,7 @@ export default function AddOperator() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          'ownerID': 1,
+          'premiumUserID': parseInt(pID),
           'operatorID': operatorID,
         }),
     })

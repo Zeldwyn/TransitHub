@@ -6,14 +6,14 @@ export default function GuestRecords() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://192.168.1.11:8080/display-Transaction', {
+    fetch('http://192.168.1.6:8080/display-Transaction', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        deviceID: '88b61495-b1a5-453b-8179-44adb108f977',
+        deviceID: '3f085dc1-af7e-4d59-9a80-9221e4091843',
       }),
     })
       .then((response) => response.json())

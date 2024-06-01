@@ -1,19 +1,24 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, } from 'react-native';
 
 export default function Records() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
-
+  const [deviceID, setDeviceID] = useState('');
+  AsyncStorage.getItem('deviceID')
+      .then((storedDeviceID) => {
+        setDeviceID(storedDeviceID);
+  })
   useEffect(() => {
-    fetch('http://192.168.1.3:8080/display-Transaction', {
+    fetch('http://192.168.1.6:8080/display-Transaction', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        deviceID: '88b61495-b1a5-453b-8179-44adb108f977',
+        deviceID: '3f085dc1-af7e-4d59-9a80-9221e4091843',
       }),
     })
       .then((response) => response.json())
@@ -28,7 +33,7 @@ export default function Records() {
         setError('Failed to fetch transaction data');
         console.error('Error:', error);
       });
-  }, []);
+  }, [deviceID]);
 
   return (
     <ScrollView style={styles.container}>

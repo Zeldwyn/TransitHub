@@ -11,6 +11,7 @@ import Message from './Message';
 import Settings from './Settings';
 import Help from './help';
 import Records from './Records';
+import MessageOperator from './MessageOperator';
 
 
 
@@ -49,7 +50,7 @@ export default function OperatorDrawer(){
         options={{title: 'Home',drawerIcon: ({focused, size},) => (
         <Ionicons name="home-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
-      <Drawer.Screen name="Message" component={Message} 
+      <Drawer.Screen name="Message" component={MessageOperator} 
         options={{title: 'Message',drawerIcon: ({focused, size}) => (
         <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />

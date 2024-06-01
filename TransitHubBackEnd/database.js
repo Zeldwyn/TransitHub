@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: '1234',
     database: 'transithub'
 });
 
@@ -87,15 +87,20 @@ pool.getConnection((err, connection) => {
         `,
         `
         CREATE TABLE IF NOT EXISTS message (
-            conversationID INT PRIMARY KEY,
+            messageID INT AUTO_INCREMENT PRIMARY KEY,
+            conversationID INT,
             ownerID INT,
             operatorID INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (conversationID) REFERENCES conversation(conversationID)
-        )
+            userType VARCHAR(10),
+            text VARCHAR(255),
+            created_at TIMESTAMP,
+            FOREIGN KEY (conversationID) REFERENCES conversation(conversationID),
+            FOREIGN KEY (ownerID) REFERENCES owner(ownerID) ON DELETE CASCADE,
+            FOREIGN KEY (operatorID) REFERENCES operator(operatorID) ON DELETE CASCADE
+        )     
         `,
         `
-        CREATE TABLE IF NOT EXISTS feedback (
+        CREATE TABLE IF NOT EXISTS feedback (   
             feedbackID INT AUTO_INCREMENT PRIMARY KEY,
             feedbackMessage VARCHAR (500) NOT NULL,
             rate INT
@@ -114,7 +119,7 @@ pool.getConnection((err, connection) => {
         JOIN operator o ON p.premiumUserID = o.premiumUserID
         JOIN invites i ON o.operatorID = i.operatorID  
         JOIN owner ow ON i.ownerID = ow.ownerID;
-        `
+        `,
     ];    
     
     pool.getConnection((err, connection) => {
