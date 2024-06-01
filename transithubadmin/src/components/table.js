@@ -131,14 +131,6 @@ export default function Table() {
             </table>
             <div style={{ marginTop: "20px", textAlign: "center" }}>
                 <button
-                    disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    style={styles.paginationButton}
-                >
-                    Previous
-                </button>
-                <span style={{ margin: "0 10px" }}>{currentPage}</span>
-                <button
                     disabled={currentRows.length < rowsPerPage}
                     onClick={() => handlePageChange(currentPage - 1)}
                     style={styles.paginationButton}
