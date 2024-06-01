@@ -90,7 +90,27 @@ export default function Map() {
     }
   };
 
-  const getRoute = async () => {
+  const getDynamicBuffer = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    const morningRushHourBuffer = 45 * 60; // 45 minutes
+    const eveningRushHourBuffer = 45 * 60; // 45 minutes
+    const daytimeBuffer = 20 * 60; // 20 minutes
+    const nightTimeBuffer = 10 * 60; // 10 minutes
+  
+    if (currentHour >= 7 && currentHour < 10) {
+      return morningRushHourBuffer;
+    } else if (currentHour >= 16 && currentHour < 19) {
+      return eveningRushHourBuffer;
+    } else if (currentHour >= 10 && currentHour < 16) {
+      return daytimeBuffer;
+    } else {
+      return nightTimeBuffer;
+    }
+  };
+  
+    const getRoute = async () => {
     try {
       if (!startingLocation || !endingLocation) {
         setErrorMessage('Please select both starting and ending locations');
@@ -109,15 +129,22 @@ export default function Map() {
       const route = response.data.features[0].properties.segments[0];
       const routeCoordinates = response.data.features[0].geometry.coordinates.map(coord => ({ latitude: coord[1], longitude: coord[0] }));
       setCoordinates(routeCoordinates);
-      setDuration(route.duration);
-      setDistance(route.distance / 1000); 
 
-      calculateTotalFee(route.distance / 1000); 
+      const dynamicBuffer = getDynamicBuffer();
+      const adjustedDuration = route.duration + dynamicBuffer;
+
+      setDuration(adjustedDuration);
+      setDistance(route.distance / 1000); // Distance in kilometers
+
+      calculateTotalFee(route.distance / 1000);
       setCurrentPage(2);
     } catch (error) {
       console.error('Error fetching route:', error);
     }
   };
+
+  
+  
 
   const calculateTotalFee = () => {
     try {
