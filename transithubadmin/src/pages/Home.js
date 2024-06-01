@@ -52,15 +52,16 @@ const styles = {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "row",
-        alignItems: "flex-start",
+        alignItems: "center",
+        justifyContent: "center",
     },
     container: {
         padding: 30,
         borderRadius: 10,
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        textAlign: "left",
+        alignItems: "center",
+        textAlign: "center",
         fontFamily: "Almarai, sans-serif",
         flex: 1,
         marginLeft: 10,
@@ -70,15 +71,14 @@ const styles = {
         fontSize: 24, 
         fontWeight: "bold", 
         fontFamily: "Almarai, sans-serif",
-        marginTop: 110,
-        marginLeft: -100,
+        marginTop: 20,
     },
     buttonGrid: {
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: "20px",
-        justifyContent: "center", // Align horizontally to the center
-        alignItems: "center", // Align vertically to the center
+        justifyContent: "center",
+        alignItems: "center",
     },
     button: {
         display: "flex",
@@ -87,7 +87,7 @@ const styles = {
         backgroundColor: "#8A252C",
         color: "white",
         borderRadius: "15px",
-        padding: "50px",
+        padding: "50px", // Retain original button size
         fontFamily: "Almarai, sans-serif",
         textAlign: "center",
         marginTop: 30,
