@@ -94,6 +94,31 @@ app.post('/add-PremiumUser', async (req, res) => {
     });
 });
 
+app.post('/validate-AdminLogin', (req, res) => {
+    const { username, password } = req.body;
+    const sql = `SELECT username, password, role, adminUserID FROM adminUser WHERE username = ?`;
+    pool.query(sql, [username], (err, result) => {
+        if (err) {
+            console.error('Server Side Error', err);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        } else {
+            if (result.length > 0) {
+                if (password === result[0].password) {
+                    console.log('Login successful');
+                    res.status(200).json({ isValid: true, role: result[0].role, id: result[0].adminUserID });
+                } else {
+                    console.log('Invalid login credentials');
+                    res.status(400).json({ isValid: false });
+                }
+            } else {
+                console.log('Invalid login credentials');
+                res.status(400).json({ isValid: false });
+            }
+        }
+    });
+});
+
+
 app.post('/validate-Login', async (req, res) => {
     const { email, password } = req.body;
     const sql = `SELECT email, password, userType, premiumUserID FROM premiumUser WHERE email = ? AND password = ?`;

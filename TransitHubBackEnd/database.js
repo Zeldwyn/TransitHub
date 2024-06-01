@@ -114,6 +114,15 @@ pool.getConnection((err, connection) => {
         JOIN operator o ON p.premiumUserID = o.premiumUserID
         JOIN invites i ON o.operatorID = i.operatorID  
         JOIN owner ow ON i.ownerID = ow.ownerID;
+        `,
+        `
+        CREATE TABLE IF NOT EXISTS adminUser (
+            adminUserID INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
         `
     ];    
     
