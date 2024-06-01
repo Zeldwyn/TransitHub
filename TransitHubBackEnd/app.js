@@ -399,6 +399,54 @@ app.post('/tester', async (req, res) => {
         }
     });   
 });
+
+app.get('/premiumUsers', (req, res) => {
+    pool.query('SELECT * FROM premiumUser', (err, results) => {
+        if (err) {
+            console.error('Error fetching premium users:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+app.post('/premiumUsers', (req, res) => {
+    const { firstName, lastName, email } = req.body;
+    pool.query('INSERT INTO premiumUser (firstName, lastName, email) VALUES (?, ?, ?)', [firstName, lastName, email], (err, results) => {
+        if (err) {
+            console.error('Error adding premium user:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(201).json({ message: 'Premium user added successfully' });
+        }
+    });
+});
+
+app.put('/premiumUsers/:id', (req, res) => {
+    const { firstName, lastName, email } = req.body;
+    const userId = req.params.id;
+    pool.query('UPDATE premiumUser SET firstName = ?, lastName = ?, email = ? WHERE id = ?', [firstName, lastName, email, userId], (err, results) => {
+        if (err) {
+            console.error('Error updating premium user:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(200).json({ message: 'Premium user updated successfully' });
+        }
+    });
+});
+
+app.delete('/premiumUsers/:id', (req, res) => {
+    const userId = req.params.id;
+    pool.query('DELETE FROM premiumUser WHERE id = ?', [userId], (err, results) => {
+        if (err) {
+            console.error('Error deleting premium user:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(200).json({ message: 'Premium user deleted successfully' });
+        }
+    });
+});
 //END
 
 
