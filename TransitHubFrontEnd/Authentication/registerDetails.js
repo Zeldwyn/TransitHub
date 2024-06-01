@@ -33,7 +33,6 @@ export default function RegisterDetails(){
           .then(response => response.json())
           .then(data => {
             console.log('Response from Express backend:', data);
-            console.log('yawa');
             navigation.navigate('Login');
           })
           .catch(error => {
@@ -111,8 +110,8 @@ export default function RegisterDetails(){
           </View>
           {/*Change to handle submit if for working backend*/}
           
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}> 
-          {/*<TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}> */}
+          {/* <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}> */}
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
   

@@ -12,6 +12,7 @@ import Message from './Message';
 import Records from './Records';
 import Settings from './Settings';
 import Help from './help';
+import MessageOperator from './MessageOperator';
 
 function Hatdog() {
   const navigation = useNavigation();
