@@ -8,9 +8,35 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [usernameFocused, setUsernameFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-    const handleLogin = () => {
-        navigate('/home');
+    const handleLogin = async () => {
+        if (!username || !password) {
+            setErrorMessage('Please enter both username and password.');
+            return;
+        }
+        try {
+            const response = await fetch('http://192.168.1.5:8080/validate-AdminLogin', { //change ip
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const result = await response.json();
+
+            if (result.isValid) {
+                console.log('Login successful');
+                navigate('/home');
+            } else {
+                console.log('Invalid login credentials');
+                setErrorMessage('Invalid login credentials. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error occurred during login:', error);
+            setErrorMessage('An unexpected error occurred. Please try again later.');
+        }
     };
 
     return (
@@ -38,11 +64,12 @@ export default function Login() {
                     value={password}
                     type="password"
                 />
+                {errorMessage && <p style={styles.error}>{errorMessage}</p>}
                 <button
                     onClick={handleLogin}
                     style={styles.button}
                 >
-                    Submit
+                   Submit
                 </button>
             </div>
         </div>
@@ -65,7 +92,7 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        fontFamily: "Almarai, sans-serif", 
+        fontFamily: "Almarai, sans-serif",
     },
     logoBanner: {
         marginTop: -200,
@@ -84,17 +111,21 @@ const styles = {
         borderRadius: 5,
         border: "1px solid #ccc",
         textAlign: "center",
-        fontFamily: "Almarai, sans-serif", 
+        fontFamily: "Almarai, sans-serif",
     },
     button: {
         marginTop: 10,
-        backgroundColor: "#8A252C", 
+        backgroundColor: "#8A252C",
         color: "#fff",
         borderRadius: 5,
         padding: "10px 20px",
         border: "none",
         cursor: "pointer",
         fontFamily: "Almarai, sans-serif",
-        fontWeight: "bold", 
-    },    
+        fontWeight: "bold",
+    },
+    error: {
+        color: "red",
+        marginBottom: 10,
+    },
 };

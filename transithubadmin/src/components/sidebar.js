@@ -53,7 +53,7 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-      <img src={logo} alt="Logo" style={{ ...styles.logo, marginLeft: expanded ? "230px" : "80px" }} />
+      {/* <img src={logo} alt="Logo" style={styles.logo} /> */}
     </div>
   );
 }
@@ -61,10 +61,13 @@ export default function Sidebar() {
 const styles = {
   container: {
     display: "flex",
+    position: "relative",
     fontFamily: "Almarai, sans-serif",
   },
   sidebarContainer: {
-    flexGrow: 1,
+    position: "fixed",
+    top: 0,
+    bottom: 0,
   },
   sidebar: {
     backgroundColor: "#8A252C",
@@ -72,10 +75,7 @@ const styles = {
     overflowX: "hidden",
     borderTopRightRadius: "10px",
     borderBottomRightRadius: "10px",
-    height: "100%",
-    position: "fixed",
-    top: 0,
-    bottom: 0,
+    height: "100vh", // Set height to 100vh to fill the full page height
     transition: "width 0.1s ease-in-out", 
   },
   toggleButton: {
@@ -115,3 +115,4 @@ const styles = {
     transition: "margin-left 0.1s ease-in-out",
   },
 };
+

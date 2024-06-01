@@ -23,8 +23,8 @@ const styles = {
     },
     container: {
         marginTop: 130,
-        marginLeft: -280, // Add left margin
-        marginRight: 280, // Add right margin
+        //marginLeft: -280, // Add left margin
+       // marginRight: 280, // Add right margin
         borderRadius: 10,
         display: "flex",
         flexDirection: "column",
