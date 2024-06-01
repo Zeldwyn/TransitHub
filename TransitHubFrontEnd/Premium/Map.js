@@ -94,10 +94,10 @@ export default function Map() {
     const now = new Date();
     const currentHour = now.getHours();
 
-    const morningRushHourBuffer = 45 * 60; // 45 minutes
-    const eveningRushHourBuffer = 45 * 60; // 45 minutes
-    const daytimeBuffer = 20 * 60; // 20 minutes
-    const nightTimeBuffer = 10 * 60; // 10 minutes
+    const morningRushHourBuffer = 50 * 60; 
+    const eveningRushHourBuffer = 50 * 60; 
+    const daytimeBuffer = 35 * 60;
+    const nightTimeBuffer = 20 * 60; 
   
     if (currentHour >= 7 && currentHour < 10) {
       return morningRushHourBuffer;
