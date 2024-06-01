@@ -30,7 +30,7 @@ export default function Home() {
 
     useEffect(() => {
         if (!isOwner && userType && pID) {
-            fetch(`http://192.168.1.6:8080/received-Invites`, {
+            fetch(`http://192.168.1.5:8080/received-Invites`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -58,7 +58,7 @@ export default function Home() {
                 { text: "Cancel", style: 'destructive' },
                 {
                     text: "Accept", onPress: () => {
-                        fetch(`http://192.168.1.6:8080/accept-Invites`, {
+                        fetch(`http://192.168.1.5:8080/accept-Invites`, {
                             method: 'PUT',
                             headers: {
                                 Accept: 'application/json',
@@ -107,11 +107,11 @@ export default function Home() {
             />
             <Text style={styles.label}>What are you going to deliver today?</Text>
             <View style={styles.row}>
-                <TouchableOpacity onPress={() => navigation.navigate('Map')}>
+                <TouchableOpacity onPress={() => navigation.navigate('MapPackage')}>
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />
-                <TouchableOpacity onPress={() => navigation.navigate('Map')}>
+                <TouchableOpacity onPress={() => navigation.navigate('MapCustom')}>
                     <Image style={styles.options} source={require('../assets/img/custom.png')} />
                 </TouchableOpacity>
             </View>

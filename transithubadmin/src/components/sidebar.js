@@ -6,7 +6,6 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import { useNavigate } from "react-router-dom";
-import logo from "../img/blackText.png";
 
 export default function Sidebar() {
   const [showLabels, setShowLabels] = useState(false);
@@ -53,7 +52,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-      {/* <img src={logo} alt="Logo" style={styles.logo} /> */}
     </div>
   );
 }
@@ -107,12 +105,6 @@ const styles = {
   menuIcon: {
     fontSize: "24px",
     marginRight: "10px",
-  },
-  logo: {
-    width: "200px", 
-    top: 10,
-    marginTop: -65,
-    transition: "margin-left 0.1s ease-in-out",
   },
 };
 
