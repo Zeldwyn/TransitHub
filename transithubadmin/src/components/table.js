@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import Modal from "./modal";
 
 export default function Table() {
     const [premiumUsers, setPremiumUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
         fetchPremiumUsers();
@@ -21,23 +24,25 @@ export default function Table() {
             console.error("Error fetching premium users:", error);
         }
     };
-    
+
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    const handleView = (userId) => {
-        // Logic to view user details
-        console.log(`View user with ID: ${userId}`);
+    const handleView = (user) => {
+        setSelectedUser(user);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
     };
 
     const handleUpdate = (userId) => {
-        // Logic to update user
         console.log(`Update user with ID: ${userId}`);
     };
 
     const handleDelete = (userId) => {
-        // Logic to delete user
         console.log(`Delete user with ID: ${userId}`);
     };
 
@@ -52,6 +57,7 @@ export default function Table() {
 
     return (
         <div>
+            {modalOpen && <Modal user={selectedUser} onClose={handleCloseModal} />}
             <div style={{ marginBottom: "20px", display: "flex", justifyContent: "flex-end" }}>
                 <input
                     type="text"
@@ -79,7 +85,7 @@ export default function Table() {
                             <td>{user.lastName}</td>
                             <td>{user.userType}</td>
                             <td>
-                                <button onClick={() => handleView(user.id)} style={styles.actionButton}>View</button>
+                                <button onClick={() => handleView(user)} style={styles.actionButton}>View</button>
                                 <button onClick={() => handleUpdate(user.id)} style={styles.actionButton}>Update</button>
                                 <button onClick={() => handleDelete(user.id)} style={styles.actionButton}>Delete</button>
                             </td>
