@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./modal";
-import UpdateModal from "./updatemodal"; // Import the UpdateModal component
+import UpdateModal from "./updatemodal";
 
 export default function Table() {
     const [premiumUsers, setPremiumUsers] = useState([]);
-    const [deletedUserIds, setDeletedUserIds] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUser, setSelectedUser] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [updateModalOpen, setUpdateModalOpen] = useState(false); // State to manage the visibility of the update modal
-    const [selectedUserId, setSelectedUserId] = useState(null); // State to store the ID of the selected user for update
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
     useEffect(() => {
         fetchPremiumUsers();
@@ -43,8 +42,8 @@ export default function Table() {
     };
 
     const handleUpdate = (premiumUserID) => {
-        setSelectedUserId(premiumUserID); // Set the selected user ID
-        setUpdateModalOpen(true); // Open the update modal
+        setSelectedUserId(premiumUserID);
+        setUpdateModalOpen(true);
     };
 
     const handleUpdateUser = async (updatedUser) => {
@@ -64,11 +63,28 @@ export default function Table() {
         setUpdateModalOpen(false);
     };
 
-    const handleDelete = (userId) => {
+    const handleDelete = async (userId) => {
+        try {
+            const updatedUsers = premiumUsers.filter(user => user.premiumUserID !== userId);
+            setPremiumUsers(updatedUsers);
+            const response = await fetch(`http://192.168.1.5:8080/premiumUsers/${userId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete premium user');
+            }
+
+            const data = await response.json();
+            console.log(data.message); 
+
+        } catch (error) {
+            console.error("Error deleting premium user:", error);
+        }
     };
 
     const handleDeleteButtonClick = (userId) => {
-        
+        handleDelete(userId);
     };
 
     const rowsPerPage = 10;
@@ -113,7 +129,7 @@ export default function Table() {
                             <td>
                                 <button onClick={() => handleView(user)} style={styles.actionButton}>View</button>
                                 <button onClick={() => handleUpdate(user.premiumUserID)} style={styles.actionButton}>Update</button> 
-                                <button onClick={() => handleDeleteButtonClick(user.id)} style={styles.actionButton}>Delete</button>
+                                <button onClick={() => handleDeleteButtonClick(user.premiumUserID)} style={styles.actionButton}>Delete</button>
                             </td>
                         </tr>
                     ))}
