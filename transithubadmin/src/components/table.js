@@ -17,19 +17,12 @@ export default function Table() {
     }, []);
 
     useEffect(() => {
-        const storedUsers = JSON.parse(localStorage.getItem("premiumUsers"));
-        if (storedUsers) {
-            setPremiumUsers(storedUsers.filter(user => !deletedUserIds.includes(user.id))); // Filter out deleted users from stored users
-        }
-    }, [deletedUserIds]); // Update premiumUsers whenever deletedUserIds change
-
-    useEffect(() => {
         localStorage.setItem("premiumUsers", JSON.stringify(premiumUsers));
     }, [premiumUsers]);
 
     const fetchPremiumUsers = async () => {
         try {
-            const response = await fetch("http://10.147.18.235:8080/premiumUsers");
+            const response = await fetch("http://192.168.1.5:8080/premiumUsers");
             if (!response.ok) {
                 throw new Error('Failed to fetch premium users');
             }
@@ -49,17 +42,20 @@ export default function Table() {
         setModalOpen(true);
     };
 
-    const handleUpdate = (userId) => {
-        setSelectedUserId(userId); // Set the ID of the selected user for update
+    const handleUpdate = (premiumUserID) => {
+        setSelectedUserId(premiumUserID); // Set the selected user ID
         setUpdateModalOpen(true); // Open the update modal
     };
 
-    const handleUpdateUserDetails = (updatedUser) => {
-        const updatedUsers = premiumUsers.map(user => user.id === updatedUser.id ? updatedUser : user);
-        setPremiumUsers(updatedUsers);
-        localStorage.setItem("premiumUsers", JSON.stringify(updatedUsers)); // Update local storage
+    const handleUpdateUser = async (updatedUser) => {
+        try {
+            const updatedUsers = premiumUsers.map(user => user.id === updatedUser.id ? updatedUser : user);
+            setPremiumUsers(updatedUsers);
+        } catch (error) {
+            console.error("Error updating user details:", error);
+        }
     };
-
+    
     const handleCloseModal = () => {
         setModalOpen(false);
     };
@@ -69,16 +65,10 @@ export default function Table() {
     };
 
     const handleDelete = (userId) => {
-        setDeletedUserIds([...deletedUserIds, userId]);
-        const updatedUsers = premiumUsers.filter(user => user.id !== userId);
-        setPremiumUsers(updatedUsers);
-        localStorage.setItem("premiumUsers", JSON.stringify(updatedUsers)); // Update local storage
     };
 
     const handleDeleteButtonClick = (userId) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-            handleDelete(userId);
-        }
+        
     };
 
     const rowsPerPage = 10;
@@ -93,7 +83,7 @@ export default function Table() {
     return (
         <div>
             {modalOpen && <Modal user={selectedUser} onClose={handleCloseModal} />}
-            {updateModalOpen && <UpdateModal userId={selectedUserId} onClose={handleCloseUpdateModal} onUpdate={handleUpdateUserDetails} />} {/* Pass userId, onClose, and onUpdate to UpdateModal */}
+            {updateModalOpen && <UpdateModal premiumUserID={selectedUserId} onClose={handleCloseUpdateModal} onUpdate={handleUpdateUser} />}
             <div style={{ marginBottom: "20px", display: "flex", justifyContent: "flex-end" }}>
                 <input
                     type="text"
@@ -122,7 +112,7 @@ export default function Table() {
                             <td>{user.userType}</td>
                             <td>
                                 <button onClick={() => handleView(user)} style={styles.actionButton}>View</button>
-                                <button onClick={() => handleUpdate(user.id)} style={styles.actionButton}>Update</button> {/* Add Update button */}
+                                <button onClick={() => handleUpdate(user.premiumUserID)} style={styles.actionButton}>Update</button> 
                                 <button onClick={() => handleDeleteButtonClick(user.id)} style={styles.actionButton}>Delete</button>
                             </td>
                         </tr>
