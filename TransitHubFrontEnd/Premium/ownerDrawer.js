@@ -1,31 +1,29 @@
 import * as React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import { Button, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-gesture-handler';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import OwnerHome from './Home';
 import AddOperator from './addOperator';
 import Message from './Message';
 import Records from './Records';
 import Settings from './Settings';
 import Help from './help';
-import MessageOperator from './MessageOperator';
 
-function Hatdog() {
+function Logout() {
   const navigation = useNavigation();
   AsyncStorage.removeItem('email');
   AsyncStorage.removeItem('userType');
   AsyncStorage.removeItem('ID');
+  
+  React.useEffect( () => {
+    navigation.navigate('Login')
+  })
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Button
-        onPress={() => navigation.navigate('Login')}
-        title="LOGOUTTTTTTTTTTTTTTTTT"
-      />
-    </View>
+    <></>
   );
 }
 
@@ -69,9 +67,9 @@ export default function OwnerDrawer(){
         options={{title: 'Profile Settings',drawerIcon: ({focused, size}) => (
         <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} /> 
-      <Drawer.Screen name="TEMPORARY LOGOUT" component={Hatdog} 
-        options={{title: 'TEMPORARY LOGOUT',drawerIcon: ({focused, size}) => (
-        <Feather name="command" size={size} color={focused ? '#8A252C' : 'black'}/>
+      <Drawer.Screen name="Logout" component={Logout} 
+        options={{title: 'Logout',drawerIcon: ({focused, size}) => (
+        <MaterialIcons name="logout" size={size} color={focused ? '#8A252C' : 'black'} />
       ),}} />    
     </Drawer.Navigator>
   );

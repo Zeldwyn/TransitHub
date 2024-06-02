@@ -7,7 +7,7 @@ import 'react-native-gesture-handler';
 import OwnerHome from './Home';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Message from './Message';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Settings from './Settings';
 import Help from './help';
 import Records from './Records';
@@ -15,20 +15,20 @@ import MessageOperator from './MessageOperator';
 
 
 
-function Hatdog() {
+function Logout() {
   const navigation = useNavigation();
   AsyncStorage.removeItem('email');
   AsyncStorage.removeItem('userType');
   AsyncStorage.removeItem('ID');
+  
+  React.useEffect( () => {
+    navigation.navigate('Login')
+  })
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Button
-        onPress={() => navigation.navigate('Login')}
-        title="LOGOUTTTTTTTTTTTTTTTTT"
-      />
-    </View>
+    <></>
   );
 }
+
 
 const Drawer = createDrawerNavigator();
 
@@ -66,10 +66,10 @@ export default function OperatorDrawer(){
         options={{title: 'Profile Settings',drawerIcon: ({focused, size}) => (
         <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} /> 
-      <Drawer.Screen name="TEMPORARY LOGOUT" component={Hatdog} 
-        options={{title: 'TEMPORARY LOGOUT',drawerIcon: ({focused, size}) => (
-        <Feather name="command" size={size} color={focused ? '#8A252C' : 'black'}/>
-      ),}} />   
+      <Drawer.Screen name="Logout" component={Logout} 
+        options={{title: 'Logout',drawerIcon: ({focused, size}) => (
+        <MaterialIcons name="logout" size={size} color={focused ? '#8A252C' : 'black'} />
+      ),}} /> 
     </Drawer.Navigator>
   );
 };

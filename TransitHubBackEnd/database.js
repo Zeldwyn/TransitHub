@@ -54,13 +54,18 @@ pool.getConnection((err, connection) => {
         ) 
         `,
         `
-        CREATE TABLE IF NOT EXISTS guestUser (
-            guestID INT AUTO_INCREMENT PRIMARY KEY,
-            deviceID VARCHAR (100) NOT NULL
+        CREATE TABLE IF NOT EXISTS transactionPremium (
+            transactionID INT AUTO_INCREMENT PRIMARY KEY,
+            toLocation VARCHAR (100) NOT NULL,
+            fromLocation VARCHAR (100) NOT NULL,
+            status VARCHAR (50) NOT NULL,
+            premiumUserID INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (premiumUserID) REFERENCES premiumUser(premiumUserID)
         )
         `,
         `
-        CREATE TABLE IF NOT EXISTS transaction (
+        CREATE TABLE IF NOT EXISTS transactionGuest (
             transactionID INT AUTO_INCREMENT PRIMARY KEY,
             toLocation VARCHAR (50) NOT NULL,
             fromLocation VARCHAR (50) NOT NULL,

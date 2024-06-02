@@ -1,25 +1,37 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, } from 'react-native';
 
 export default function GuestRecords() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
+  const [deviceID, setDeviceID] = useState('');
 
   useEffect(() => {
-    fetch('http://192.168.1.6:8080/display-Transaction', {
+    const getDeviceID = async () => {
+      const id = await AsyncStorage.getItem('deviceID');
+      console.log("ID: ", id);
+      setDeviceID(id);
+    };
+    getDeviceID();
+  });
+
+  useEffect(() => {
+    fetch('http://192.168.1.6:8080/display-TransactionGuest', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        deviceID: '3f085dc1-af7e-4d59-9a80-9221e4091843',
+        "deviceID": deviceID,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.result) {
+        if (data) {
           setTransactionData(data.result);
+          setError(null);
         } else {
           setError(data.message || 'Failed to fetch transaction data');
         }

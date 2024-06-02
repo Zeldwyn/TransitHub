@@ -5,35 +5,43 @@ import { View, Text, StyleSheet, ScrollView, } from 'react-native';
 export default function Records() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
-  const [deviceID, setDeviceID] = useState('');
-  AsyncStorage.getItem('deviceID')
-      .then((storedDeviceID) => {
-        setDeviceID(storedDeviceID);
-  })
+  const [pID, setPID] = useState('');
+
   useEffect(() => {
-    fetch('http://192.168.1.6:8080/display-Transaction', {
+    const getUserID = async () => {
+        const id = await AsyncStorage.getItem('premiumUserID');
+        console.log("ID: ", id);
+        setPID(id);
+    };
+    getUserID();
+  }, []);
+
+  useEffect(() => {
+    fetch('http://192.168.1.6:8080/display-TransactionPremium', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        deviceID: '3f085dc1-af7e-4d59-9a80-9221e4091843',
+        "premiumUserID": parseInt(pID),
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.result) {
+        if (data) {
           setTransactionData(data.result);
+          console.log(data.result);
+          setError(null);
         } else {
-          setError(data.message || 'Failed to fetch transaction data');
+          setError('Failed to fetch transaction data');
         }
       })
       .catch((error) => {
         setError('Failed to fetch transaction data');
         console.error('Error:', error);
       });
-  }, [deviceID]);
+  }, [pID]);
 
   return (
     <ScrollView style={styles.container}>

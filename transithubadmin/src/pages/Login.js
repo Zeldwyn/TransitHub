@@ -16,7 +16,7 @@ export default function Login() {
             return;
         }
         try {
-            const response = await fetch('http://192.168.1.5:8080/validate-AdminLogin', { //change ip
+            const response = await fetch('http://192.168.1.6:8080/validate-AdminLogin', { //change ip
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

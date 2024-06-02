@@ -1,41 +1,39 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, Image, StyleSheet, Text, TouchableOpacity, TextInput } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function Help() {
-  const windowWidth = Dimensions.get('window').width;
-  const windowHeight = Dimensions.get('window').height;
   const [feedback, setFeedback] = useState('');
   const [rate, setRate] = useState('');
 
   const handleFeedbackSubmit = () => {
     console.log(rate,feedback)
     fetch('http://192.168.1.6:8080/add-Feedback', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            "feedbackMessage": feedback,
-            "rate": rate,
-          }),
-        })
-        .then(response => response.json())
-          .then(data => {
-            if (data.status === 'Success') {
-              console.log('Feedback submitted successfully');
-            } else {
-              console.log('Failed to submit feedback');
-            }
-            setRate('');
-            setFeedback('');
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
-      };
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "feedbackMessage": feedback,
+        "rate": rate,
+      }),
+    })
+    .then(response => response.json())
+      .then(data => {
+        if (data.status === 'Success') {
+          console.log('Feedback submitted successfully');
+        } else {
+          console.log('Failed to submit feedback');
+        }
+        setRate('');
+        setFeedback('');
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });       
+  };
 
   return (
     <TouchableWithoutFeedback>
@@ -43,8 +41,8 @@ export default function Help() {
         <Image
           style={{
             ...styles.logo,
-            width: windowWidth * 0.7,
-            height: windowHeight * 0.25,
+            width: 400,
+            height: 280,
           }}
           source={require('../assets/img/feedback.png')}
         />
@@ -91,6 +89,7 @@ const styles = StyleSheet.create({
     margin: 30,
     backgroundColor: '#ffffff',
     alignItems: 'center',
+    marginTop: 65
   },
   logo: {
     marginBottom: 20,

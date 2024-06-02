@@ -3,6 +3,8 @@ import { StyleSheet, View, Text, Button, Image, Dimensions, Animated, TouchableO
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Map() {
   const [startingLocation, setStartingLocation] = useState(null);
@@ -30,6 +32,9 @@ export default function Map() {
   const [duration, setDuration] = useState('');
   const [distance, setDistance] = useState('');
   const [totalFee, setTotalFee] = useState('');
+  const [pID, setPID] = useState('');
+  const [currentTransactionID, setCurrentTransactionID] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
     const toValue = isInputAreaExpanded
@@ -287,7 +292,7 @@ export default function Map() {
             />
             <View style={styles.buttonContainer}>
               <Button title="Previous" onPress={() => setCurrentPage(2)} color="#8a252c" />
-              <Button title="Confirm" onPress={() => setCurrentPage(4)} color="#8a252c" disabled={isConfirmDisabled} />
+              <Button title="Confirm" onPress={() => [setCurrentPage(4), handleConfirm()]} color="#8a252c" disabled={isConfirmDisabled} />
             </View>
           </>
         );
@@ -296,8 +301,11 @@ export default function Map() {
           <>
             <Text>Duration: {duration ? `${(duration / 60).toFixed(2)} minutes` : ''}</Text>
             <Text>Distance: {distance ? `${distance.toFixed(2)} km` : ''}</Text>
-            <Text>Total Fee: {totalFee ? `₱${totalFee}` : ''}</Text>
-            <Button title="Previous" onPress={() => setCurrentPage(3)} color="#8a252c" />
+            <Text>Total Fee: {totalFee ? `₱${totalFee}` : ''}</Text> 
+            <Text></Text>
+            <Button title="Previous" onPress={() => setCurrentPage(3)} color="#8a252c"/>
+            <Text></Text>
+            <Button title="Arrived" onPress={() => handleUpdate()} color="#8a252c" />
           </>
         );
       default:
@@ -305,6 +313,53 @@ export default function Map() {
     }
   };
 
+  useEffect(() => {
+    const getUserID = async () => {
+        const id = await AsyncStorage.getItem('premiumUserID');
+        console.log("ID: ", id);
+        setPID(id);
+    };
+    getUserID();
+  }, []);
+
+  const handleUpdate = () => {
+    fetch('http://192.168.1.6:8080/transaction-Status', {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "transactionID": currentTransactionID,
+      }),
+    });
+
+    navigation.navigate('Records');
+  }
+
+  const handleConfirm = () => {
+    fetch('http://192.168.1.6:8080/add-PremiumTransaction', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "premiumUserID": parseInt(pID),
+        "toLocation": endLocationName,
+        "fromLocation": startLocationName,
+      }),
+    })
+    .then(response => response.json())
+      .then(data => {
+        if (data.status === 1) { console.log('Transaction added successfully'); setCurrentTransactionID(data.transactionID)} 
+        else if (data.status === 0) { console.log(data.err); }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });     
+  }
+  
   return (
     <View style={styles.container}>
       <MapView

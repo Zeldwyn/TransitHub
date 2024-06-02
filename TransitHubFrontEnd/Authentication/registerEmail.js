@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView } from 'react-native';
 
 export default function RegisterEmail() {
   const navigation = useNavigation();
@@ -70,7 +70,6 @@ export default function RegisterEmail() {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
 input: {

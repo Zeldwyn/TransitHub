@@ -6,10 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
   const navigation = useNavigation();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [validate, setValidate] = useState('');
+  const [passwordValidate, setPasswordValidate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async () => {
@@ -28,12 +27,12 @@ export default function Login() {
       .then((data) => {
         console.log('Response from Express backend:', data);
         if (data.isValid == false) {
-          setValidate('Invalid Credentials');
+          setPasswordValidate('Invalid Credentials');
         } else {
           AsyncStorage.setItem('email', email);
           AsyncStorage.setItem('userType', data.userType);
           AsyncStorage.setItem('premiumUserID', data.id.toString());
-          setValidate('');
+          setPasswordValidate('');
           if (data.userType === 'owner') navigation.navigate('OwnerDrawer');
           if (data.userType === 'operator') navigation.navigate('OperatorDrawer');
         }
@@ -78,16 +77,16 @@ export default function Login() {
             {showPassword ? <Feather name="eye-off" size={24} color="black" /> : <Feather name="eye" size={24} color="black" />}
           </TouchableOpacity>
         </View>
-        <Text style={styles.suggestion}>{validate}</Text>
+        <Text style={styles.suggestion}>{passwordValidate}</Text>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OwnerDrawer'); AsyncStorage.setItem('userType', "owner"); }}>
+          {/* <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OwnerDrawer'); AsyncStorage.setItem('userType', "owner"); }}>
             <Text style={styles.buttonText}>Submit for Owner</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OperatorDrawer'); AsyncStorage.setItem('userType', "operator"); }}>
             <Text style={styles.buttonText}>Submit for Operator</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}>
             <Text style={styles.registerText}>Don't have an account? Click here to Register</Text>
           </TouchableOpacity>
@@ -140,8 +139,9 @@ buttonText: {
 suggestion: {
   color: 'red',
   fontSize: 12,
-  marginTop: -10,
   marginBottom: 10,
+  marginTop: 10,
+  alignSelf: 'center'
 },
 registerText: {
   color: 'black',

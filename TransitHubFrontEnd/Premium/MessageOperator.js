@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput} from 'react-native';
 import io from 'socket.io-client';
 
 const socket = io('http://192.168.1.6:8080');
@@ -125,9 +123,6 @@ export default function MessageOperator() {
 
     return (
         <View style={styles.chatModal}>
-            <View style={{ flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ alignSelf: 'center', fontSize: 20 }}>NIME LABLAB</Text>
-            </View>
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -267,5 +262,4 @@ leftArrowOverlap: {
     borderBottomRightRadius: 18,
     left: -20
 },
-    
 });

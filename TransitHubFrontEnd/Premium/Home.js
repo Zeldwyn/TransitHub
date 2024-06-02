@@ -5,12 +5,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Home() {
     const navigation = useNavigation();
-    const windowWidth = Dimensions.get('window').width;
-    const windowHeight = Dimensions.get('window').height;
     const [displayInvites, setDisplayInvites] = useState([]);
     const [pID, setPID] = useState('');
     const [userType, setUserType] = useState('');
     const [isOwner, setIsOwner] = useState(true);
+    const [accepted, setAccepted] = useState(true);
 
     useEffect(() => {
         const getType = async () => {
@@ -47,41 +46,32 @@ export default function Home() {
             })
             .catch(error => {
                 console.error('Error posting data to Express backend:', error);
-            });
-        }
-    }, [isOwner, userType, pID]);
+            })} setAccepted(true);
+    }, [isOwner, userType, pID, accepted]);
 
     const handleAccept = (ownerID) => {
-        Alert.alert(
-            "Confirmation", "Are you sure you want to accept?",
-            [
-                { text: "Cancel", style: 'destructive' },
-                {
-                    text: "Accept", onPress: () => {
-                        fetch(`http://192.168.1.6:8080/accept-Invites`, {
-                            method: 'PUT',
-                            headers: {
-                                Accept: 'application/json',
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                'ownerID': ownerID,
-                                'premiumUserID': parseInt(pID),
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                        })
-                        .catch(error => {
-                            console.error('Error posting data to Express backend:', error);
-                        });
-                    }
-                }
-            ]
-        );
-    };
-
+        Alert.alert( "Confirmation", "Are you sure you want to accept?", [
+            { text: "Cancel", style: 'destructive' },{
+            text: "Accept", onPress: () => {
+            fetch(`http://192.168.1.6:8080/accept-Invites`, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'ownerID': ownerID,
+                    'premiumUserID': parseInt(pID),
+            })})             
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error posting data to Express backend:', error);
+            });  setAccepted(false);          
+    }}])};
+                
     const renderInvite = ({ item }) => (
         <View style={styles.itemContainer}>
             <View style={styles.textContainer}>
@@ -100,8 +90,8 @@ export default function Home() {
             <Image
                 style={{
                     ...styles.logo,
-                    width: windowWidth * 0.7,
-                    height: windowHeight * 0.2,
+                    width: 350,
+                    height: 250,
                 }}
                 source={require('../assets/img/blackText.png')}
             />
@@ -130,77 +120,79 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-    },
-    welcome: {
-        fontSize: 30,
-        marginTop: 50,
-        marginBottom: 30,
-        alignSelf: 'center'
-    },
-    label: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        alignSelf: 'center'
-    },
-    pendingLabel: {
-        marginTop: 20,
-        fontSize: 20,
-        fontWeight: 'bold',
-        alignSelf: 'center'
-    },
-    logo: {
-        marginTop: -50,
-        alignSelf: 'center'
-    },
-    options: {
-        marginTop: 30,
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    itemContainer: {
-        flexDirection: 'row',
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: 'maroon',
-        backgroundColor: '#fff',
-        marginVertical: 5,
-        marginHorizontal: 10,
-        borderRadius: 10,
-        elevation: 3,
-        height: 70
-    },
-    textContainer: {
-        flex: 1,
-        alignItems: 'flex-start',
-        justifyContent: 'center'
-    },
-    temp: {
-        height: 250,
-    },
-    email: {
-        fontSize: 12.5,
-    },
-    name: {
-        fontSize: 15,
-    },
-    accept: {
-        color: '#fff',
-        fontWeight: 'bold',
-        width: 45,
-        textAlign: 'center'
-    },
-    acceptBtn: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        backgroundColor: 'maroon',
-        borderRadius: 5,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'flex-end',
-    },
+container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+},
+welcome: {
+    fontSize: 30,
+    marginTop: 50,
+    marginBottom: 0,
+    alignSelf: 'center'
+},
+label: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'center'
+},
+pendingLabel: {
+    marginTop: 20,
+    fontSize: 20,
+    fontWeight: 'bold',
+    alignSelf: 'center'
+},
+logo: {
+    marginTop: -60,
+    marginBottom: -30,
+    alignSelf: 'center'
+},
+options: {
+    marginTop: 30,
+},
+row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+},
+itemContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'maroon',
+    backgroundColor: '#fff',
+    marginVertical: 5,
+    marginHorizontal: 10,
+    borderRadius: 10,
+    elevation: 3,
+    height: 70
+},
+textContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center'
+},
+temp: {
+    height: 250,
+},
+email: {
+    fontSize: 12.5,
+},
+name: {
+    fontSize: 15,
+},
+accept: {
+    color: '#fff',
+    fontWeight: 'bold',
+    width: 45,
+    textAlign: 'center'
+},
+acceptBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: 'maroon',
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+},
+    
 });

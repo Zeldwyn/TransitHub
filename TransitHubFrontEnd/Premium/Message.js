@@ -1,15 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, TouchableWithoutFeedbackComponent } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal } from 'react-native';
 import io from 'socket.io-client';
 
 
 const socket = io('http://192.168.1.6:8080');
 
 export default function Message() {
-    const [pID, setPID] = useState('');
+  const [pID, setPID] = useState('');
   const [userType, setUserType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [displayOperators, setDisplayOperators] = useState([]);
@@ -21,7 +19,6 @@ export default function Message() {
   const [currentOwner, setCurrentOwner] = useState('');
   const [currentConversation, setCurrentConversation] = useState('');
   const [newMessage, setNewMessage] = useState('');
-  const navigation = useNavigation();
 
   useEffect(() => {
     const getUserID = async () => {
@@ -34,29 +31,6 @@ export default function Message() {
     };
     getUserID();
   }, []);
-
-  useEffect(() => {
-    if(pID && userType) {
-      fetch(`http://192.168.1.6:8080/get-Messages`, {
-      method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          'premiumUserID': parseInt(pID),
-          'userType': userType
-        })
-    })
-      .then(response => response.json())
-      .then(data => {
-        setMessages(data.results);
-      })
-      .catch(error => {
-        console.error('Error fetching existing messages:', error);
-      });
-    }
-  }, [userType, pID]);
 
   useEffect(() => {
     if (pID) {
@@ -82,17 +56,36 @@ export default function Message() {
   }, [pID, chatModal]);
 
   useEffect(() => {
-    socket.on('message', (message) => {
-      // Check if the message belongs to the current conversation
-      if (message.conversationID === currentConversation) {
-        setMessages(prevMessages => [...prevMessages, message]);
-      }
-    });
-  
-    return () => {
-      socket.off('message');
-    };
+      socket.on('message', (message) => {
+        if (message.conversationID === currentConversation) {
+          setMessages(prevMessages => [...prevMessages, message]);
+        }
+      });
+      return () => {
+        socket.off('message');
+      };
   }, [currentConversation]);
+
+  useEffect(() => {
+    fetch(`http://192.168.1.6:8080/select-Messages`, {
+      method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          'conversationID': currentConversation,
+        })
+    })
+      .then(response => response.json())
+      .then(data => {
+        setMessages(data.results);
+        console.log(data.results)
+      })
+      .catch(error => {
+        console.error('Error fetching existing messages:', error);
+      });
+  }, [currentConversation])
 
   const handleConvo = (operatorID, ownerID, firstName, lastName) => {
     fetch(`http://192.168.1.6:8080/get-ConversationID`, {
@@ -109,7 +102,6 @@ export default function Message() {
     .then(response => response.json())
       .then(data => {
         setCurrentConversation(data.conversationID);
-        console.log(currentConversation);
         socket.emit('join_conversation', { conversationID: data.conversationID });
       });
       setCurrentOwner(ownerID); 
@@ -140,7 +132,7 @@ export default function Message() {
     <TouchableOpacity style={styles.itemContainer} onPress={() => handleConvo(item.operatorID, item.ownerID, item.firstName, item.lastName)}>
       <View style={styles.textContainer}>
         <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
-        <Text style={styles.message}>Start a Conversation</Text>
+        <Text style={styles.message}>View Conversation</Text>
       </View>
     </TouchableOpacity>
   );
@@ -150,7 +142,7 @@ export default function Message() {
     if(userType == item.userType) {
       return (
         <View style={styles.sender} key={index}>          
-          <Text style={{ fontSize: 16, color: "#fff", }}> {item.text}</Text>
+          <Text style={{ fontSize: 18, color: "#000", }}> {item.text}</Text>
             <View style={styles.rightArrow}></View>
             <View style={styles.rightArrowOverlap}></View>         
         </View>
@@ -158,7 +150,7 @@ export default function Message() {
     } else {
       return (
         <View style={styles.receiver} key={index}>
-            <Text style={{ fontSize: 16, color: "#000",justifyContent:"center" }} key={index}> {item.text}</Text>
+            <Text style={{ fontSize: 18, color: "#fff",justifyContent:"center" }} key={index}> {item.text}</Text>
             <View style={styles.leftArrow}></View>
             <View style={styles.leftArrowOverlap}></View>
         </View>
@@ -193,13 +185,10 @@ export default function Message() {
         renderItem={renderItem}
         keyExtractor={(item) => item.operatorID.toString()}
       />
-      <Modal animationType='slide' visible={chatModal} onRequestClose={() => {setChatModal(false)}}>
+      <Modal animationType='slide' visible={chatModal} onRequestClose={() => {setChatModal(false)}} style={{height: "auto"}}>
         <View style={styles.chatModal}>
-          <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-            <TouchableOpacity onPress={() => {setChatModal(false)}} style={{alignSelf: 'flex-start', marginLeft: 10}}>
-              <AntDesign name="smileo" size={24} color="black" />
-            </TouchableOpacity>
-            <Text style={{alignSelf: 'center', fontSize: 20}}>{currentName}</Text>
+          <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: 'maroon', height: 60, marginTop: 0}}>
+            <Text style={{alignSelf: 'center', fontSize: 24, color: 'white', fontWeight: '600'}}>{currentName}</Text>
           </View>
           <FlatList
             data={messages}
@@ -282,12 +271,13 @@ message: {
 },
 chatModal: {
   flex: 1,
+  height: "100%"
 },
 sender: {
-  backgroundColor: "maroon",
-  padding:10,
+  backgroundColor: "#dedede",
+  padding:15,
   marginLeft: '45%',
-  borderRadius: 5,
+  borderRadius: 3,
   marginTop: 5,
   marginRight: "5%",
   maxWidth: '50%',
@@ -295,22 +285,18 @@ sender: {
   borderRadius: 20,
 },
 receiver: {
-  backgroundColor: "#dedede",
-  padding:10,
-  borderRadius: 5,
+  backgroundColor: "maroon",
+  padding:15,
+  borderRadius: 3,
   marginTop: 5,
   marginLeft: "5%",
   maxWidth: '50%',
   alignSelf: 'flex-start',
-  //maxWidth: 500,
-  //padding: 14,
-  //alignItems:"center",
   borderRadius: 20,
 },
 rightArrow: {
   position: "absolute",
-  backgroundColor: "maroon",
-  //backgroundColor:"red",
+  backgroundColor: "#dedede",
   width: 20,
   height: 25,
   bottom: 0,
@@ -320,7 +306,6 @@ rightArrow: {
 rightArrowOverlap: {
   position: "absolute",
   backgroundColor: "#eeeeee",
-  //backgroundColor:"green",
   width: 20,
   height: 35,
   bottom: -6,
@@ -330,8 +315,7 @@ rightArrowOverlap: {
 },
 leftArrow: {
   position: "absolute",
-  backgroundColor: "#dedede",
-  //backgroundColor:"red",
+  backgroundColor: "maroon",
   width: 20,
   height: 25,
   bottom: 0,
@@ -341,7 +325,6 @@ leftArrow: {
 leftArrowOverlap: {
     position: "absolute",
     backgroundColor: "#eeeeee",
-    //backgroundColor:"green",
     width: 20,
     height: 35,
     bottom: -6,

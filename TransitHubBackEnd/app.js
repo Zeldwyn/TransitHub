@@ -13,7 +13,7 @@ app.use(cors());
 let storedOTP = "123456";
 // let storedEmail;
 // let storedOTP;
-let storedEmail = "nimeop4@gmail.com";
+let storedEmail = "nimeop6@gmail.com";
 
 // AUTHENTICATIONS
 app.post('/send-OTP', async (req, res) => { 
@@ -135,9 +135,9 @@ app.post('/validate-Login', async (req, res) => {
 });
 
 app.post('/user-Details', async (req, res) => {
-    const { email } = req.body;
-    const sql = `SELECT firstName, lastName, password FROM premiumUser WHERE email = ?`;
-    pool.query(sql, [email] , (err, result) => {
+    const { premiumUserID } = req.body;
+    const sql = `SELECT firstName, lastName, password FROM premiumUser WHERE premiumUserID = ?`;
+    pool.query(sql, [premiumUserID] , (err, result) => {
         if(err) {
             res.status(500).json({ success: false, error: 'Internal server error User-Details' })
         } else {
@@ -187,7 +187,33 @@ app.post('/add-GuestUser', async (req, res) => {
 //END
 
 //TRANSACTIONS
-app.post('/add-Transaction', async (req, res) => {
+app.post('/add-PremiumTransaction', async (req, res) => {
+    const { premiumUserID, toLocation, fromLocation } = req.body;   
+    const sql = `INSERT INTO transactionPremium (premiumUserID, toLocation, fromLocation, status) VALUES (?, ?, ?, ?)`;
+    pool.query(sql, [premiumUserID, toLocation, fromLocation, 'Ongoing'], (err, result) => {
+        if (err) { 
+            res.status(400).json({ status: 0, err}); 
+        } else {
+            const transactionID = result.insertId;
+            res.status(200).json({ status: 1, transactionID: transactionID });
+        }
+    });  
+});
+
+app.put('/transaction-Status', (req, res) => {
+    const { transactionID } = req.body;
+    pool.query('UPDATE transactionPremium SET status = ? WHERE transactionID = ?', ['Arrived', transactionID], (err, results) => {
+        if (err) {
+            console.error('Error updating  transaction:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        } else {
+        
+            res.status(200).json({ message: 'Transaction updated successfully' });
+        }
+    });
+});
+
+app.post('/add-GuestTransaction', async (req, res) => {
     const { deviceID, toLocation, fromLocation } = req.body;
     const status = "Ongoing";
     isDeviceIDExists(deviceID, (exists) =>{
@@ -213,7 +239,7 @@ app.post('/add-Transaction', async (req, res) => {
     })  
 });
 
-app.post('/display-Transaction', async (req, res) => {
+app.post('/display-TransactionGuest', async (req, res) => {
     const { deviceID } = req.body;
     isDeviceIDExists(deviceID, (exists) =>{
         if(!exists)
@@ -237,6 +263,19 @@ app.post('/display-Transaction', async (req, res) => {
             });
         }   
     })  
+});
+
+app.post('/display-TransactionPremium', async (req, res) => {
+    const { premiumUserID } = req.body;
+    const sql = `SELECT toLocation, fromLocation, status, created_at FROM transactionPremium where premiumUserID = ?`;
+    pool.query(sql, [premiumUserID], (err, result) => {
+        if (err) {
+            res.status(400).json({ error: 'Fail Displaying Transaction' }); 
+        } else {
+            console.log('Transaction Displayed successfully');   
+            res.status(200).json({ result }); 
+        }
+    }); 
 });
 //END
 
@@ -295,6 +334,19 @@ app.post('/get-Messages', (req, res) => {
         }
     });
 });
+
+app.post('/select-Messages', (req, res) => {
+    const { conversationID } = req.body;
+    const getMessagesSql = `SELECT * FROM message WHERE conversationID = ?`;
+    pool.query(getMessagesSql, [conversationID], (err, results) => {
+    if (err) {
+        console.error('Error fetching messages:', err);
+            res.status(500).json({ error: 'Internal server error' });
+    }
+    res.json({ results });
+    });
+});
+
 app.post('/save-Message', (req, res) => {
     const { conversationID, userType, text } = req.body;
     const insertMessageSql = `INSERT INTO message (conversationID,userType, text) VALUES (?, ?, ?)`;

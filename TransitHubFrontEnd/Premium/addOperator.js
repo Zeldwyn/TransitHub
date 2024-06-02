@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useRef, useEffect } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View, Keyboard, Modal, Text, TouchableWithoutFeedback, ScrollView, FlatList, Button } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, TextInput, TouchableOpacity, View, Text, FlatList} from "react-native";
 
 export default function AddOperator() {
   const [search, setSearch] = useState('');
@@ -37,7 +37,7 @@ export default function AddOperator() {
       .catch(error => {
         console.error('Error posting data to Express backend:', error);
       })
-  }, [pID]);
+  }, [pID, showResults]);
 
   const handleSubmit = async () => {
     console.log('Search:', search);
@@ -150,7 +150,7 @@ export default function AddOperator() {
           keyExtractor={(item) => item.email.toString()}
         />
         <TouchableOpacity style={styles.clearBtn} onPress={() => setShowResults(false)}>
-          <Text style={styles.btnTxt}>Clear</Text>
+          <Text style={styles.btnTxt}>Close</Text>
         </TouchableOpacity>
         </>
       ) : (
