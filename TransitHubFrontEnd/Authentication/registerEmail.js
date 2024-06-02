@@ -14,7 +14,7 @@ export default function RegisterEmail() {
     }
     
     console.log(email);
-    fetch('http://192.168.1.6:8080/send-OTP', {
+    fetch('http://192.168.1.5:8080/send-OTP', {
       method: 'POST',
       headers: {
         Accept: 'application/json',

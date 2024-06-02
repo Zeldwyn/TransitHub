@@ -29,7 +29,7 @@ export default function Settings(){
   };
   useEffect(() => {
     if(pID) {
-      fetch(`http://192.168.1.6:8080/user-Details`, {
+      fetch(`http://192.168.1.5:8080/user-Details`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -61,7 +61,7 @@ export default function Settings(){
       handleChange();
   };
   const handleChange = async() => {
-      fetch(`http://192.168.1.6:8080/update-UserDetails`, {
+      fetch(`http://192.168.1.5:8080/update-UserDetails`, {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
@@ -200,10 +200,11 @@ input: {
   marginBottom:30,
 },
 suggestionsText: { 
-  color: 'red', 
+  color: 'red',
   fontSize: 12,
-  marginLeft: 25, // Adjust margin to align with text input
-  marginBottom: 10,
+  marginBottom: 30,
+  marginTop: -20,
+  alignSelf: 'center'
 }, 
   
 });

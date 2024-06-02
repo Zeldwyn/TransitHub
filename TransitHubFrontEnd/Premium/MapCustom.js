@@ -31,6 +31,7 @@ export default function MapCustom() {
   const [duration, setDuration] = useState('');
   const [distance, setDistance] = useState('');
   const [totalFee, setTotalFee] = useState('');
+  
 
   useEffect(() => {
     const toValue = isInputAreaExpanded

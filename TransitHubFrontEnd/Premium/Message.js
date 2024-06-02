@@ -4,7 +4,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal } 
 import io from 'socket.io-client';
 
 
-const socket = io('http://192.168.1.6:8080');
+const socket = io('http://192.168.1.5:8080');
 
 export default function Message() {
   const [pID, setPID] = useState('');
@@ -34,7 +34,7 @@ export default function Message() {
 
   useEffect(() => {
     if (pID) {
-      fetch(`http://192.168.1.6:8080/message-Owner`, {
+      fetch(`http://192.168.1.5:8080/message-Owner`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -67,7 +67,7 @@ export default function Message() {
   }, [currentConversation]);
 
   useEffect(() => {
-    fetch(`http://192.168.1.6:8080/select-Messages`, {
+    fetch(`http://192.168.1.5:8080/select-Messages`, {
       method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -88,7 +88,7 @@ export default function Message() {
   }, [currentConversation])
 
   const handleConvo = (operatorID, ownerID, firstName, lastName) => {
-    fetch(`http://192.168.1.6:8080/get-ConversationID`, {
+    fetch(`http://192.168.1.5:8080/get-ConversationID`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

@@ -12,7 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async () => {
-    fetch('http://192.168.1.6:8080/validate-Login', {
+    fetch('http://192.168.1.5:8080/validate-Login', {
       method: 'POST',
       headers: {
         Accept: 'application/json',

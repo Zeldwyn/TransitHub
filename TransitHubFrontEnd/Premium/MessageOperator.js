@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput} from 'react-native';
 import io from 'socket.io-client';
 
-const socket = io('http://192.168.1.6:8080');
+const socket = io('http://192.168.1.5:8080');
 
 export default function MessageOperator() {
     const [pID, setPID] = useState('');
@@ -30,7 +30,7 @@ export default function MessageOperator() {
 
     useEffect(() => {
         if (pID && userType) {
-            fetch(`http://192.168.1.6:8080/get-Messages`, {
+            fetch(`http://192.168.1.5:8080/get-Messages`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -48,7 +48,7 @@ export default function MessageOperator() {
             .catch(error => {
                 console.error('Error fetching existing messages:', error);
             });
-            fetch(`http://192.168.1.6:8080/get-ConversationIDOP`, {
+            fetch(`http://192.168.1.5:8080/get-ConversationIDOP`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',

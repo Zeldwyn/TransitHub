@@ -17,7 +17,7 @@ export default function Records() {
   }, []);
 
   useEffect(() => {
-    fetch('http://192.168.1.6:8080/display-TransactionPremium', {
+    fetch('http://192.168.1.5:8080/display-TransactionPremium', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
