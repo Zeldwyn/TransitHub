@@ -6,6 +6,7 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import { useNavigate } from "react-router-dom";
+import logo from '../img/blackText.png';
 
 export default function Sidebar() {
   const [showLabels, setShowLabels] = useState(false);
@@ -23,10 +24,14 @@ export default function Sidebar() {
 
   return (
     <div style={styles.container}>
+      <img src={logo} alt="Logo" style={styles.logo} />
       <div style={styles.sidebarContainer}>
         <div style={{...styles.sidebar, width: expanded ? "180px" : "30px"}}>
           <div style={styles.toggleButton} onClick={toggleSidebar}>
             <MenuOutlinedIcon style={styles.menuIcon} />
+          </div>
+          <div style={styles.logoContainer}>
+            
           </div>
           <div style={styles.iconsContainer}>
             <div style={styles.iconItem} onClick={() => handleNavigation('/home')}>
@@ -84,6 +89,20 @@ const styles = {
     display: "flex",
     height: "40px",
   },
+  logoContainer: {
+    textAlign: "center",
+    marginBottom: "20px",
+  },
+  logo: {
+    position: "fixed",
+    marginLeft: 30,
+    marginTop: -110,
+    top: 50,
+    left: 50,
+    width: "200px", // Adjusted width
+    height: "200px", // Adjusted height
+  },
+  
   iconsContainer: {
     display: "flex",
     flexDirection: "column",
@@ -107,4 +126,3 @@ const styles = {
     marginRight: "10px",
   },
 };
-
