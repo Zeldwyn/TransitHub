@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '1234',
+    password: 'root',
     database: 'transithub'
 });
 
@@ -108,7 +108,7 @@ pool.getConnection((err, connection) => {
         CREATE TABLE IF NOT EXISTS feedback (   
             feedbackID INT AUTO_INCREMENT PRIMARY KEY,
             feedbackMessage VARCHAR (500) NOT NULL,
-            rate INT
+            rate INT 
         )
         `,
         `

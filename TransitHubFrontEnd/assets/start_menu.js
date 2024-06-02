@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import uuid from 'react-native-uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +26,9 @@ export default function StartMenu () {
       });
   },[])
   return (
+    <SafeAreaView style={{backgroundColor: '#E3B130', minHeight: '100%'}}>
+    <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'android' ? 'height' : null}>
+        <ScrollView showsVerticalScrollIndicator={false}> 
     <View style={styles.container}>
       <Image
         style={{
@@ -44,10 +47,20 @@ export default function StartMenu () {
         }}
         source={require('./img/blackText.png')}
       />
-      <CustomButton title="Login" onPress={() => navigation.navigate('Login')} />
-      <CustomButton title="Register" onPress={() => navigation.navigate('RegisterEmail')}/>
-      <CustomButton title="Guest" onPress={() => navigation.navigate('GuestDrawer')} />
+      <Text style={styles.mantra}>"Navigate with Transithub, Deliver with Confidence"</Text>
+      <CustomButton title="Join Now" onPress={() => navigation.navigate('RegisterEmail')}/>
+      <View style={{flexDirection: 'row'}}>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.textTwoButton}>
+          <Text style={styles.textTwo}>Login | </Text> 
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('GuestDrawer')} style={styles.textTwoButton}>
+          <Text style={styles.textTwo}>Guest</Text>
+      </TouchableOpacity>
+      </View>
     </View>
+    </ScrollView>
+      </KeyboardAvoidingView>  
+    </SafeAreaView>
   );
 };
 
@@ -71,6 +84,13 @@ const styles = StyleSheet.create({
     fontSize: 35, 
     marginTop: 10, 
   },
+  mantra: {
+    fontSize: 25, 
+    margin: 5, 
+    justifyContent: 'center',
+    textAlign: 'center',
+    width: "70%",
+  },
   button: {
     backgroundColor: '#8A252C',
     padding: 10,
@@ -79,18 +99,27 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15,
+    marginTop: 80,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
   },
   logo: {
-    marginTop: -50,
+    marginTop: 60,
   },
   logo2: {
     marginTop: -90,
     marginBottom: -70
-  }
+  },
+  textTwo: {
+    color: 'black',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  textTwoButton: {
+    alignSelf: 'center',
+    marginTop: 30,
+  },
 });
 
