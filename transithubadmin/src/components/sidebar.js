@@ -11,7 +11,7 @@ import logo from '../img/blackText.png';
 export default function Sidebar() {
   const [showLabels, setShowLabels] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
@@ -24,33 +24,31 @@ export default function Sidebar() {
 
   return (
     <div style={styles.container}>
-      <img src={logo} alt="Logo" style={styles.logo} />
+      <img src={logo} alt="Logo" style={{ ...styles.logo, marginLeft: expanded ? '180px' : '30px' }} />
       <div style={styles.sidebarContainer}>
-        <div style={{...styles.sidebar, width: expanded ? "180px" : "30px"}}>
+        <div style={{ ...styles.sidebar, width: expanded ? "180px" : "30px" }}>
           <div style={styles.toggleButton} onClick={toggleSidebar}>
             <MenuOutlinedIcon style={styles.menuIcon} />
           </div>
-          <div style={styles.logoContainer}>
-            
-          </div>
+          <div style={styles.logoContainer}></div>
           <div style={styles.iconsContainer}>
-            <div style={styles.iconItem} onClick={() => handleNavigation('/home')}>
+            <div style={styles.iconItem} onClick={() => handleNavigation("/home")}>
               <HomeOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Home</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation('/manage-user')}>
+            <div style={styles.iconItem} onClick={() => handleNavigation("/manage-user")}>
               <PersonOutlineOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Manage</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation('/maintenance')}>
+            <div style={styles.iconItem} onClick={() => handleNavigation("/maintenance")}>
               <ConstructionOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Maintenance</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation('/organizer')}>
+            <div style={styles.iconItem} onClick={() => handleNavigation("/organizer")}>
               <CalendarMonthOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Organizer</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation('/settings')}>
+            <div style={styles.iconItem} onClick={() => handleNavigation("/settings")}>
               <SettingsOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Settings</span>}
             </div>
@@ -78,7 +76,7 @@ const styles = {
     overflowX: "hidden",
     borderTopRightRadius: "10px",
     borderBottomRightRadius: "10px",
-    height: "100vh", // Set height to 100vh to fill the full page height
+    height: "100vh", 
     transition: "width 0.1s ease-in-out", 
   },
   toggleButton: {
@@ -95,12 +93,12 @@ const styles = {
   },
   logo: {
     position: "fixed",
-    marginLeft: 30,
+    marginLeft: 30, 
     marginTop: -110,
     top: 50,
     left: 50,
-    width: "200px", // Adjusted width
-    height: "200px", // Adjusted height
+    width: "200px", 
+    height: "200px",
   },
   
   iconsContainer: {
