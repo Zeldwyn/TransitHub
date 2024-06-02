@@ -4,14 +4,12 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function GuestHelp() {
-  const windowWidth = Dimensions.get('window').width;
-  const windowHeight = Dimensions.get('window').height;
   const [feedback, setFeedback] = useState('');
   const [rate, setRate] = useState('');
 
   const handleFeedbackSubmit = () => {
     console.log(rate,feedback)
-    fetch('http://192.168.1.8:8080/add-Feedback', {
+    fetch('http://192.168.1.6:8080/add-Feedback', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -43,8 +41,8 @@ export default function GuestHelp() {
         <Image
           style={{
             ...styles.logo,
-            width: windowWidth * 0.7,
-            height: windowHeight * 0.25,
+            width: 400  ,
+            height: 280,
           }}
           source={require('../assets/img/feedback.png')}
         />

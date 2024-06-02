@@ -98,8 +98,9 @@ input: {
 suggestion: {
   color: 'red',
   fontSize: 12,
-  marginTop: -10,
-  marginBottom: 10, 
+  marginBottom: 10,
+  marginTop: 10,
+  alignSelf: 'center'
 },
 button: {
   backgroundColor: 'maroon',

@@ -48,7 +48,9 @@ export default function StartMenu () {
         source={require('./img/blackText.png')}
       />
       <Text style={styles.mantra}>"Navigate with Transithub, Deliver with Confidence"</Text>
-      <CustomButton title="Join Now" onPress={() => navigation.navigate('RegisterEmail')}/>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('RegisterEmail')}>
+          <Text style={styles.buttonText}>Join Now</Text>
+        </TouchableOpacity>
       <View style={{flexDirection: 'row'}}>
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.textTwoButton}>
           <Text style={styles.textTwo}>Login | </Text> 
@@ -63,15 +65,6 @@ export default function StartMenu () {
     </SafeAreaView>
   );
 };
-
-const CustomButton = ({ title, onPress }) => {
-    return (
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>{title}</Text>
-      </TouchableOpacity>
-    );
-};
-  
 
 const styles = StyleSheet.create({
   container: {
@@ -92,18 +85,20 @@ const styles = StyleSheet.create({
     width: "70%",
   },
   button: {
-    backgroundColor: '#8A252C',
-    padding: 10,
-    width: 280,
-    height: 40,
+    backgroundColor: 'maroon',
     borderRadius: 5,
+    width: 300,
+    height: 40,
     alignItems: 'center',
+    alignSelf: 'center',
     justifyContent: 'center',
-    marginTop: 80,
+    marginTop: 70,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'normal',
+    fontSize: 18,
+    textAlign: 'center'
   },
   logo: {
     marginTop: 60,

@@ -1,28 +1,25 @@
 import * as React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import { Button, View } from 'react-native';
 import 'react-native-gesture-handler';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import GuestRecords from './guestRecords';
 import GuestMap from './guestMap';
 import GuestHelp from './guestHelp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-function Hatdog() {
+function Logout() {
     const navigation = useNavigation();
+    React.useEffect( () => {
+      navigation.navigate('StartMenu')
+    })
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Button
-          onPress={() => navigation.navigate('StartMenu')}
-          title="REGISTER OR LOGIN"
-        />
-      </View>
+      <></>
     );
-}
-
+  }
 const Drawer = createDrawerNavigator();
 
 export default function GuestDrawer(){
@@ -75,9 +72,9 @@ export default function GuestDrawer(){
                     options={{title: 'Help',drawerIcon: ({focused, size}) => (
                     <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/>
                 ),}} />     
-                <Drawer.Screen name="Register or LOGIN" component={Hatdog} 
-                    options={{title: 'Register or LOGIN',drawerIcon: ({focused, size}) => (
-                    <Feather name="command" size={size} color={focused ? '#8A252C' : 'black'}/>
+                <Drawer.Screen name="Register or Login" component={Logout} 
+                    options={{title: 'Register or Login',drawerIcon: ({focused, size}) => (
+                    <MaterialIcons name="logout" size={size} color={focused ? '#8A252C' : 'black'} />
                 ),}} />    
             </Drawer.Navigator>              
     );

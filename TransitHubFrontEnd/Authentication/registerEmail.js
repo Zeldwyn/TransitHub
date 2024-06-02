@@ -8,6 +8,11 @@ export default function RegisterEmail() {
   const [suggestions, setSuggestions] = useState('');
 
   const handleSubmit = async() => {
+    if (email.trim() === '') {
+      setSuggestions('Email cannot be empty!');
+      return;
+    }
+    
     console.log(email);
     fetch('http://192.168.1.6:8080/send-OTP', {
       method: 'POST',
@@ -22,9 +27,9 @@ export default function RegisterEmail() {
       .then(response => response.json())
       .then(data => {
         console.log('Response from Express backend:', data);
-        if(data.isValid == false)
-          setSuggestions('Email is already taken!')
-        else {
+        if (data.isValid === false) {
+          setSuggestions('Email is already taken!');
+        } else {
           navigation.navigate('OTP');
         } 
       })
@@ -32,6 +37,7 @@ export default function RegisterEmail() {
         console.error('Error posting data to Express backend:', error);
       });
   }
+
   return (
     <SafeAreaView style={{backgroundColor: '#E3B130', minHeight: '100%'}}> 
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'android' ? 'height' : null}> 
@@ -50,7 +56,11 @@ export default function RegisterEmail() {
           <Text style={styles.suggestion}>   
               {suggestions}
           </Text> 
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={[styles.button, email.trim() === '' && styles.buttonDisabled]}
+            onPress={handleSubmit}
+            disabled={email.trim() === ''}
+          >
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{
@@ -72,37 +82,38 @@ export default function RegisterEmail() {
 }
 
 const styles = StyleSheet.create({
-input: {
-  height: 40, 
-  width: 300, 
-  backgroundColor: 'white', 
-  alignSelf: 'center', 
-  borderColor: 'white', 
-  borderRadius: 5, 
-  textAlign: 'center'
-},
-suggestion: {
-  color: 'red',
-  fontSize: 12,
-  marginTop: -10,
-  marginBottom: 10, 
-},
-button: {
-  backgroundColor: 'maroon',
-  borderRadius: 5,
-  width: 300,
-  height: 40,
-  alignItems: 'center',
-  alignSelf: 'center',
-  justifyContent: 'center',
-  marginTop: 90,
-},
-buttonText: {
-  color: '#fff',
-  fontWeight: 'normal',
-  fontSize: 18,
-  textAlign: 'center'
-},
+  input: {
+    height: 40, 
+    width: 300, 
+    backgroundColor: 'white', 
+    alignSelf: 'center', 
+    borderColor: 'white', 
+    borderRadius: 5, 
+    textAlign: 'center'
+  },
+  suggestion: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10, 
+  },
+  button: {
+    backgroundColor: 'maroon',
+    borderRadius: 5,
+    width: 300,
+    height: 40,
+    alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    marginTop: 90,
+  },
+  buttonDisabled: {
+    backgroundColor: '#8a252c',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'normal',
+    fontSize: 18,
+    textAlign: 'center'
+  },
 });
-
-
