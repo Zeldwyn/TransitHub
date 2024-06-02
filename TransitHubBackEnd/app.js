@@ -508,8 +508,8 @@ app.get('/premiumUsers', (req, res) => {
 });
 
 app.post('/premiumUsers', (req, res) => {
-    const { firstName, lastName, email } = req.body;
-    pool.query('INSERT INTO premiumUser (firstName, lastName, email) VALUES (?, ?, ?)', [firstName, lastName, email], (err, results) => {
+    const { firstName, lastName, email, password, userType } = req.body;
+    pool.query('INSERT INTO premiumUser (firstName, lastName, email, password, userType) VALUES (?, ?, ?, ?, ?)', [firstName, lastName, email,password, userType], (err, results) => {
         if (err) {
             console.error('Error adding premium user:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -520,21 +520,41 @@ app.post('/premiumUsers', (req, res) => {
 });
 
 app.put('/premiumUsers/:id', (req, res) => {
-    const { firstName, lastName, email } = req.body;
-    const userId = req.params.id;
-    pool.query('UPDATE premiumUser SET firstName = ?, lastName = ?, email = ? WHERE id = ?', [firstName, lastName, email, userId], (err, results) => {
+    const premiumUserID = req.params.id;
+    const { firstName, lastName, email, userType } = req.body;
+    pool.query('UPDATE premiumUser SET firstName=?, lastName=?, email=?, userType=? WHERE premiumUserID=?', 
+        [firstName, lastName, email, userType, premiumUserID], 
+        (err, results) => {
+            if (err) {
+                console.error('Error updating premium user:', err);
+                res.status(500).json({ error: 'Internal server error' });
+            } else {
+                res.status(200).json({ message: 'Premium user updated successfully' });
+            }
+        }
+    );
+});
+
+app.get('/premiumUsers/:id', (req, res) => {
+    const premiumUserID = req.params.id;
+    pool.query('SELECT * FROM premiumUser WHERE premiumUserID = ?', [premiumUserID], (err, results) => {
         if (err) {
-            console.error('Error updating premium user:', err);
+            console.error('Error fetching premium user:', err);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            res.status(200).json({ message: 'Premium user updated successfully' });
+            if (results.length > 0) {
+                res.status(200).json(results[0]);
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
         }
     });
 });
 
+
 app.delete('/premiumUsers/:id', (req, res) => {
     const userId = req.params.id;
-    pool.query('DELETE FROM premiumUser WHERE id = ?', [userId], (err, results) => {
+    pool.query('DELETE FROM premiumUser WHERE premiumUserID = ?', [userId], (err, results) => {
         if (err) {
             console.error('Error deleting premium user:', err);
             res.status(500).json({ error: 'Internal server error' });

@@ -11,7 +11,8 @@ import 'react-native-gesture-handler';
 import GuestDrawer from './Guest/guestDrawer';
 import OwnerDrawer from './Premium/ownerDrawer';
 import OperatorDrawer from './Premium/operatorDrawer';
-import Map from './Premium/Map';
+import MapPackage from './Premium/MapPackage';
+import MapCustom from './Premium/MapCustom';
 import GuestMap from './Guest/guestMap';
 
 export default function App() {
@@ -43,7 +44,8 @@ const MyStack = () => {
       <Stack.Screen name="OwnerDrawer" component={OwnerDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="OperatorDrawer" component={OperatorDrawer} options={{ headerShown: false}} />
       <Stack.Screen name="GuestDrawer" component={GuestDrawer} options={{ headerShown: false}} />
-      <Stack.Screen name="Map" component={Map} options={{ headerShown: false}} />
+      <Stack.Screen name="MapPackage" component={MapPackage} options={{ headerShown: false}} />
+      <Stack.Screen name="MapCustom" component={MapCustom} options={{headerShown: false}} />
       <Stack.Screen name="GuestMap" component={GuestMap} options={{headerShown: false}}/>
     </Stack.Navigator> 
   );

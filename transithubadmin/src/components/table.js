@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from "react";
+import Modal from "./modal";
+import UpdateModal from "./updatemodal";
 
 export default function Table() {
     const [premiumUsers, setPremiumUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
     useEffect(() => {
         fetchPremiumUsers();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem("premiumUsers", JSON.stringify(premiumUsers));
+    }, [premiumUsers]);
 
     const fetchPremiumUsers = async () => {
         try {
@@ -21,24 +31,60 @@ export default function Table() {
             console.error("Error fetching premium users:", error);
         }
     };
-    
+
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    const handleView = (userId) => {
-        // Logic to view user details
-        console.log(`View user with ID: ${userId}`);
+    const handleView = (user) => {
+        setSelectedUser(user);
+        setModalOpen(true);
     };
 
-    const handleUpdate = (userId) => {
-        // Logic to update user
-        console.log(`Update user with ID: ${userId}`);
+    const handleUpdate = (premiumUserID) => {
+        setSelectedUserId(premiumUserID);
+        setUpdateModalOpen(true);
     };
 
-    const handleDelete = (userId) => {
-        // Logic to delete user
-        console.log(`Delete user with ID: ${userId}`);
+    const handleUpdateUser = async (updatedUser) => {
+        try {
+            const updatedUsers = premiumUsers.map(user => user.id === updatedUser.id ? updatedUser : user);
+            setPremiumUsers(updatedUsers);
+        } catch (error) {
+            console.error("Error updating user details:", error);
+        }
+    };
+    
+    const handleCloseModal = () => {
+        setModalOpen(false);
+    };
+
+    const handleCloseUpdateModal = () => {
+        setUpdateModalOpen(false);
+    };
+
+    const handleDelete = async (userId) => {
+        try {
+            const updatedUsers = premiumUsers.filter(user => user.premiumUserID !== userId);
+            setPremiumUsers(updatedUsers);
+            const response = await fetch(`http://192.168.1.5:8080/premiumUsers/${userId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete premium user');
+            }
+
+            const data = await response.json();
+            console.log(data.message); 
+
+        } catch (error) {
+            console.error("Error deleting premium user:", error);
+        }
+    };
+
+    const handleDeleteButtonClick = (userId) => {
+        handleDelete(userId);
     };
 
     const rowsPerPage = 10;
@@ -52,6 +98,8 @@ export default function Table() {
 
     return (
         <div>
+            {modalOpen && <Modal user={selectedUser} onClose={handleCloseModal} />}
+            {updateModalOpen && <UpdateModal premiumUserID={selectedUserId} onClose={handleCloseUpdateModal} onUpdate={handleUpdateUser} />}
             <div style={{ marginBottom: "20px", display: "flex", justifyContent: "flex-end" }}>
                 <input
                     type="text"
@@ -79,9 +127,9 @@ export default function Table() {
                             <td>{user.lastName}</td>
                             <td>{user.userType}</td>
                             <td>
-                                <button onClick={() => handleView(user.id)} style={styles.actionButton}>View</button>
-                                <button onClick={() => handleUpdate(user.id)} style={styles.actionButton}>Update</button>
-                                <button onClick={() => handleDelete(user.id)} style={styles.actionButton}>Delete</button>
+                                <button onClick={() => handleView(user)} style={styles.actionButton}>View</button>
+                                <button onClick={() => handleUpdate(user.premiumUserID)} style={styles.actionButton}>Update</button> 
+                                <button onClick={() => handleDeleteButtonClick(user.premiumUserID)} style={styles.actionButton}>Delete</button>
                             </td>
                         </tr>
                     ))}
@@ -89,7 +137,7 @@ export default function Table() {
             </table>
             <div style={{ marginTop: "20px", textAlign: "center" }}>
                 <button
-                    disabled={currentPage === 1}
+                    disabled={currentRows.length < rowsPerPage}
                     onClick={() => handlePageChange(currentPage - 1)}
                     style={styles.paginationButton}
                 >
