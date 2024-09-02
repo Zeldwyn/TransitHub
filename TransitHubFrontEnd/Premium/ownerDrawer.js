@@ -12,6 +12,7 @@ import Message from './Message';
 import Records from './Records';
 import Settings from './Settings';
 import Help from './help';
+import Bookings from './Bookings';
 
 function Logout() {
   const navigation = useNavigation();
@@ -46,6 +47,10 @@ export default function OwnerDrawer(){
       <Drawer.Screen name="Home" component={OwnerHome} 
         options={{title: 'Home',drawerIcon: ({focused, size},) => (
         <Ionicons name="home-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}} />
+      <Drawer.Screen name="Bookings" component={Bookings} 
+        options={{title: 'Bookings',drawerIcon: ({focused, size}) => (
+        <Ionicons name="person-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
       <Drawer.Screen name="Transport Operator" component={AddOperator} 
         options={{title: 'Transport Operator',drawerIcon: ({focused, size}) => (
