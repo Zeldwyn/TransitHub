@@ -118,7 +118,7 @@ export default function Bookings() {
     );
 }
 
-const bookings = [              
+const bookings = [              //temporary 
     {
         id: '1',
         name: 'Miles Morales',
