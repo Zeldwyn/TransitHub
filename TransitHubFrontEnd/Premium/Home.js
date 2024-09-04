@@ -3,7 +3,7 @@ import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, FlatList, 
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Home() {
+export default function OwnerHome() {
     const navigation = useNavigation();
     const [displayInvites, setDisplayInvites] = useState([]);
     const [pID, setPID] = useState('');
@@ -97,7 +97,7 @@ export default function Home() {
             />
             <Text style={styles.label}>What are you going to deliver today?</Text>
             <View style={styles.row}>
-                <TouchableOpacity onPress={() => navigation.navigate('MapPackage')}>
+                <TouchableOpacity onPress={() => navigation.navigate('TransactionDetails')}>
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />

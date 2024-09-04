@@ -30,9 +30,9 @@ app.post('/send-OTP', async (req, res) => {
                 console.log('Email is available');
                 storedEmail = email;
                 try {
-                    storedOTP = generateOTP();
-                    //storedOTP = '123456';
-                    sendOTP({ email, otp: storedOTP}); 
+                    storedOTP = generateOTP();                 
+                    sendOTP({ email, otp: storedOTP }); 
+                    console.log('OTP sent successfully!');
                     res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
                 } catch (error) {
                     console.error(error); 
@@ -165,7 +165,7 @@ app.put('/update-UserDetails', async (req, res) => {
             }
         }
     });
-});
+}); 
 
 app.post('/add-GuestUser', async (req, res) => {
     const { deviceID } = req.body;
