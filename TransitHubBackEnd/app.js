@@ -9,7 +9,9 @@ const {pool} = require('./database');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: '*'
+}));
 app.use(session ({
     secret: 'hatdog',
     resave: false,
@@ -34,7 +36,7 @@ app.post('/send-OTP', async (req, res) => {
                     req.session.otp = generatedOTP;
                     req.session.email = email;
 
-                    sendOTP({ email, otp: storedOTP }); 
+                    sendOTP({ email, otp: generatedOTP }); 
                     console.log('OTP sent successfully!');
                     res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
                 } catch (error) {
@@ -64,7 +66,7 @@ app.post('/verify-OTP', async (req, res) => {
 
 app.post('/resend-OTP', async (req, res) => { 
     try {
-        await sendOTP({ email: storedEmail, otp: storedOTP}); 
+        await sendOTP({ email: req.session.email, otp: req.session.otp}); 
         res.status(200).json({ message: 'OTP sent successfully' }); 
     } catch (error) {
         console.error(error);
@@ -74,13 +76,13 @@ app.post('/resend-OTP', async (req, res) => {
 
 app.post('/add-PremiumUser', async (req, res) => {
     const {firstName, lastName, password, userType} = req.body;
-    
+    console.log(req.session.email)
     const sql = `INSERT INTO premiumUser (email, firstName, lastName, password, userType) VALUES (?, ?, ?, ?, ?)`;
-    pool.query(sql, [storedEmail, firstName, lastName, password, userType], (err, result) => {
+    pool.query(sql, [req.session.email, firstName, lastName, password, userType], (err, result) => {
         if (err) {
             res.status(500).json({ error: 'Fail adding Premium User' }); 
         } else {
-            getPremiumID(storedEmail, (exists, premiumUserID) => { 
+            getPremiumID(req.session.email, (exists, premiumUserID) => { 
                 if(exists) {
                     setUser(userType, premiumUserID, (success) => {
                         if(success)
