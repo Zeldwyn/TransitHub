@@ -1,17 +1,26 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
-import { useState, useEffect } from "react";
-import { Ionicons } from '@expo/vector-icons';
-import { Calendar } from 'react-native-calendars';
-import { View, StyleSheet, Text, TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback } from "react-native";
+import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
+import Geocoder from 'react-native-geocoding';
+import { GOOGLE_MAPS_API_KEY } from '@env';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+
+Geocoder.init(GOOGLE_MAPS_API_KEY);
 
 export default function TransactionDetails() {
+    const [fromCoords, setFromCoords] = useState(null);
+    const [toCoords, setToCoords] = useState(null);
+    const [shouldNavigate, setShouldNavigate] = useState(false);
     const navigation = useNavigation();
-    const [date, setDate] = useState('');
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [isCalendarVisible, setCalendarVisible] = useState(false);
-    const [fromLocation, setFromLocation] = useState('');
-    const [toLocation, setToLocation] = useState('');
-    const [shouldNavigate, setShouldNavigate] = useState(false); 
+
+    const [region, setRegion] = useState({
+        latitude: 10.3157,
+        longitude: 123.8854,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+    });
 
     useEffect(() => {
         if (shouldNavigate) {
@@ -20,140 +29,156 @@ export default function TransactionDetails() {
         }
     }, [shouldNavigate, navigation]);
 
-    const markedDates = {
-        '2024-09-20': {
-            marked: true,
-            dotColor: 'maroon',
-            color: '#c17171',
-            textColor: 'black',
-        },  
-    };
-    const handleDayPress = (day) => {
-        setSelectedDate(formatDate(day.dateString));
-        setModalVisible(true);
-    };
+    const handleGetDirections = async () => {
+        try {
+            if (!fromCoords || !toCoords) {
+                console.error("Both location fields must be filled.");
+                return;
+            }
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+            // DEBUGG YAWAAAAAA PISTE ERROR
+            console.log("From Coords:", fromCoords);
+            console.log("To Coords:", toCoords);
+
+            const fromLat = typeof fromCoords.latitude === 'string' ? parseFloat(fromCoords.latitude) : fromCoords.latitude;
+            const fromLng = typeof fromCoords.longitude === 'string' ? parseFloat(fromCoords.longitude) : fromCoords.longitude;
+            const toLat = typeof toCoords.latitude === 'string' ? parseFloat(toCoords.latitude) : toCoords.latitude;
+            const toLng = typeof toCoords.longitude === 'string' ? parseFloat(toCoords.longitude) : toCoords.longitude;
+
+            setFromCoords({ latitude: fromLat, longitude: fromLng });
+            setToCoords({ latitude: toLat, longitude: toLng });
+        } catch (error) {
+            console.error("Error fetching coordinates:", error);
+        }
     };
 
     return (
         <View style={styles.container}>
-            <Text>From: </Text>
-            <TextInput
-                value={fromLocation}
-                onChangeText={setFromLocation}
+             <Text>From: </Text>
+            <GooglePlacesAutocomplete
+                placeholder='Enter starting location'
+                onPress={(data, details = null) => {
+                    if (details) {
+                        const location = details.geometry.location;
+                        console.log("Selected From Location:", location);
+                        setFromCoords({
+                            latitude: typeof location.lat === 'string' ? parseFloat(location.lat) : location.lat,
+                            longitude: typeof location.lng === 'string' ? parseFloat(location.lng) : location.lng,
+                        });
+                    }
+                }}
+                fetchDetails={true}
+                query={{
+                    key: GOOGLE_MAPS_API_KEY,
+                    language: 'en',
+                }}
+                styles={styles.autocomplete}
             />
+
             <Text>To: </Text>
-            <TextInput
-                value={toLocation}
-                onChangeText={setToLocation}
+            <GooglePlacesAutocomplete
+                placeholder='Enter destination'
+                onPress={(data, details = null) => {
+                    if (details) {
+                        const location = details.geometry.location;
+                        console.log("Selected To Location:", location);
+                        setToCoords({
+                            latitude: typeof location.lat === 'string' ? parseFloat(location.lat) : location.lat,
+                            longitude: typeof location.lng === 'string' ? parseFloat(location.lng) : location.lng,
+                        });
+                    }
+                }}
+                fetchDetails={true}
+                query={{
+                    key: GOOGLE_MAPS_API_KEY,
+                    language: 'en',
+                }}
+                styles={styles.autocomplete}
             />
-            <Text>Duration: </Text>
-            <TextInput/>
-            <View style={{alignItems: 'center', flexDirection: "row"}}>
-                <Text>Date: </Text>
-                <TextInput
-                    value={date}
-                    placeholder="Select a date"
-                    style={{width: '50%', textAlign: 'center'}} 
-                    editable={false}
-                />
-                <View style={styles.icons}>
-                        <TouchableOpacity onPress={() => setCalendarVisible(true)}>
-                            <Ionicons name="calendar-outline" size={24} color="black" />
-                        </TouchableOpacity>
-                </View>
-            </View>
-            
-            <Text>Additional Info: </Text>
-            <TextInput multiline={true} numberOfLines={4}/>
-           
+            <MapView
+                style={styles.map}
+                region={region}
+                onRegionChangeComplete={setRegion}
+            >
+                {fromCoords && (
+                    <Marker
+                        coordinate={fromCoords}
+                        title="From Location"
+                        pinColor="blue" 
+                    />
+                )}
+                {toCoords && (
+                    <Marker
+                        coordinate={toCoords}
+                        title="To Location"
+                        pinColor="red" 
+                    />
+                )}
+
+                {fromCoords && toCoords && (
+                    <MapViewDirections
+                        origin={fromCoords}
+                        destination={toCoords}
+                        apikey={GOOGLE_MAPS_API_KEY}
+                        strokeWidth={5}
+                        strokeColor="hotpink"
+                        optimizeWaypoints={true}
+                        travelMode="DRIVING"
+                        waypoints={[]} 
+                    />
+                )}
+            </MapView>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={handleGetDirections}
+            >
+                <Text style={styles.buttonText}>Get Directions</Text>
+            </TouchableOpacity>
             <TouchableOpacity 
                 style={styles.button} 
                 onPress={() => setShouldNavigate(true)} 
             >
                 <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>  
-
-            <Modal
-                transparent={true}
-                visible={isCalendarVisible}
-                animationType="slide"
-                onRequestClose={() => setCalendarVisible(false)}
-            >
-                <TouchableWithoutFeedback onPress={() => setCalendarVisible(false)}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                    <Calendar
-                        onDayPress={day => {
-                            console.log('Selected Day: ', day.dateString);
-                            handleDayPress(day);
-                        }}
-                        markingType={'period'}
-                        markedDates={markedDates}
-                        theme={{
-                            arrowColor: 'maroon',
-                            textDayFontSize: 16,
-                            textMonthFontSize: 16,
-                        }}
-                    />
-                     
-                    </View>
-                </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+            </TouchableOpacity> 
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    margin: 3,
-},
-button: {
-    backgroundColor: 'maroon',
-    borderRadius: 5,
-    width: 300,
-    height: 40,
-    alignItems: 'center',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-},
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        padding: 10,
+    },
+    autocomplete: {
+        container: {
+            flex: 0,
+            width: '100%',
+            marginBottom: 10,
+        },
+        textInput: {
+            height: 40,
+            borderColor: '#ccc',
+            borderWidth: 1,
+            paddingHorizontal: 8,
+        },
+    },
+    button: {
+        backgroundColor: 'maroon',
+        borderRadius: 5,
+        width: '100%',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginVertical: 10,
+    },
     buttonText: {
-    color: '#fff',
-    fontSize: 16,
-},
-icons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-},
-modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-},
-modalContent: {
-    width: '75%',
-    height: '50%',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    alignItems: 'center',
-},
-modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-},
-closeModal: {
-    marginTop: 0,
-    color: '#007BFF',
-    fontSize: 16,
-},
+        color: '#fff',
+        fontSize: 16,
+    },
+    map: {
+        flex: 1,
+        width: '100%',
+        height: 400,
+    },
 });
