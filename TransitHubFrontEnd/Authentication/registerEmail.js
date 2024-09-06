@@ -29,8 +29,9 @@ export default function RegisterEmail() {
       .then(data => {
         console.log('Response from Express backend:', data);
         if (data.isValid === false) {
-          setSuggestions('Email is already taken!');
+          setSuggestions('Email is already used!');
         } else {
+          setSuggestions('');
           navigation.navigate('OTP');
         } 
       })
