@@ -32,7 +32,7 @@ export default function ChooseDate() {
             <View style={styles.calendar}>
                 <Calendar
                     onDayPress={day => {
-                        console.log('selected day', day.dateString);
+                        console.log('Selected Day: ', day.dateString);
                         handleDayPress(day);
                     }}
                     markingType={'period'}
@@ -70,6 +70,9 @@ export default function ChooseDate() {
                             >
                                 <Text style={styles.buttonText}>Close</Text>
                             </TouchableOpacity>
+                               {/* <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                            <Text style={styles.closeModal}>Close</Text>
+                        </TouchableOpacity> */}
                         </View>
                     </View>
                 </View>

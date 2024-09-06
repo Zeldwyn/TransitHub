@@ -3,6 +3,7 @@ import {View,Image,StyleSheet,TouchableOpacity,Text,TextInput,KeyboardAvoidingVi
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
 
 export default function Login() {
   const navigation = useNavigation();
@@ -10,9 +11,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [passwordValidate, setPasswordValidate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
+  
   const handleSubmit = async () => {
-    fetch('http://192.168.1.5:8080/validate-Login', {
+    fetch(`${config.BASE_URL}/validate-Login`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

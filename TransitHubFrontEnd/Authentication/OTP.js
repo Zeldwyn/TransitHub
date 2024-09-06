@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import {  Image, StyleSheet, TouchableOpacity, Text, TextInput, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {  Image, StyleSheet, TouchableOpacity, Text, TextInput, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import config from '../config';
 
 export default function OTP(){
   const navigation = useNavigation();
@@ -9,8 +9,12 @@ export default function OTP(){
   const [otp, setOtp] = useState('');
 
   const handleSubmit = async() => {  
+    Keyboard.dismiss();
     console.log(otp);
-    fetch('http://192.168.1.5:8080/verify-OTP', {
+    if (otp.length !== 6) {
+      return;
+    }
+    fetch(`${config.BASE_URL}/verify-OTP`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -36,7 +40,7 @@ export default function OTP(){
       });
   }
   const handleResendOTP = async() => {
-    fetch('http://192.168.1.5:8080/resend-OTP', {
+    fetch(`${config.BASE_URL}/resend-OTP`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

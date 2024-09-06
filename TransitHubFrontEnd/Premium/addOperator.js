@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View, Text, FlatList} from "react-native";
+import config from '../config';
 
 export default function AddOperator() {
   const [search, setSearch] = useState('');
@@ -20,7 +21,7 @@ export default function AddOperator() {
   },[]);
 
   useEffect(() => {
-    fetch(`http://192.168.1.5:8080/sent-Invites`, {
+    fetch(`${config.BASE_URL}/sent-Invites`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -47,7 +48,7 @@ export default function AddOperator() {
       return;
     }
     try {
-      const response = await fetch(`http://192.168.1.5:8080/search-Operator?search=${search}`, {
+      const response = await fetch(`${config.BASE_URL}/search-Operator?search=${search}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -75,7 +76,7 @@ export default function AddOperator() {
   };
 
   const sendInvite = async(operatorID) => {
-    fetch(`http://192.168.1.5:8080/send-Invite`, {
+    fetch(`${config.BASE_URL}/send-Invite`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',

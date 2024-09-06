@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CheckPasswordValidity } from './functions';
 import { Feather } from '@expo/vector-icons';
 import { RadioButton } from 'react-native-paper';
+import config from '../config';
 
 export default function RegisterDetails(){
   const navigation = useNavigation();
@@ -16,7 +17,7 @@ export default function RegisterDetails(){
 
   const handleSubmit = async() => {
     console.log(firstName, lastName, password);
-    fetch('http://192.168.1.5:8080/add-PremiumUser', {
+    fetch(`${config.BASE_URL}/add-PremiumUser`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

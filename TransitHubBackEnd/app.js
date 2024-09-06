@@ -1,5 +1,6 @@
 //app.js mga SQL statements and routes for API call sa backend
 const express = require('express');
+const session = require('express-session');
 const cors = require('cors');
 const {sendOTP} = require('./mail');
 const {generateOTP, isDeviceIDExists, getGuestID, isConversationExists, setUser, getPremiumID, isInviteExists, getOwnerOperatorID} = require('./functions');
@@ -9,13 +10,13 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(session ({
+    secret: 'hatdog',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {secure: false}
+}));
 
-//let storedOTP = "123456";
-// let storedEmail;
-// let storedOTP;
-//let storedEmail = "nimeop6@gmail.com";
-
-// AUTHENTICATIONS
 app.post('/send-OTP', async (req, res) => { 
     const { email } = req.body;
     const sql = `SELECT email FROM premiumUser WHERE email = ?`;
@@ -28,9 +29,11 @@ app.post('/send-OTP', async (req, res) => {
                 res.status(200).json({ isValid: false});
             } else {
                 console.log('Email is available');
-                storedEmail = email;
                 try {
-                    storedOTP = generateOTP();                 
+                    const generatedOTP = generateOTP(); 
+                    req.session.otp = generatedOTP;
+                    req.session.email = email;
+
                     sendOTP({ email, otp: storedOTP }); 
                     console.log('OTP sent successfully!');
                     res.status(200).json({ message: 'OTP sent successfully', isValid: true }); 
@@ -45,9 +48,10 @@ app.post('/send-OTP', async (req, res) => {
 
 app.post('/verify-OTP', async (req, res) => {
     const {otp} = req.body;
-    // let otp = "123456";
     try {
+        const storedOTP = req.session.otp;
         if(otp === storedOTP) {
+            req.session.otp = null;
             res.status(200).json({ isValid: true });
         } else {
             res.status(400).json({ isValid: false });

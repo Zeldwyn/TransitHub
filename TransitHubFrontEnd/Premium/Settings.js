@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CheckPasswordValidity } from '../Authentication/functions';
+import config from '../config';
 
 export default function Settings(){
   const [firstName, setFirstName] = useState('');
@@ -29,7 +30,7 @@ export default function Settings(){
   };
   useEffect(() => {
     if(pID) {
-      fetch(`http://192.168.1.5:8080/user-Details`, {
+      fetch(`${config.BASE_URL}/user-Details`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -61,7 +62,7 @@ export default function Settings(){
       handleChange();
   };
   const handleChange = async() => {
-      fetch(`http://192.168.1.5:8080/update-UserDetails`, {
+      fetch(`${config.BASE_URL}/update-UserDetails`, {
       method: 'PUT',
       headers: {
         Accept: 'application/json',

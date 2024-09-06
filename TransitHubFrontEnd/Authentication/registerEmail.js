@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView } from 'react-native';
+import config from '../config';
 
 export default function RegisterEmail() {
   const navigation = useNavigation();
@@ -14,7 +15,7 @@ export default function RegisterEmail() {
     }
     
     console.log(email);
-    fetch('http://192.168.1.5:8080/send-OTP', {
+    fetch(`${config.BASE_URL}/send-OTP`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

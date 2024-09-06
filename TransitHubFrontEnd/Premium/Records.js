@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; // Import Ionicons
+import config from '../config';
 
 export default function Records() {
   const [transactionData, setTransactionData] = useState([]);
@@ -20,7 +21,7 @@ export default function Records() {
   }, []);
 
   useEffect(() => {
-    fetch('http://192.168.5.45:8080/display-TransactionPremium', {
+    fetch(`${config.BASE_URL}/display-TransactionPremium`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

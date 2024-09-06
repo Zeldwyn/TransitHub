@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import config from "../config";
 
 export default function OwnerHome() {
     const navigation = useNavigation();
@@ -29,7 +30,7 @@ export default function OwnerHome() {
 
     useEffect(() => {
         if (!isOwner && userType && pID) {
-            fetch(`http://192.168.1.5:8080/received-Invites`, {
+            fetch(`${config.BASE_URL}/received-Invites`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -53,7 +54,7 @@ export default function OwnerHome() {
         Alert.alert( "Confirmation", "Are you sure you want to accept?", [
             { text: "Cancel", style: 'destructive' },{
             text: "Accept", onPress: () => {
-            fetch(`http://192.168.1.5:8080/accept-Invites`, {
+            fetch(`${config.BASE_URL}/accept-Invites`, {
                 method: 'PUT',
                 headers: {
                     Accept: 'application/json',

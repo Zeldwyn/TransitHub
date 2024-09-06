@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal } from 'react-native';
 import io from 'socket.io-client';
-
+import config from '../config';
 
 const socket = io('http://192.168.1.5:8080');
 
@@ -34,7 +34,7 @@ export default function Message() {
 
   useEffect(() => {
     if (pID) {
-      fetch(`http://192.168.1.5:8080/message-Owner`, {
+      fetch(`${config.BASE_URL}/message-Owner`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -67,7 +67,7 @@ export default function Message() {
   }, [currentConversation]);
 
   useEffect(() => {
-    fetch(`http://192.168.1.5:8080/select-Messages`, {
+    fetch(`${config.BASE_URL}/select-Messages`, {
       method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -88,7 +88,7 @@ export default function Message() {
   }, [currentConversation])
 
   const handleConvo = (operatorID, ownerID, firstName, lastName) => {
-    fetch(`http://192.168.1.5:8080/get-ConversationID`, {
+    fetch(`${config.BASE_URL}/get-ConversationID`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
