@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import config from "../config";
-
 
 export default function OperatorHome() {
     const [pID, setPID] = useState('');
@@ -18,7 +16,6 @@ export default function OperatorHome() {
         const getType = async () => {
             const type = await AsyncStorage.getItem('userType');
             const id = await AsyncStorage.getItem('premiumUserID');
-            console.log("Inner:", type, "PremiumUserID:", id);
             if (type === "owner") {
                 setIsOwner(true);
             } else if (type === "operator") {
@@ -36,11 +33,11 @@ export default function OperatorHome() {
         const formattedDate = today.toLocaleDateString('en-US', options);
         setCurrentDate(formattedDate);
 
-        // Sample data for deliveries
+        // Sample data for deliveries, remove if naa nay backend
         const sampleDeliveries = [
-            { id: '1', item: 'Package 1', time: '10:00 AM', from: 'Location A', to: 'Location B', fee: '$10' },
-            { id: '2', item: 'Package 2', time: '12:30 PM', from: 'Location C', to: 'Location D', fee: '$15' },
-            { id: '3', item: 'Package 3', time: '3:15 PM', from: 'Location E', to: 'Location F', fee: '$20' }
+            { id: '1', item: 'Package 1', from: 'Location A', to: 'Location B', fee: '1000' },
+            { id: '2', item: 'Package 2', from: 'Location C', to: 'Location D', fee: '1500' },
+            { id: '3', item: 'Package 3', from: 'Location E', to: 'Location F', fee: '2000' }
         ];
         setDeliveries(sampleDeliveries);
     }, []);
@@ -51,13 +48,14 @@ export default function OperatorHome() {
 
     const renderItem = ({ item }) => (
         <View style={styles.deliveryItem}>
-            <TouchableOpacity onPress={() => handlePress(item.id)}>
-                <Text style={styles.deliveryText}>{item.item} - {item.time}</Text>
+            <TouchableOpacity onPress={() => handlePress(item.id)} style={styles.itemHeader}>
+                <Text style={styles.deliveryText}>{item.item}</Text>
             </TouchableOpacity>
             {expandedItemId === item.id && (
                 <View style={styles.details}>
-                    <Text style={styles.detailText}>To: {item.to}</Text>
-                    <Text style={styles.detailText}>Fee: {item.fee}</Text>
+                    <Text style={styles.detailText}>Pickup Location: {item.from}</Text>
+                    <Text style={styles.detailText}>Delivery Location: {item.to}</Text>
+                    <Text style={styles.detailText}>Fee: ₱{item.fee}</Text>
                     <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('OperatorLive')}>
                         <Text style={styles.startButtonText}>Deliver</Text>
                     </TouchableOpacity>
@@ -70,15 +68,10 @@ export default function OperatorHome() {
         <View style={styles.container}>
             <Text style={styles.welcome}>Welcome To</Text>
             <Image
-                style={{
-                    ...styles.logo,
-                    width: 350,
-                    height: 250,
-                }}
+                style={styles.logo}
                 source={require('../assets/img/blackText.png')}
             />
             <Text style={styles.date}>{currentDate}</Text>
-
             <Text style={styles.label}>Deliveries for today</Text>
             <FlatList
                 data={deliveries}
@@ -94,6 +87,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#ffffff',
+        padding: 20,
     },
     welcome: {
         fontSize: 30,
@@ -101,47 +95,68 @@ const styles = StyleSheet.create({
         marginBottom: 0,
         alignSelf: 'center'
     },
-    label: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        alignSelf: 'center'
+    logo: {
+        marginTop: -50,
+        width: 350,
+        height: 250,
+        alignSelf: 'center',
+        marginVertical: 20,
     },
     date: {
         fontSize: 18,
         fontWeight: 'bold',
-        alignSelf: 'center',
-        marginBottom: 40,
-        marginTop: -30,
-    },
-    logo: {
+        textAlign: 'center',
+        color: '#555',
         marginTop: -50,
-        marginBottom: -30,
-        alignSelf: 'center'
+        marginBottom: 30,
+    },
+    label: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#222',
+        marginBottom: 10,
     },
     deliveryList: {
-        paddingHorizontal: 20,
+        flexGrow: 1,
     },
     deliveryItem: {
-        padding: 10,
+        marginBottom: 10,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    itemHeader: {
+        padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#cccccc',
+        borderBottomColor: '#ddd',
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
     },
     deliveryText: {
-        fontSize: 16,
+        fontSize: 18,
+        color: '#333',
+        fontWeight: 'bold',
     },
     details: {
-        marginTop: 10,
-        padding: 10,
+        padding: 15,
         backgroundColor: '#f0f0f0',
-        borderRadius: 5,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
     },
     detailText: {
         fontSize: 14,
+        color: '#666',
         marginBottom: 5,
     },
     startButton: {
         marginTop: 10,
-        padding: 10,
+        paddingVertical: 10,
         backgroundColor: 'maroon',
         borderRadius: 5,
         alignItems: 'center',
@@ -149,5 +164,6 @@ const styles = StyleSheet.create({
     startButtonText: {
         color: '#ffffff',
         fontSize: 16,
+        fontWeight: 'bold',
     },
 });
