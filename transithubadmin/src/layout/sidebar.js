@@ -21,6 +21,11 @@ const Sidebar = () => {
     navigate(path); 
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/');
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.sidebarContainer}>
@@ -46,7 +51,7 @@ const Sidebar = () => {
               <AccountBoxOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Account</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation("/Login")}>
+            <div style={styles.iconItem} onClick={handleLogout}>
               <LogoutOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Logout</span>}
             </div>

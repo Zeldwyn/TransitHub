@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import Sidebar from "../../layout/sidebar";
 import { userData } from "../data/sampleData";
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
@@ -18,6 +19,14 @@ export default function ManageUser() {
     const [userTypeFilter, setUserTypeFilter] = useState(""); 
     const [dateRange, setDateRange] = useState({ start: "", end: "" }); 
     const itemsPerPage = 15;
+    const navigate = useNavigate(); // Initialize useNavigate
+
+    useEffect(() => {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        if (!isAuthenticated) {
+            navigate('/');
+        }
+    }, [navigate]);
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);
@@ -186,24 +195,22 @@ export default function ManageUser() {
                     user={selectedUser}
                     onClose={handleCloseManageModal}
                     onUpdate={handleUpdateUser}
-               
-                    />
-                )}
-                {/* Update User Modal */}
-                {updateModalOpen && selectedUser && (
-                    <UpdateUserModal
-                        user={selectedUser}
-                        onClose={handleCloseUpdateModal}
-                        onSave={handleSave}
-                    />
-                )}
-                {/* Filter Modal */}
-                <FilterModal
-                    open={filterModalOpen}
-                    onClose={handleCloseFilterModal}
-                    onApply={handleApplyFilters}
                 />
-            </div>
-        );
-    }
-    
+            )}
+            {/* Update User Modal */}
+            {updateModalOpen && selectedUser && (
+                <UpdateUserModal
+                    user={selectedUser}
+                    onClose={handleCloseUpdateModal}
+                    onSave={handleSave}
+                />
+            )}
+            {/* Filter Modal */}
+            <FilterModal
+                open={filterModalOpen}
+                onClose={handleCloseFilterModal}
+                onApply={handleApplyFilters}
+            />
+        </div>
+    );
+}

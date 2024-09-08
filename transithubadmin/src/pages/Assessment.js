@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
@@ -7,8 +8,17 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import Sidebar from "../layout/sidebar";
 import { weeklyData, deliveryRate } from "./data/sampleData";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+
 export default function Assessment() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+    const navigate = useNavigate(); // Initialize useNavigate
+
+    useEffect(() => {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        if (!isAuthenticated) {
+            navigate('/');
+        }
+    }, [navigate]);
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);
@@ -112,15 +122,15 @@ export default function Assessment() {
                                 <h1 className="header">Total Sales</h1>
                             </div>
                             <div className="cardsContainerhalf">
-                            <BarChart width={450} height={300} data={monthlySalesData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="thisMonth" fill="#8884d8" name="Current Month" />
-                                <Bar dataKey="lastMonth" fill="#82ca9d" name="Previous Month" />
-                            </BarChart>
+                                <BarChart width={450} height={300} data={monthlySalesData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="thisMonth" fill="#8884d8" name="Current Month" />
+                                    <Bar dataKey="lastMonth" fill="#82ca9d" name="Previous Month" />
+                                </BarChart>
                             </div>
                         </div>
                         <div className="cardContainerotherhalf">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';  // Import useNavigate
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
@@ -6,15 +6,21 @@ import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import '../styles/style.css';
 import Sidebar from "../../layout/sidebar";
-import { weeklyData, userData, deliveryRate } from "../data/sampleData"; 
+import { weeklyData, userData, deliveryRate } from "../data/sampleData";
 
 export default function Dashboard() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const itemsPerPage = 5;
+    const navigate = useNavigate();
 
-    const navigate = useNavigate(); 
+    useEffect(() => {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        if (!isAuthenticated) {
+            navigate('/');
+        }
+    }, [navigate]);
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);

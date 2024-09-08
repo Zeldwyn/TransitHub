@@ -17,28 +17,48 @@ export default function Login() {
             return;
         }
         try {
-            const response = await fetch(`${config.BASE_URL}/validate-AdminLogin`, { //change ip
+            console.log('Sending request:', { username, password }); // Log request payload
+    
+            const response = await fetch(`${config.BASE_URL}/validate-AdminLogin`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password }),
             });
-
+    
             const result = await response.json();
-
+            console.log('Login Response:', result); // Debugging
+    
             if (result.isValid) {
-                console.log('Login successful');
+                // Store user details in localStorage
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('adminUserID', result.adminUserID || '');
+                localStorage.setItem('username', result.username || ''); // Default empty string if undefined
+                localStorage.setItem('email', result.email || '');
+                localStorage.setItem('firstname', result.firstname || '');
+                localStorage.setItem('lastname', result.lastname || '');
+                localStorage.setItem('phonenumber', result.phonenumber || '');
+    
+                console.log('Stored in localStorage:', {
+                    username: result.username,
+                    email: result.email,
+                    firstname: result.firstname,
+                    lastname: result.lastname,
+                    phonenumber: result.phonenumber,
+                });
+    
                 navigate('/dashboard');
             } else {
-                console.log('Invalid login credentials');
                 setErrorMessage('Invalid login credentials. Please try again.');
             }
         } catch (error) {
-            console.error('Error occurred during login:', error);
+            console.error('Error:', error);
             setErrorMessage('An unexpected error occurred. Please try again later.');
         }
     };
+    
+    
 
     return (
         <div style={styles.page}>
