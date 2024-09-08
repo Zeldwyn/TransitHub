@@ -1,12 +1,11 @@
-// Sample Data for weekly performance, remove if naa nay backend
 export const weeklyData = [
-    { name: "Mon", deliveries: 10, sales: 7000 },
-    { name: "Tue", deliveries: 12, sales: 8500 },
-    { name: "Wed", deliveries: 14, sales: 6000 },
-    { name: "Thu", deliveries: 15, sales: 7200 },
-    { name: "Fri", deliveries: 11, sales: 9000 },
-    { name: "Sat", deliveries: 9, sales: 9500 },
-    { name: "Sun", deliveries: 8, sales: 5300 }
+    { name: "Mon", deliveries: 2, sales: 3000 }, 
+    { name: "Tue", deliveries: 1, sales: 4500 }, 
+    { name: "Wed", deliveries: 1, sales: 2000 }, 
+    { name: "Thu", deliveries: 1, sales: 1200 }, 
+    { name: "Fri", deliveries: 1, sales: 600 }, 
+    { name: "Sat", deliveries: 1, sales: 900 },
+    { name: "Sun", deliveries: 1, sales: 1000 }   
 ];
 
 
@@ -41,6 +40,14 @@ export const deliveryRate = [
     {
         toLocation: "Ace Medical Center, City of Cebu, CB, Philippines",
         fromLocation: "Wash n Dry, City of Cebu, CB, Philippines",
+        status: "Arrived",
+        dateCreated: "2024-09-01 23:45:39",
+        operator: "Isabella Gonzalez",
+        owner: "Delwin Gauson"
+    },
+    {
+        toLocation: "Sophia's Bread & Pastries, CB, Philippines",
+        fromLocation: "Berdon's Residence, City of Cebu, CB, Philippines",
         status: "Arrived",
         dateCreated: "2024-09-01 23:45:39",
         operator: "Isabella Gonzalez",

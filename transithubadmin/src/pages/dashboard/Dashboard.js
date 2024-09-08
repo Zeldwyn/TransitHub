@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
@@ -6,21 +7,19 @@ import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import '../styles/style.css';
 import Sidebar from "../../layout/sidebar";
 import { weeklyData, userData, deliveryRate } from "../data/sampleData"; 
-import Modal from '../../layout/manageModal';
 
 export default function Dashboard() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const itemsPerPage = 5;
+
+    const navigate = useNavigate(); 
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);
     };
 
-    // Calculate total deliveries and sales
     const totalDeliveries = weeklyData.reduce((total, day) => total + day.deliveries, 0);
     const totalSales = weeklyData.reduce((total, day) => total + day.sales, 0);
 
@@ -56,13 +55,8 @@ export default function Dashboard() {
     };
 
     const handleManageClick = (user) => {
-        setSelectedUser(user);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setSelectedUser(null);
+        // Navigate to /manage-user route
+        navigate('/manage-user');
     };
 
     return (
@@ -83,7 +77,7 @@ export default function Dashboard() {
                             </div>
                             <div className="card">
                                 <AttachMoneyOutlinedIcon className="icon" />
-                                <p>${totalSales.toLocaleString()}</p>
+                                <p>₱{totalSales.toLocaleString()}</p>
                                 <h2>Total Sales</h2>
                             </div>
                             <div className="card">
@@ -159,13 +153,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
-
-                {isModalOpen && (
-                    <Modal 
-                        user={selectedUser} 
-                        onClose={handleCloseModal} 
-                    />
-                )}
             </div>
         </div>
     );

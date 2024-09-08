@@ -1,7 +1,7 @@
 import React from "react";
-import '../pages/styles/style.css'; // Ensure this path is correct
+import '../pages/styles/style.css';
 
-const Modal = ({ user, onClose, onUpdate, onDelete }) => {
+const ManageUserModal = ({ user, onClose, onUpdate, onDelete }) => {
     return (
         <div className="modal-overlay">
             <div className="modal-container">
@@ -16,7 +16,6 @@ const Modal = ({ user, onClose, onUpdate, onDelete }) => {
                     <p>Last Name: {user.lastName}</p>
                     <p>User Type: {user.userType}</p>
                     <p>Date Created: {user.dateCreated}</p>
-                    {/* Add more user details here */}
                 </div>
                 <div className="button-container">
                     <button
@@ -37,4 +36,4 @@ const Modal = ({ user, onClose, onUpdate, onDelete }) => {
     );
 };
 
-export default Modal;
+export default ManageUserModal;

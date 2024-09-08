@@ -230,3 +230,58 @@
     background-color: #2e605b; /* Darker shade on hover */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
 }
+/* Input Styles for Modals */
+.modal-body .input-group {
+    margin-bottom: 15px;
+}
+
+.modal-body .input-group label {
+    display: block;
+    font-size: 16px;
+    color: #e0e0e0;
+    margin-bottom: 5px;
+}
+
+.modal-body .input-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #171821;
+    color: white;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.modal-body .input-group input:focus {
+    border-color: #4DB6AC;
+    outline: none;
+    box-shadow: 0 0 5px rgba(77, 182, 172, 0.5);
+}
+
+/* Ensure consistent spacing and styling */
+.modal-body .input-group input[type="password"] {
+    font-family: 'Roboto', sans-serif; /* Make sure password inputs have consistent font */
+}
+.filterButton {
+    background-color: #4DB6AC;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.filterButton:hover {
+    background-color: #00796B;
+}
+/* Modal Input Styles */
+.modal-input {
+    background-color: #171821;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 5px;
+}
+

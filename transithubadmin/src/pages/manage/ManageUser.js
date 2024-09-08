@@ -3,14 +3,20 @@ import Sidebar from "../../layout/sidebar";
 import { userData } from "../data/sampleData";
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import '../styles/style.css';
-import Modal from '../../layout/manageModal';
+import ManageUserModal from '../../layout/manageUserModal';
+import UpdateUserModal from '../../layout/updateUserModal';
+import FilterModal from '../../layout/filterModal'; // Import the new FilterModal component
 
 export default function ManageUser() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
-    const [modalOpen, setModalOpen] = useState(false); 
-    const [selectedUser, setSelectedUser] = useState(null); 
+    const [modalOpen, setModalOpen] = useState(false);
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [filterModalOpen, setFilterModalOpen] = useState(false); // New state for filter modal
+    const [userTypeFilter, setUserTypeFilter] = useState(""); 
+    const [dateRange, setDateRange] = useState({ start: "", end: "" }); 
     const itemsPerPage = 15;
 
     const toggleSidebar = () => {
@@ -18,18 +24,40 @@ export default function ManageUser() {
     };
 
     const handleManageClick = (user) => {
-        setSelectedUser(user); 
+        setSelectedUser(user);
         setModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setModalOpen(false); // Close the modal
-        setSelectedUser(null); // Clear selected user
+    const handleCloseManageModal = () => {
+        setModalOpen(false);
+        setSelectedUser(null);
     };
 
-    const filteredOwners = userData.filter(user =>
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleUpdateUser = () => {
+        setModalOpen(false);
+        setUpdateModalOpen(true);
+    };
+
+    const handleCloseUpdateModal = () => {
+        setUpdateModalOpen(false);
+    };
+
+    const handleSave = (updatedUser) => {
+        console.log("Updated user:", updatedUser);
+        setUpdateModalOpen(false);
+    };
+
+    const applyFilters = (user) => {
+        const matchesSearchTerm = `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesUserType = userTypeFilter ? user.userType === userTypeFilter : true;
+        const matchesDateRange = dateRange.start && dateRange.end
+            ? new Date(user.dateCreated) >= new Date(dateRange.start) &&
+              new Date(user.dateCreated) <= new Date(dateRange.end)
+            : true;
+        return matchesSearchTerm && matchesUserType && matchesDateRange;
+    };
+
+    const filteredOwners = userData.filter(applyFilters);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -64,6 +92,19 @@ export default function ManageUser() {
         document.body.removeChild(link);
     };
 
+    const handleFilterClick = () => {
+        setFilterModalOpen(true);
+    };
+
+    const handleCloseFilterModal = () => {
+        setFilterModalOpen(false);
+    };
+
+    const handleApplyFilters = (filters) => {
+        setUserTypeFilter(filters.userType);
+        setDateRange({ start: filters.startDate, end: filters.endDate });
+    };
+
     return (
         <div className="page">
             <Sidebar onToggle={toggleSidebar} />
@@ -81,6 +122,9 @@ export default function ManageUser() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="searchInput"
                                     />
+                                    <button onClick={handleFilterClick} className="filterButton">
+                                        Filter
+                                    </button>
                                     <button onClick={exportToCSV} className="exportButton">
                                         <FileDownloadOutlinedIcon style={{ marginRight: '5px' }} /> Export
                                     </button>
@@ -136,10 +180,30 @@ export default function ManageUser() {
                 </div>
             </div>
 
-            {/* Modal Component */}
+            {/* Manage User Modal */}
             {modalOpen && selectedUser && (
-                <Modal user={selectedUser} onClose={handleCloseModal} />
-            )}
-        </div>
-    );
-}
+                <ManageUserModal
+                    user={selectedUser}
+                    onClose={handleCloseManageModal}
+                    onUpdate={handleUpdateUser}
+               
+                    />
+                )}
+                {/* Update User Modal */}
+                {updateModalOpen && selectedUser && (
+                    <UpdateUserModal
+                        user={selectedUser}
+                        onClose={handleCloseUpdateModal}
+                        onSave={handleSave}
+                    />
+                )}
+                {/* Filter Modal */}
+                <FilterModal
+                    open={filterModalOpen}
+                    onClose={handleCloseFilterModal}
+                    onApply={handleApplyFilters}
+                />
+            </div>
+        );
+    }
+    
