@@ -18,6 +18,7 @@ export default function Account() {
                         <div className="cardContainer">
                             <div className="titlesContainer">
                                 <h1 className="header">Personal Information</h1>
+                                
                             </div>
                         </div>
                     </div>

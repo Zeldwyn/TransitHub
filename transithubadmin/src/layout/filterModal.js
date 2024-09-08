@@ -26,7 +26,6 @@ const FilterModal = ({ open, onClose, onApply }) => {
                     <MenuItem value="">Any</MenuItem>
                     <MenuItem value="Operator">Operator</MenuItem>
                     <MenuItem value="Owner">Owner</MenuItem>
-                    {/* Add more user types if needed */}
                 </TextField>
                 <TextField
                     type="date"

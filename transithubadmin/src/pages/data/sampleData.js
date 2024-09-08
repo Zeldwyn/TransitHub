@@ -1,11 +1,11 @@
 export const weeklyData = [
-    { name: "Mon", deliveries: 2, sales: 3000 }, 
-    { name: "Tue", deliveries: 1, sales: 4500 }, 
-    { name: "Wed", deliveries: 1, sales: 2000 }, 
-    { name: "Thu", deliveries: 1, sales: 1200 }, 
-    { name: "Fri", deliveries: 1, sales: 600 }, 
-    { name: "Sat", deliveries: 1, sales: 900 },
-    { name: "Sun", deliveries: 1, sales: 1000 }   
+    { name: "Mon", deliveries: 3, sales: 1500 }, 
+    { name: "Tue", deliveries: 2, sales: 2250 }, 
+    { name: "Wed", deliveries: 1, sales: 1500 }, 
+    { name: "Thu", deliveries: 4, sales: 4000 }, 
+    { name: "Fri", deliveries: 5, sales: 2500 }, 
+    { name: "Sat", deliveries: 6, sales: 2000 },
+    { name: "Sun", deliveries: 4, sales: 1500 }
 ];
 
 
@@ -41,7 +41,7 @@ export const deliveryRate = [
         toLocation: "Ace Medical Center, City of Cebu, CB, Philippines",
         fromLocation: "Wash n Dry, City of Cebu, CB, Philippines",
         status: "Arrived",
-        dateCreated: "2024-09-01 23:45:39",
+        dateCreated: "2024-09-01 09:30:00",
         operator: "Isabella Gonzalez",
         owner: "Delwin Gauson"
     },
@@ -49,8 +49,8 @@ export const deliveryRate = [
         toLocation: "Sophia's Bread & Pastries, CB, Philippines",
         fromLocation: "Berdon's Residence, City of Cebu, CB, Philippines",
         status: "Arrived",
-        dateCreated: "2024-09-01 23:45:39",
-        operator: "Isabella Gonzalez",
+        dateCreated: "2024-09-01 11:45:39",
+        operator: "Sophia Brown",
         owner: "Delwin Gauson"
     },
     {
@@ -72,33 +72,9 @@ export const deliveryRate = [
     {
         toLocation: "University of Cebu, City of Cebu, CB, Philippines",
         fromLocation: "Cebu Doctors' University, City of Cebu, CB, Philippines",
-        status: "Cancelled",
-        dateCreated: "2024-09-04 09:30:18",
-        operator: "Evelyn Jackson",
-        owner: "Benjamin Hernandez"
-    },
-    {
-        toLocation: "Cebu South Road Properties, City of Cebu, CB, Philippines",
-        fromLocation: "Cebu North Bus Terminal, City of Cebu, CB, Philippines",
         status: "Arrived",
-        dateCreated: "2024-09-05 16:45:37",
-        operator: "Amelia Taylor",
-        owner: "Lucas Thomas"
-    },
-    {
-        toLocation: "Robinsons Galleria Cebu, City of Cebu, CB, Philippines",
-        fromLocation: "SM Seaside City Cebu, City of Cebu, CB, Philippines",
-        status: "Cancelled",
-        dateCreated: "2024-09-06 11:05:22",
+        dateCreated: "2024-09-04 09:30:18",
         operator: "Olivia Davis",
         owner: "William Garcia"
-    },
-    {
-        toLocation: "Cebu Technological University, City of Cebu, CB, Philippines",
-        fromLocation: "Cebu International Convention Center, City of Cebu, CB, Philippines",
-        status: "Arrived",
-        dateCreated: "2024-09-07 13:25:40",
-        operator: "Sophia Brown",
-        owner: "Michael Williams"
     }
 ];

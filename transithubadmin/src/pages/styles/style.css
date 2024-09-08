@@ -56,6 +56,29 @@
     color: white;
     box-sizing: border-box;
 }
+.cardWrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%; /* Ensure it takes the full width of the parent container */
+}
+.cardContainerhalf, .cardContainerotherhalf {
+    background-color: #21222D;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    overflow: auto;
+    margin-bottom: 20px;
+}
+
+.cardContainerhalf {
+    width: 40%; /* Adjust to fit your layout */
+}
+
+.cardContainerotherhalf {
+    width: 58%; /* Adjust to fit your layout */
+}
 
 .card {
     background-color: #171821;
