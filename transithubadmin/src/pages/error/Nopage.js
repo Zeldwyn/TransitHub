@@ -1,5 +1,5 @@
 import React from "react";
-import Logo from "../img/blackText.png";
+import Logo from "../../img/blackText.png";
 
 export default function NoPage() {
     const goBack = () => {

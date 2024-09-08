@@ -1,5 +1,5 @@
 import React from "react";
-import Sidebar from "../components/sidebar"; 
+import Sidebar from "../layout/sidebar"; 
 
 export default function Organizer() {
     return (
@@ -13,7 +13,7 @@ export default function Organizer() {
 
 const styles = {
     page: {
-        backgroundColor: "white",
+        backgroundColor: "#1A1A2E",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "row", 

@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "../layout/sidebar"; 
 
-export default function Feedback() {
+export default function Settings() {
     return (
         <div style={styles.page}>
             <Sidebar />

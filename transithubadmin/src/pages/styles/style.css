@@ -1,0 +1,232 @@
+
+.page {
+    background-color: #1A1A2E;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    overflow: auto;
+}
+
+.mainContainer {
+    padding: 15px;
+    flex: 1;
+    margin-left: 10px;
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease-in-out;
+    margin-left: 30px; 
+    flex-grow: 1;
+}
+.mainContainer.expanded {
+    margin-left: 180px;
+}
+
+.cardContainer {
+    background-color: #21222D;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    margin-bottom: 20px;
+}
+
+.titlesContainer {
+    margin-bottom: 20px;
+}
+
+.header {
+    margin-top: -10px;
+    color: #FFF;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.subHeader {
+    margin-top: -10px;
+    color: #A0A0A0;
+    text-align: left;
+}
+
+.cardsContainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+    color: white;
+    box-sizing: border-box;
+}
+
+.card {
+    background-color: #171821;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    color: white;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.icon {
+    font-size: 50px;
+    color: #4DB6AC;
+    margin-bottom: 10px;
+}
+
+.tableContainer {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px;
+    color: white;
+}
+
+.th {
+    padding: 10px;
+    text-align: left;
+}
+
+.td {
+    padding: 10px;
+    border-bottom: 2px solid #444;
+}
+
+.paginationContainer {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.paginationButton {
+    background-color: #21222D;
+    border: none;
+    color: white;
+    padding: 10px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.manageButton {
+    background-color: #4DB6AC;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.manageButton:hover {
+    background-color: #2e605b; /* Darker shade on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+}
+
+.headerWithSearch {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.searchInput {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #171821;
+    color: white;
+    width: 200px;
+    margin-left: 20px;
+}
+.searchExportContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.exportButton {
+    background-color:#4DB6AC;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.exportButton:hover {
+    background-color: #2e605b;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2)
+}
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Container */
+.modal-container {
+    background-color: #21222D;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 600px;
+    width: 80%;
+    position: relative;
+    z-index: 1000; /* Ensure the modal appears above the overlay */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Close Button */
+.close-button {
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px; /* Space between buttons */
+}
+
+/* Buttons */
+.modal-button {
+    background-color: #4DB6AC;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+}
+
+/* Hover Effects for Update Button */
+.modal-button:hover {
+    background-color: #2e605b; /* Darker shade on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+}

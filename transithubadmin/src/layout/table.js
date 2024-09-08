@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./modal";
 import UpdateModal from "./updatemodal";
+import config from "../config";
 
-export default function Table() {
+const Table = () => {
     const [premiumUsers, setPremiumUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +22,7 @@ export default function Table() {
 
     const fetchPremiumUsers = async () => {
         try {
-            const response = await fetch("http://192.168.1.5:8080/premiumUsers");
+            const response = await fetch(`${config.BASE_URL}/premiumUsers`);
             if (!response.ok) {
                 throw new Error('Failed to fetch premium users');
             }
@@ -186,3 +187,5 @@ const styles = {
         marginRight: "5px",
     },
 };
+
+export default Table;

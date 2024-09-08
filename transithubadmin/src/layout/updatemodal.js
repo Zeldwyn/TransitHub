@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import config from "../config";
 
 const UpdateModal = ({ premiumUserID, onClose, onUpdate }) => {
     const [updatedUserDetails, setUpdatedUserDetails] = useState({
@@ -11,7 +12,7 @@ const UpdateModal = ({ premiumUserID, onClose, onUpdate }) => {
     useEffect(() => {
         const fetchUserDetails = async () => {
             try {
-                const response = await fetch(`http://192.168.1.5:8080/premiumUsers/${premiumUserID}`);
+                const response = await fetch(`${config.BASE_URL}/premiumUsers/${premiumUserID}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch user details');
                 }

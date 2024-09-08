@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import ConstructionOutlinedIcon from '@mui/icons-material/ConstructionOutlined';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
+import AccountBoxOutlinedIcon from '@mui/icons-material/AccountBoxOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import { useNavigate } from "react-router-dom";
-import logo from '../img/blackText.png';
 
-export default function Sidebar() {
+const Sidebar = () => {
   const [showLabels, setShowLabels] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
@@ -24,7 +23,6 @@ export default function Sidebar() {
 
   return (
     <div style={styles.container}>
-      <img src={logo} alt="Logo" style={{ ...styles.logo, marginLeft: expanded ? '180px' : '30px' }} />
       <div style={styles.sidebarContainer}>
         <div style={{ ...styles.sidebar, width: expanded ? "180px" : "30px" }}>
           <div style={styles.toggleButton} onClick={toggleSidebar}>
@@ -32,25 +30,25 @@ export default function Sidebar() {
           </div>
           <div style={styles.logoContainer}></div>
           <div style={styles.iconsContainer}>
-            <div style={styles.iconItem} onClick={() => handleNavigation("/home")}>
-              <HomeOutlinedIcon style={styles.icon} />
-              {showLabels && <span style={styles.label}>Home</span>}
+            <div style={styles.iconItem} onClick={() => handleNavigation("/dashboard")}>
+              <DashboardOutlinedIcon style={styles.icon} />
+              {showLabels && <span style={styles.label}>Dashboard</span>}
             </div>
             <div style={styles.iconItem} onClick={() => handleNavigation("/manage-user")}>
               <PersonOutlineOutlinedIcon style={styles.icon} />
               {showLabels && <span style={styles.label}>Manage</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation("/maintenance")}>
-              <ConstructionOutlinedIcon style={styles.icon} />
-              {showLabels && <span style={styles.label}>Maintenance</span>}
+            <div style={styles.iconItem} onClick={() => handleNavigation("/assessment")}>
+              <AssessmentOutlinedIcon style={styles.icon} />
+              {showLabels && <span style={styles.label}>Assessment</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation("/organizer")}>
-              <CalendarMonthOutlinedIcon style={styles.icon} />
-              {showLabels && <span style={styles.label}>Organizer</span>}
+            <div style={styles.iconItem} onClick={() => handleNavigation("/account")}>
+              <AccountBoxOutlinedIcon style={styles.icon} />
+              {showLabels && <span style={styles.label}>Account</span>}
             </div>
-            <div style={styles.iconItem} onClick={() => handleNavigation("/settings")}>
-              <SettingsOutlinedIcon style={styles.icon} />
-              {showLabels && <span style={styles.label}>Settings</span>}
+            <div style={styles.iconItem} onClick={() => handleNavigation("/Login")}>
+              <LogoutOutlinedIcon style={styles.icon} />
+              {showLabels && <span style={styles.label}>Logout</span>}
             </div>
           </div>
         </div>
@@ -71,7 +69,7 @@ const styles = {
     bottom: 0,
   },
   sidebar: {
-    backgroundColor: "#8A252C",
+    backgroundColor: "#1A1A2E",
     padding: "25px",
     overflowX: "hidden",
     borderTopRightRadius: "10px",
@@ -124,3 +122,5 @@ const styles = {
     marginRight: "10px",
   },
 };
+
+export default Sidebar;

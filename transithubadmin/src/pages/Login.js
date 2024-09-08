@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import logo from "../img/blackText.png";
+import logo from "../img/whiteText.png";
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Login() {
             return;
         }
         try {
-            const response = await fetch('http://192.168.1.6:8080/validate-AdminLogin', { //change ip
+            const response = await fetch(`${config.BASE_URL}/validate-AdminLogin`, { //change ip
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export default function Login() {
 
             if (result.isValid) {
                 console.log('Login successful');
-                navigate('/home');
+                navigate('/dashboard');
             } else {
                 console.log('Invalid login credentials');
                 setErrorMessage('Invalid login credentials. Please try again.');
@@ -78,7 +79,7 @@ export default function Login() {
 
 const styles = {
     page: {
-        backgroundColor: "#E3B130",
+        backgroundColor: "#1A1A2E",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -86,7 +87,7 @@ const styles = {
         justifyContent: "center",
     },
     container: {
-        backgroundColor: "#E3B130",
+        backgroundColor: "#1A1A2E",
         padding: 20,
         borderRadius: 10,
         display: "flex",
@@ -102,6 +103,7 @@ const styles = {
     },
     label: {
         marginBottom: 5,
+        color: "white",
     },
     input: {
         width: "30%",
