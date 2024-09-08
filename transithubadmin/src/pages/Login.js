@@ -117,7 +117,7 @@ const styles = {
     },
     button: {
         marginTop: 10,
-        backgroundColor: "#8A252C",
+        backgroundColor: "#4DB6AC",
         color: "#fff",
         borderRadius: 5,
         padding: "10px 20px",
