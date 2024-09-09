@@ -35,9 +35,9 @@ export default function OperatorHome() {
 
         // Sample data for deliveries, remove if naa nay backend
         const sampleDeliveries = [
-            { id: '1', item: 'Package 1', from: 'Location A', to: 'Location B', fee: '1000' },
-            { id: '2', item: 'Package 2', from: 'Location C', to: 'Location D', fee: '1500' },
-            { id: '3', item: 'Package 3', from: 'Location E', to: 'Location F', fee: '2000' }
+            { id: '1', item: 'Client', from: 'Location A', to: 'Location B', fee: '1000' },
+            { id: '2', item: 'Client', from: 'Location C', to: 'Location D', fee: '1500' },
+            { id: '3', item: 'Client', from: 'Location E', to: 'Location F', fee: '2000' }
         ];
         setDeliveries(sampleDeliveries);
     }, []);

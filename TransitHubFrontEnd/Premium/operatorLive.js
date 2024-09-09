@@ -12,28 +12,47 @@ export default function OperatorLive() {
     const [deliveryStatus, setDeliveryStatus] = useState('In Progress');
     const [currentPosition, setCurrentPosition] = useState(null);
     const [estimatedTime, setEstimatedTime] = useState(null);
-    const [panelHeight] = useState(new Animated.Value(70));
-    const [containerOffset] = useState(new Animated.Value(0));
+    const [distance, setDistance] = useState(null);
+    const [note, setNote] = useState('');
+    const [panelHeight] = useState(new Animated.Value(75));
     const [panelExpanded, setPanelExpanded] = useState(false);
-    const mapRef = useRef(null); // Create a ref for MapView
+    const [locationPromptVisible, setLocationPromptVisible] = useState(false);
+    const mapRef = useRef(null);
 
-    // temporary, ilisa if nanay backend, btw pardo ni
-    const deliveryAddress = { latitude: 10.283431, longitude: 123.859688 };    
+    const deliveryAddress = { latitude: 10.283431, longitude: 123.859688 };
 
     useEffect(() => {
+        let locationSubscription;
         (async () => {
+            const servicesEnabled = await Location.hasServicesEnabledAsync();
+            if (!servicesEnabled) {
+                setLocationPromptVisible(true);
+                return;
+            }
+
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 console.log('Permission to access location was denied');
                 return;
             }
 
-            let location = await Location.getCurrentPositionAsync({});
-            setCurrentPosition({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            });
+            locationSubscription = await Location.watchPositionAsync(
+                { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
+                (location) => {
+                    console.log('Location update:', location);
+                    setCurrentPosition({
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude,
+                    });
+                }
+            );
         })();
+
+        return () => {
+            if (locationSubscription) {
+                locationSubscription.remove();
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -43,16 +62,14 @@ export default function OperatorLive() {
                 longitude: currentPosition.longitude,
                 latitudeDelta: 0.0922,
                 longitudeDelta: 0.0421,
-            }, 1000); // 1-second animation
+            }, 1000);
         }
     }, [currentPosition]);
 
     useEffect(() => {
         if (currentPosition) {
             const distanceToDestination = haversine(currentPosition, deliveryAddress, { unit: 'meter' });
-            if (distanceToDestination < 50) {
-                setFinishButtonEnabled(true);
-            }
+            setFinishButtonEnabled(distanceToDestination < 50);
         }
     }, [currentPosition]);
 
@@ -65,53 +82,62 @@ export default function OperatorLive() {
         if (currentPosition && routeVisible) {
             const origins = `${currentPosition.latitude},${currentPosition.longitude}`;
             const destinations = `${deliveryAddress.latitude},${deliveryAddress.longitude}`;
-
+    
             try {
                 const response = await fetch(
                     `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&departure_time=now&key=${GOOGLE_MAPS_API_KEY}`
                 );
                 const data = await response.json();
-                if (data.rows && data.rows[0].elements[0].duration_in_traffic) {
-                    setEstimatedTime(data.rows[0].elements[0].duration_in_traffic.text);
+    
+                if (data.status === 'ZERO_RESULTS') {
+                    console.warn('No route found between the origin and destination.');
+                    setEstimatedTime('No route available');
+                    setDistance('N/A');
+                    return;
+                }
+    
+                const duration = data?.rows?.[0]?.elements?.[0]?.duration_in_traffic?.value;
+    
+                if (duration) {
+                    const minutes = Math.floor(duration / 60);
+                    const hours = Math.floor(minutes / 60);
+                    setEstimatedTime(hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`);
                 } else {
                     setEstimatedTime('ETA not available');
                 }
+    
+                const distanceInMeters = haversine(currentPosition, deliveryAddress, { unit: 'meter' });
+                setDistance((distanceInMeters / 1000).toFixed(2));
+    
             } catch (error) {
                 console.error('Error fetching ETA:', error);
                 setEstimatedTime('Error calculating ETA');
             }
         }
-    };
+    };    
 
     const handleFinishDelivery = () => {
-        setDeliveryStatus('Completed');
-        setRouteVisible(false); // Optionally hide route on completion
+        setDeliveryStatus("Delivered");
+        setRouteVisible(false);
     };
 
     const handleCancelDelivery = () => {
         setRouteVisible(false);
         setFinishButtonEnabled(false);
-        setDeliveryStatus('In Progress');
         setEstimatedTime(null);
+        setDeliveryStatus("Cancelled");
+        setDistance(null);
         setCurrentPosition(null);
     };
 
     const togglePanel = () => {
-        const toPanelHeight = panelExpanded ? 70 : 180;
-        const toContainerOffset = panelExpanded ? 0 : 0;
+        const toPanelHeight = panelExpanded ? 75 : 300;
 
-        Animated.parallel([
-            Animated.timing(panelHeight, {
-                toValue: toPanelHeight,
-                duration: 300,
-                useNativeDriver: false,
-            }),
-            Animated.timing(containerOffset, {
-                toValue: toContainerOffset,
-                duration: 300,
-                useNativeDriver: false,
-            })
-        ]).start();
+        Animated.timing(panelHeight, {
+            toValue: toPanelHeight,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
 
         setPanelExpanded(!panelExpanded);
     };
@@ -121,10 +147,15 @@ export default function OperatorLive() {
         longitude: -122.4194
     };
 
+    const handlePromptClose = () => {
+        setLocationPromptVisible(false);
+        // Optionally redirect the user to the device settings
+    };
+
     return (
-        <Animated.View style={[styles.container, { transform: [{ translateY: containerOffset }] }]}>
+        <View style={styles.container}>
             <MapView
-                ref={mapRef} // Attach the ref to MapView
+                ref={mapRef}
                 style={styles.map}
                 initialRegion={{
                     latitude: currentPosition ? currentPosition.latitude : defaultCoordinates.latitude,
@@ -133,11 +164,12 @@ export default function OperatorLive() {
                     longitudeDelta: 0.0421,
                 }}
                 showsUserLocation={true}
+                showsTraffic={true}
                 onUserLocationChange={(event) => {
                     const newPosition = event.nativeEvent.coordinate;
                     setCurrentPosition(newPosition);
                     if (routeVisible) {
-                        calculateETA(); // Update ETA as the user moves when the route is visible
+                        calculateETA();
                     }
                 }}
             >
@@ -151,8 +183,8 @@ export default function OperatorLive() {
                         origin={currentPosition}
                         destination={deliveryAddress}
                         apikey={GOOGLE_MAPS_API_KEY}
-                        strokeWidth={4}
-                        strokeColor="blue"
+                        strokeWidth={5}
+                        strokeColor="green"
                     />
                 )}
             </MapView>
@@ -162,9 +194,18 @@ export default function OperatorLive() {
                     <Text style={styles.expandButtonText}>{panelExpanded ? 'Collapse' : 'Expand'}</Text>
                 </TouchableOpacity>
                 <View style={styles.statusTextContainer}>
-                    <Text style={styles.statusText}>Delivery Status: {deliveryStatus}</Text>
-                    {routeVisible && estimatedTime && (
-                        <Text style={styles.statusText}>ETA: {estimatedTime}</Text>
+                    {routeVisible && (
+                        <>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailTextBold}>{distance || 'Calculating...'}</Text>
+                                <Text style={styles.detailTextBold}>{estimatedTime || 'Calculating...'}</Text>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>DISTANCE</Text>
+                                <Text style={styles.detailLabel}>ESTIMATED DELIVERY TIME</Text>
+                            </View>
+                            <Text style={styles.Note}>Note: {note || 'No additional note'}</Text>
+                        </>
                     )}
                 </View>
                 <View style={styles.buttonsContainer}>
@@ -182,65 +223,123 @@ export default function OperatorLive() {
                             >
                                 <Text style={styles.buttonText}>Finish Delivery</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.button, { backgroundColor: 'red' }]} onPress={handleCancelDelivery}>
+
+                            <TouchableOpacity style={styles.button} onPress={handleCancelDelivery}>
                                 <Text style={styles.buttonText}>Cancel Delivery</Text>
                             </TouchableOpacity>
                         </>
                     )}
                 </View>
             </Animated.View>
-        </Animated.View>
+
+            {locationPromptVisible && (
+                <View style={styles.promptContainer}>
+                    <Text style={styles.promptText}>Please enable location services to proceed with delivery tracking.</Text>
+                    <TouchableOpacity style={styles.promptButton} onPress={handlePromptClose}>
+                        <Text style={styles.promptButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     map: {
-        flex: 1,
+        ...StyleSheet.absoluteFillObject,
     },
     statusContainer: {
-        padding: 15,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderColor: '#ddd',
-        overflow: 'hidden',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    expandButton: {
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    expandButtonText: {
+        fontSize: 16,
+        color: '#800000',
+    },
+    statusTextContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    detailRow: {
+        marginTop:25,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    detailTextBold: {
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    detailLabel: {
+        color: '#888888',
+        fontSize: 14,
+    },
+    Note: {
+        marginTop: 10,
+        color: '#555555',
+        fontSize: 12,
     },
     buttonsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginVertical: 10,
+        justifyContent: 'space-around',
     },
     button: {
-        backgroundColor: 'maroon',
-        padding: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        backgroundColor: '#800000',
         borderRadius: 5,
-        width: 140,
-        alignItems: 'center',
     },
     buttonText: {
-        color: '#fff',
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: 'bold',
     },
-    statusTextContainer: {
-        marginTop: 10,
-    },
-    statusText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    expandButton: {
-        padding: 10,
-        backgroundColor: 'maroon',
+    promptContainer: {
+        position: 'absolute',
+        bottom: 80,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        padding: 20,
+        borderRadius: 10,
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    promptText: {
+        fontSize: 16,
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    promptButton: {
+        backgroundColor: '#007BFF',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         borderRadius: 5,
     },
-    expandButtonText: {
-        color: '#fff',
+    promptButtonText: {
+        color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: 'bold',
     },
 });
+
