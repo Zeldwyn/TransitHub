@@ -99,27 +99,42 @@ app.post('/add-PremiumUser', async (req, res) => {
 
 app.post('/validate-AdminLogin', (req, res) => {
     const { username, password } = req.body;
-    const sql = `SELECT username, password, role, adminUserID FROM adminUser WHERE username = ?`;
+    const sql = `SELECT username, password, email, firstname, lastname, phonenumber, adminUserID FROM adminUser WHERE username = ?`;
+
     pool.query(sql, [username], (err, result) => {
         if (err) {
             console.error('Server Side Error', err);
-            res.status(500).json({ success: false, error: 'Internal server error' });
-        } else {
-            if (result.length > 0) {
-                if (password === result[0].password) {
-                    console.log('Login successful');
-                    res.status(200).json({ isValid: true, role: result[0].role, id: result[0].adminUserID });
-                } else {
-                    console.log('Invalid login credentials');
-                    res.status(400).json({ isValid: false });
-                }
+            return res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+
+        if (result.length > 0) {
+            // Check if the provided password matches the stored password directly
+            const storedPassword = result[0].password;
+
+            if (password === storedPassword) {
+                console.log('Login successful');
+                return res.status(200).json({
+                    isValid: true,
+                    adminUserID: result[0].adminUserID,
+                    username: result[0].username,
+                    email: result[0].email,
+                    firstname: result[0].firstname,
+                    lastname: result[0].lastname,
+                    phonenumber: result[0].phonenumber
+                });
             } else {
                 console.log('Invalid login credentials');
-                res.status(400).json({ isValid: false });
+                return res.status(400).json({ isValid: false });
             }
+        } else {
+            console.log('Invalid login credentials');
+            return res.status(400).json({ isValid: false });
         }
     });
 });
+
+
+
 
 
 app.post('/validate-Login', async (req, res) => {
@@ -620,6 +635,49 @@ app.delete('/premiumUsers/:id', (req, res) => {
         }
     });
 });
+
+app.put('/update-AdminDetails', (req, res) => {
+    const { adminUserID, username, email, password, firstname, lastname, phonenumber, role } = req.body;
+
+    if (!adminUserID) {
+        return res.status(400).json({ success: false, error: 'Admin User ID is required' });
+    }
+
+    const sql = `UPDATE adminUser SET username = ?, email = ?, password = ?, firstname = ?, lastname = ?, phonenumber = ?, role = ? WHERE adminUserID = ?`;
+    pool.query(sql, [username, email, password, firstname, lastname, phonenumber, role, adminUserID], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+
+        if (result.affectedRows > 0) {
+            res.status(200).json({ success: true, message: 'Admin details updated successfully' });
+        } else {
+            res.status(400).json({ success: false, error: 'Admin not found or no changes made' });
+        }
+    });
+});
+
+app.get('/admin-details', (req, res) => {
+    const adminUserID = req.query.adminUserID; 
+
+    if (!adminUserID) {
+        return res.status(400).json({ success: false, error: 'Admin User ID is required' });
+    }
+
+    const sql = `SELECT * FROM adminUser WHERE adminUserID = ?`;
+    pool.query(sql, [adminUserID], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+        
+        if (result.length > 0) {
+            res.status(200).json({ success: true, data: result[0] });
+        } else {
+            res.status(404).json({ success: false, error: 'Admin not found' });
+        }
+    });
+});
+
 //END
 
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "../components/sidebar";
+import Sidebar from "../layout/sidebar";
 import BackupOutlinedIcon from '@mui/icons-material/BackupOutlined';
 import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
 import StorageOutlinedIcon from '@mui/icons-material/StorageOutlined';
@@ -51,7 +51,7 @@ export default function Maintenance() {
 
 const styles = {
     page: {
-        backgroundColor: "white",
+        backgroundColor: "#1A1A2E",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "row",
