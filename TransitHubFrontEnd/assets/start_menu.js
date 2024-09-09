@@ -35,6 +35,7 @@ export default function StartMenu () {
           ...styles.logo,
           width: windowWidth * 0.5, 
           height: windowWidth * 0.5, 
+          marginTop: 100
         }}
         source={require('./img/blackLogo.png')}
       />
@@ -55,8 +56,8 @@ export default function StartMenu () {
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.textTwoButton}>
           <Text style={styles.textTwo}>Login | </Text> 
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('GuestDrawer')} style={styles.textTwoButton}>
-          <Text style={styles.textTwo}>Guest</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Location')} style={styles.textTwoButton}>
+          <Text style={styles.textTwo}>TEMP</Text>
       </TouchableOpacity>
       </View>
     </View>
@@ -117,4 +118,33 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 });
-
+{/* <Text style={styles.label}>Input Additional Details</Text>
+<Text style={styles.miniLabel}>Package Details:</Text>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Width:</Text><TextInput style={styles.input}/>
+ </View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Height:</Text><TextInput style={styles.input}/>
+</View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Weight:</Text><TextInput style={styles.input}/>
+</View>
+<Text style={styles.miniLabel}>Rate:</Text>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>First 2km:</Text><TextInput style={styles.input}/>
+</View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Succeeding km:</Text><TextInput style={styles.input}/>
+</View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Distance:</Text><TextInput style={styles.input}/>
+</View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Expected Duration:</Text><TextInput style={styles.input}/>
+</View>
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Expected Fee:</Text><TextInput style={styles.input}/>
+</View>     
+<View style={styles.row}>
+    <Text style={styles.microLabel}>Additional Info:</Text><TextInput style={styles.input}/>
+</View> */}

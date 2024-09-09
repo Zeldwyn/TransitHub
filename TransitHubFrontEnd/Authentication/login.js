@@ -13,34 +13,44 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   
   const handleSubmit = async () => {
-    fetch(`${config.BASE_URL}/validate-Login`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Response from Express backend:', data);
-        if (data.isValid == false) {
-          setPasswordValidate('Invalid Credentials');
-        } else {
-          AsyncStorage.setItem('email', email);
-          AsyncStorage.setItem('userType', data.userType);
-          AsyncStorage.setItem('premiumUserID', data.id.toString());
-          setPasswordValidate('');
-          if (data.userType === 'owner') navigation.navigate('OwnerDrawer');
-          if (data.userType === 'operator') navigation.navigate('OperatorDrawer');
-        }
-      })
-      .catch((error) => {
-        console.error('Error posting data to Express backend:', error);
+    try {
+      const response = await fetch(`${config.BASE_URL}/validate-Login`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
       });
+  
+      const data = await response.json();
+      console.log('Response from Express backend:', data);
+  
+      if (!data.isValid) {
+        setPasswordValidate('Invalid Credentials');
+      } else {
+        await AsyncStorage.setItem('email', email);
+        await AsyncStorage.setItem('userType', data.userType);
+        await AsyncStorage.setItem('premiumUserID', data.id.toString());
+        
+        setEmail(''); 
+        setPassword('');
+        console.log('TEXT FIELD CLEARED');
+
+        setPasswordValidate('');
+  
+        if (data.userType === 'owner') {
+          navigation.navigate('OwnerDrawer');
+        } else if (data.userType === 'operator') {
+          navigation.navigate('OperatorDrawer');
+        }
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
   };
 
   const toggleShowPassword = () => {
@@ -79,15 +89,9 @@ export default function Login() {
           </TouchableOpacity>
         </View>
         <Text style={styles.suggestion}>{passwordValidate}</Text>
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <TouchableOpacity style={styles.button} onPress={() => handleSubmit()}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OwnerDrawer'); AsyncStorage.setItem('userType', "owner"); }}>
-            <Text style={styles.buttonText}>Submit for Owner</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('OperatorDrawer'); AsyncStorage.setItem('userType', "operator"); }}>
-            <Text style={styles.buttonText}>Submit for Operator</Text>
-          </TouchableOpacity> */}
           <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.registerButton}>
             <Text style={styles.registerText}>Don't have an account? Click here to Register</Text>
           </TouchableOpacity>

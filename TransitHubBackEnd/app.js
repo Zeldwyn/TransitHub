@@ -190,6 +190,7 @@ app.post('/add-GuestUser', async (req, res) => {
         }   
     })  
 });
+
 //END
 
 //TRANSACTIONS
@@ -287,42 +288,53 @@ app.post('/display-TransactionPremium', async (req, res) => {
 
 //MESSAGE
 app.post('/get-ConversationID', async (req, res) => {
-    const { ownerID, operatorID } = req.body;
-    isConversationExists(ownerID, operatorID, (exists, conversationID) => {
+    const { premiumUserID, operatorID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => { 
         if(exists) {
-            res.status(200).json({conversationID: conversationID});
-        } else {
-            res.status(400).json({status: "Conversation Does not Exists"});
-        }
-    });
-});
-app.post('/get-ConversationIDOP', async (req, res) => {
-    const { premiumUserID } = req.body;
-    getOwnerOperatorID(premiumUserID, 'operator', (exists, id) => { 
-        if(exists) {
-            const sql = `SELECT conversationID, ownerID FROM conversation WHERE operatorID = ?`;
-            pool.query(sql, [id], (err, result) => {
-                if(err) {
-                    res.status(400).json({ error: 'Failed to retrieve ID' }); 
+            isConversationExists(id, operatorID, (exists, conversationID) => {
+                if(exists) {
+                    res.status(200).json({conversationID: conversationID});
                 } else {
-                    res.status(200).json({ conversationID: result[0].conversationID, ownerID: result[0].ownerID, operatorID: id}); 
+                    res.status(400).json({status: "Conversation Does not Exists"});
                 }
             });
         }
     }); 
 });
-app.post('/message-Owner', async (req, res) => {
-    const { premiumUserID } = req.body;
-    const sql = `SELECT * FROM OperatorInviteDetails WHERE ownerPremiumUserID = ? and status =?`;
-    pool.query(sql, [premiumUserID, 'Accepted'], (err, result) => {
-        if (err) {
-            console.error('Error:', err);
-            res.status(400).json({ error: 'Failed to retrieve invites' }); 
-        } else {
-            console.log('Invites retrieved successfully');   
-            res.status(200).json({ result }); 
+app.post('/get-ConversationIDOP', async (req, res) => {
+    const { premiumUserID, ownerID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'operator', (exists, id) => { 
+        if(exists) {
+            isConversationExists(ownerID, id, (exists, conversationID) => {
+                if(exists) {
+                    res.status(200).json({conversationID: conversationID, ownerID: ownerID, operatorID: id});
+                } else {
+                    res.status(400).json({status: "Conversation Does not Exists"});
+                }
+            });
         }
-    });   
+    }); 
+});
+app.post('/get-ConversationDetails', async (req, res) => {
+    const { premiumUserID, operatorID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => { 
+        if(exists) {
+            isConversationExists(id, operatorID, (exists, conversationID) => {
+                if(exists) {
+                    const sql = `SELECT *  FROM conversation WHERE operatorID = ? and ownerID = ?`;
+                    pool.query(sql, [operatorID, id], (err, result) => {
+                        if(err) {
+                            res.status(400).json({ error: 'Failed to retrieve ID' }); 
+                        } else {
+                            res.status(200).json({ ownerID: result[0].ownerID, operatorID: id}); 
+                        }
+                    });
+                } else {
+                    res.status(400).json({status: "Conversation Does not Exists"});
+                }
+            });
+        }
+    }); 
 });
 
 app.post('/get-Messages', (req, res) => {
@@ -369,109 +381,161 @@ app.post('/save-Message', (req, res) => {
 
 //ADD OPERATOR
 app.get('/search-Operator', async (req, res) => {
-    const { search } = req.query;
-    try {
-        const sql = `SELECT * FROM OperatorDetails WHERE email LIKE ?`;
-        const query = `%${search}%`;
-        pool.query(sql, [query], (err, results) => {
-            if (err) {
-                return res.status(500).send('Internal Server Error Search Operator');
+    const { search, premiumUserID } = req.query;  
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, ownerID) => { 
+        if (exists) {
+            try {
+                const sql = `
+                    SELECT * 
+                    FROM OperatorDetails od
+                    WHERE od.email LIKE ?
+                    AND NOT EXISTS (
+                        SELECT 1 
+                        FROM operator_owner oo
+                        WHERE oo.operatorID = od.operatorID 
+                        AND oo.ownerID = ?
+                    )
+                `;
+                const query = `%${search}%`;
+                
+                pool.query(sql, [query, ownerID], (err, results) => {
+                    if (err) {
+                        return res.status(500).send('Internal Server Error: Search Operator');
+                    }
+                    return res.json(results);
+                });
+            } catch (error) {
+                return res.status(500).send('Internal Server Error: Search Operator Outer');
             }
-            return res.json(results);
-        });
-    } catch (error) {
-        return res.status(500).send('Internal Server Error Search Operator Outer');
-    }
+        } 
+    }); 
 });
-app.post('/send-Invite', async (req, res) => { 
+
+
+app.post('/add-Operator', async (req, res) => {
     const { premiumUserID, operatorID } = req.body;
     getOwnerOperatorID(premiumUserID, 'owner', (exists, ownerID) => { 
-        if(exists) {
-            isInviteExists(ownerID, operatorID, (exists, ID) =>{ 
-                if(!exists) {
-                    const sql = `INSERT INTO invites (ownerID, operatorID, status) VALUES (?, ?, ?)`;
-                    console.log('OpIDINSIDE', operatorID);
-                    pool.query(sql, [ownerID, operatorID, "Pending"], (err, result) => {
-                        if (err) {
-                            console.error('Error sending invite', err);
-                            res.status(400).json({ status: 1 }); 
-                        } else {
-                            console.log('Invite sent successfully');
-                            res.status(200).json({ status: 2 }); 
-                        }
-                    });
-                } else {
-                        res.status(200).json({ status: 3})
-                }
-            });   
-        }
-    })            
-});
-
-app.post('/sent-Invites', async (req, res) => { 
-    const { premiumUserID } = req.body;
-    const sql = `SELECT * FROM operatorInviteDetails WHERE ownerPremiumUserID = ?`;
-    pool.query(sql, [premiumUserID], (err, result) => {
-        if (err) {
-            res.status(400).json({ error: 'Failed to retrieve invites Owner' }); 
-        } else {
-            console.log('Invites retrieved successfully');   
-            res.status(200).json({ result }); 
-        }
-    });     
-});
-
-app.post('/received-Invites', async (req, res) => { 
-    const { premiumUserID } = req.body;
-    getOwnerOperatorID(premiumUserID, 'operator', (exists, operatorID) => { 
-        if(exists) {
-            const sql = `SELECT * FROM operatorInviteDetails WHERE operatorID = ?`;
-            pool.query(sql, [operatorID], (err, result) => {
+        if (exists) {
+            const insertOperatorSQL = `INSERT INTO operator_owner (operatorID, ownerID) VALUES (?, ?)`;
+            pool.query(insertOperatorSQL, [operatorID, ownerID], (err, result) => {
                 if (err) {
-                    res.status(400).json({ error: 'Failed to retrieve invites Operator' }); 
-                } else {
-                    res.status(200).json({ result }); 
+                    return res.status(400).json({ status: '0' });
                 }
-            });
+                isConversationExists(ownerID, operatorID, (exists, conversationID) => {
+                    if (exists) {
+                        console.log('Conversation already exists:', conversationID);
+                        res.status(200).json({ status: '1', message: 'Operator added but conversation already exists' });
+                    } else {
+                        const insertConversationSQL = `INSERT INTO conversation (ownerID, operatorID) VALUES (?, ?)`;
+                        pool.query(insertConversationSQL, [ownerID, operatorID], (err, result) => {
+                            if (err) {
+                                return res.status(400).json({ status: '0' });
+                            }
+
+                            console.log('Operator added and conversation created successfully');
+                            res.status(200).json({ status: '1' });
+                        });
+                    }
+                });
+            });   
+        } else {
+            res.status(400).json({ status: '0' });
         }
-    })
+    }); 
 });
 
-app.put('/accept-Invites', async (req, res) => { 
-    const { ownerID, premiumUserID } = req.body;
-    const sql = `UPDATE operator SET ownerID = ? WHERE premiumUserID = ? `;
-    pool.query(sql, [ownerID, premiumUserID], (err, result) => {
-        if (err) {
-            res.status(400).json({ status: 'Fail Accepting Invite' }); 
-        } else {
-            getOwnerOperatorID(premiumUserID, 'operator', (exists, operatorID) => { 
-                if(exists) {
-                    const sql2 = `UPDATE invites SET status = ? WHERE operatorID = ?`;
-                    pool.query(sql2, ['Accepted', operatorID], (err, result) => {
-                        if (err) {
-                            res.status(400).json({ status: 'Fail Updating Invites to Accepted' }); 
-                        }
-                    })
-                    isConversationExists(ownerID, operatorID, (exists, conversationID) => {
-                        if(!exists) {
-                            const sql = `INSERT INTO conversation (ownerID, operatorID) VALUES (?, ?)`;
-                                pool.query(sql, [ownerID, operatorID], (err, result) => {
-                                if (err) {
-                                    console.error('Error adding conversation:', err);
-                                    res.status(400).json({ status: 'Fail' }); 
-                                } else {
-                                    console.log('Conversation user added successfully');
-                                    res.status(200).json({ status: 'Success' }); 
-                                }
-                            });
-                        } else {
-                            res.status(200).json({conversatioID: conversationID});
-                        }
-                    });
+app.get('/list-Operator', async (req, res) => {
+    const { premiumUserID } = req.query; 
+
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => {
+        if (exists) {
+            const sql = `SELECT operatorID FROM operator_owner WHERE ownerID = ?`;
+            pool.query(sql, [id], (err, results) => {
+                if (err) {
+                    return res.status(400).json({ error: 'Failed to retrieve operator IDs' });
                 }
-            })
+
+                if (results.length === 0) {
+                    return res.status(404).json({ message: 'No operators found for this owner.' });
+                }
+
+                const operatorIDs = results.map(row => row.operatorID);
+
+                const sql2 = `SELECT * FROM operatorDetails WHERE operatorID IN (?)`;
+                pool.query(sql2, [operatorIDs], (err, operatorDetails) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Failed to retrieve operator details' });
+                    }
+
+                    res.status(200).json(operatorDetails);
+                });
+            });
+        } else {
+            res.status(404).json({ message: 'Owner not found' });
         }
-    })
+    });
+});
+app.get('/list-Owner', async (req, res) => {
+    const { premiumUserID } = req.query; 
+    getOwnerOperatorID(premiumUserID, 'operator', (exists, id) => {
+        if (exists) {
+            const sql = `SELECT ownerID FROM operator_owner WHERE operatorID = ?`;
+            pool.query(sql, [id], (err, results) => {
+                if (err) {
+                    return res.status(400).json({ error: 'Failed to retrieve owner IDs' });
+                }
+
+                if (results.length === 0) {
+                    return res.status(404).json({ message: 'No owners found for this owner.' });
+                }
+
+                const ownerIDs = results.map(row => row.ownerID);
+
+                const sql2 = `SELECT * FROM ownerDetails WHERE ownerID IN (?)`;
+                pool.query(sql2, [ownerIDs], (err, ownerDetails) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Failed to retrieve operator details' });
+                    }
+
+                    res.status(200).json(ownerDetails);
+                });
+            });
+        } else {
+            res.status(404).json({ message: 'Operator not found' });
+        }
+    });
+});
+app.put('/delete-Operator', async (req, res) => {
+    const { premiumUserID, operatorID } = req.query;
+    
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, ownerID) => {
+        if (exists) {
+            const deleteMessagesSQL = `DELETE FROM message WHERE conversationID IN (SELECT conversationID FROM conversation WHERE ownerID = ? AND operatorID = ?)`;
+            pool.query(deleteMessagesSQL, [ownerID, operatorID], (err, result) => {
+                if (err) {
+                    console.error('Error deleting messages:', err);
+                    return res.status(500).send('Internal Server Error: Delete from messages');
+                }
+                const deleteConversationSQL = `DELETE FROM conversation WHERE ownerID = ? AND operatorID = ?`;  
+                pool.query(deleteConversationSQL, [ownerID, operatorID], (err, result) => {
+                    if (err) {
+                        console.error('Error deleting from conversation:', err);
+                        return res.status(500).send('Internal Server Error: Delete from conversation');
+                    }
+                    const deleteOperatorSQL = `DELETE FROM operator_owner WHERE operatorID = ? AND ownerID = ?`;  
+                    pool.query(deleteOperatorSQL, [operatorID, ownerID], (err, result) => {
+                        if (err) {
+                            console.error('Error deleting from operator_owner:', err);
+                            return res.status(500).send('Internal Server Error: Delete from operator_owner');
+                        }
+                        res.status(200).json('Operator, conversation, and associated messages deleted successfully');
+                    });
+                });
+            });
+        } else {
+            res.status(404).json({ message: 'Failed to delete' });
+        }
+    });
 });
 
 //FEEDBACK
@@ -488,19 +552,6 @@ app.post('/add-Feedback', async (req, res) => {
     });   
 });
 
-app.post('/tester', async (req, res) => {
-    const { premiumUserID } = req.body;
-    const sql = `SELECT * FROM OperatorInviteDetails WHERE ownerPremiumUserID = ? and status =?`;
-    pool.query(sql, [premiumUserID, 'Accepted'], (err, result) => {
-        if (err) {
-            console.error('Error:', err);
-            res.status(400).json({ error: 'Failed to retrieve invites' }); 
-        } else {
-            console.log('Invites retrieved successfully');   
-            res.status(200).json({ result }); 
-        }
-    });   
-});
 
 app.get('/premiumUsers', (req, res) => {
     pool.query('SELECT * FROM premiumUser', (err, results) => {

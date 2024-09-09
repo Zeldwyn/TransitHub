@@ -8,7 +8,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import OwnerHome from './Home';
 import AddOperator from './addOperator';
-import Message from './Message';
 import Records from './Records';
 import Settings from './Settings';
 import Help from './help';
@@ -26,7 +25,8 @@ function Logout() {
   return (
     <></>
   );
-}
+};
+
 
 const Drawer = createDrawerNavigator();
 
@@ -36,10 +36,8 @@ export default function OwnerDrawer(){
       initialRouteName="Home"
       screenOptions={{
         headerTitleAlign: 'center',
-        // drawerActiveBackgroundColor: 'black',
         drawerActiveTintColor: 'black',
         drawerLabelStyle: {fontSize: 18, marginLeft: -15},
-        // drawerContentStyle: {fontSize: 20},
         headerTitleStyle: {fontSize: 23, lineHeight: 60},
         drawerItemStyle: { marginVertical: 10 },
       }}
@@ -55,10 +53,6 @@ export default function OwnerDrawer(){
       <Drawer.Screen name="Transport Operator" component={AddOperator} 
         options={{title: 'Transport Operator',drawerIcon: ({focused, size}) => (
         <Ionicons name="person-add-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
-      ),}} />
-      <Drawer.Screen name="Message" component={Message} 
-        options={{title: 'Message',drawerIcon: ({focused, size}) => (
-        <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}} />
       <Drawer.Screen name="Records" component={Records} 
         options={{title: 'Records',drawerIcon: ({focused, size}) => (

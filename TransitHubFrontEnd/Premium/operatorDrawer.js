@@ -39,66 +39,30 @@ export default function OperatorDrawer() {
         drawerItemStyle: { marginVertical: 10 },
       }}
     >
-      <Drawer.Screen 
-        name="OperatorHome" 
-        component={OperatorHome} 
-        options={{ 
-          title: 'Home',
-          drawerIcon: ({ focused, size }) => (
-            <Ionicons name="home-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
-          ),
-        }} 
-      />
-      <Drawer.Screen 
-        name="Message" 
-        component={MessageOperator} 
-        options={{ 
-          title: 'Message',
-          drawerIcon: ({ focused, size }) => (
-            <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
-          ),
-        }} 
-      />
-      <Drawer.Screen 
-        name="Records" 
-        component={Records} 
-        options={{ 
-          title: 'Records',
-          drawerIcon: ({ focused, size }) => (
-            <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
-          ),
-        }} 
-      />
-      <Drawer.Screen 
-        name="Help" 
-        component={Help} 
-        options={{ 
-          title: 'Help',
-          drawerIcon: ({ focused, size }) => (
-            <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/>
-          ),
-        }} 
-      />
-      <Drawer.Screen 
-        name="Profile Settings" 
-        component={Settings} 
-        options={{ 
-          title: 'Profile Settings',
-          drawerIcon: ({ focused, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
-          ),
-        }} 
-      /> 
-      <Drawer.Screen 
-        name="Logout" 
-        component={Logout} 
-        options={{ 
-          title: 'Logout',
-          drawerIcon: ({ focused, size }) => (
-            <MaterialIcons name="logout" size={size} color={focused ? '#8A252C' : 'black'} />
-          ),
-        }} 
-      /> 
+      <Drawer.Screen  name="OperatorHome" component={OperatorHome}
+        options={{ title: 'Home', drawerIcon: ({ focused, size }) => (
+          <Ionicons name="home-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}} />
+      <Drawer.Screen name="Message" component={MessageOperator}   
+        options={{ title: 'Message',drawerIcon: ({ focused, size }) => (
+          <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}}/>
+      <Drawer.Screen name="Records" component={Records} 
+        options={{ title: 'Records', drawerIcon: ({ focused, size }) => (
+          <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}}/>
+      <Drawer.Screen name="Help" component={Help}
+        options={{title: 'Help', drawerIcon: ({ focused, size }) => (
+          <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/> 
+      ),}}/>
+      <Drawer.Screen name="Profile Settings" component={Settings} 
+        options={{ title: 'Profile Settings', drawerIcon: ({ focused, size }) => (
+          <Ionicons name="person-circle-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
+      ),}}/> 
+      <Drawer.Screen name="Logout" component={Logout}
+        options={{ title: 'Logout', drawerIcon: ({ focused, size }) => (
+          <MaterialIcons name="logout" size={size} color={focused ? '#8A252C' : 'black'} /> 
+      ),}}/> 
     </Drawer.Navigator>
   );
 }

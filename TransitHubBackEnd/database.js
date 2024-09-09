@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: '1234',
     database: 'transithub'
 });
 
@@ -37,31 +37,46 @@ pool.getConnection((err, connection) => {
         `
         CREATE TABLE IF NOT EXISTS operator (
             operatorID INT AUTO_INCREMENT PRIMARY KEY,
-            ownerID INT,
             premiumUserID INT,
-            FOREIGN KEY (premiumUserID) REFERENCES premiumUser(premiumUserID),
+            FOREIGN KEY (premiumUserID) REFERENCES premiumUser(premiumUserID)
+        )
+        `,
+       `CREATE TABLE IF NOT EXISTS operator_owner (
+            operatorID INT,
+            ownerID INT,
+            FOREIGN KEY (operatorID) REFERENCES operator(operatorID),
             FOREIGN KEY (ownerID) REFERENCES owner(ownerID)
+        )`     
+        ,
+        `
+        CREATE TABLE IF NOT EXISTS transaction (
+            transactionID INT AUTO_INCREMENT PRIMARY KEY,
+            toCoords POINT NOT NULL,          -- Use POINT for latitude and longitude
+            fromCoords POINT NOT NULL,        -- Use POINT for latitude and longitude
+            packageWidth DECIMAL(10, 2) NOT NULL,
+            packageHeight DECIMAL(10, 2) NOT NULL,
+            packageWeight DECIMAL(10, 2) NOT NULL,
+            first2km DECIMAL(10, 2) NOT NULL,
+            succeedingKm DECIMAL(10, 2) NOT NULL,
+            client VARCHAR(100) NOT NULL,
+            distance DECIMAL(10, 2) NOT NULL,
+            notes TEXT,
+            date DATE NOT NULL,
+            expectedDuration DECIMAL(10, 2),
+            expectedFee DECIMAL(10, 2),
+            finalFee DECIMAL(10, 2),
+            status VARCHAR(50) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            premiumUserID INT,
+            operatorID INT,
+            FOREIGN KEY (premiumUserID) REFERENCES premiumUser(premiumUserID),
+            FOREIGN KEY (operatorID) REFERENCES operator(operatorID)
         )
         `,
         `
-        CREATE TABLE IF NOT EXISTS invites (
-            inviteID INT AUTO_INCREMENT PRIMARY KEY,
-            status VARCHAR (10) NOT NULL,
-            ownerID INT,
-            operatorID INT,
-            FOREIGN KEY (ownerID) REFERENCES owner(ownerID),
-            FOREIGN KEY (operatorID) REFERENCES operator(operatorID)
-        ) 
-        `,
-        `
-        CREATE TABLE IF NOT EXISTS transactionPremium (
-            transactionID INT AUTO_INCREMENT PRIMARY KEY,
-            toLocation VARCHAR (100) NOT NULL,
-            fromLocation VARCHAR (100) NOT NULL,
-            status VARCHAR (50) NOT NULL,
-            premiumUserID INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (premiumUserID) REFERENCES premiumUser(premiumUserID)
+        CREATE TABLE IF NOT EXISTS guestUser (
+            guestID INT AUTO_INCREMENT PRIMARY KEY,
+            deviceID VARCHAR (100) NOT NULL
         )
         `,
         `
@@ -74,13 +89,7 @@ pool.getConnection((err, connection) => {
             guestID INT,
             FOREIGN KEY (guestID) REFERENCES guestUser(guestID)
         )
-        `,
-        `
-        CREATE TABLE IF NOT EXISTS guestUser (
-            guestID INT AUTO_INCREMENT PRIMARY KEY,
-            deviceID VARCHAR (100) NOT NULL
-        )
-        `,
+        `,   
         `
         CREATE TABLE IF NOT EXISTS conversation (
             conversationID INT AUTO_INCREMENT PRIMARY KEY,
@@ -116,15 +125,13 @@ pool.getConnection((err, connection) => {
         operatorDetails AS SELECT p.firstName, p.lastName, p.email, o.operatorID 
         FROM premiumUser p 
         JOIN operator o ON p.premiumUserID = o.premiumUserID;    
-        `,
+        `,  
         `
-        CREATE OR REPLACE VIEW operatorInviteDetails AS
-        SELECT  p.firstName, p.lastName, p.email, o.operatorID, i.status, i.ownerID, ow.premiumUserID AS ownerPremiumUserID, o.premiumUserID AS operatorPremiumUserID     
-        FROM premiumUser p
-        JOIN operator o ON p.premiumUserID = o.premiumUserID
-        JOIN invites i ON o.operatorID = i.operatorID  
-        JOIN owner ow ON i.ownerID = ow.ownerID;
-        `,
+        CREATE OR REPLACE VIEW 
+        ownerDetails AS SELECT p.firstName, p.lastName, p.email, o.ownerID 
+        FROM premiumUser p 
+        JOIN owner o ON p.premiumUserID = o.premiumUserID;    
+        `,  
         `
         CREATE TABLE IF NOT EXISTS adminUser (
             adminUserID INT AUTO_INCREMENT PRIMARY KEY,

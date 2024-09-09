@@ -98,7 +98,7 @@ export default function OwnerHome() {
             />
             <Text style={styles.label}>What are you going to deliver today?</Text>
             <View style={styles.row}>
-                <TouchableOpacity onPress={() => navigation.navigate('TransactionDetails')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Location')}>
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
                 <View style={{ width: 20 }} />

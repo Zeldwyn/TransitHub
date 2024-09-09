@@ -1,5 +1,5 @@
 export default config = {
-    BASE_URL: 'http://192.168.5.45:8080'
+    BASE_URL: 'http://192.168.1.9:8080'
 };
   
 //

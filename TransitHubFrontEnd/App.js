@@ -14,10 +14,10 @@ import OperatorDrawer from './Premium/operatorDrawer';
 import MapPackage from './Premium/MapPackage';
 import MapCustom from './Premium/MapCustom';
 import GuestMap from './Guest/guestMap';
-import TransactionDetails from './Premium/Transaction.js/transactionDetails';
-import ChooseDate from './Premium/Transaction.js/chooseDate';
+import Location from './Premium/Transaction/location';
 import OperatorHome from './Premium/OperatorHome';
 import OperatorLive from './Premium/operatorLive';
+import MessageOwner from './Premium/MessageOwner';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -51,10 +51,10 @@ const MyStack = () => {
       <Stack.Screen name="MapPackage" component={MapPackage} options={{ headerShown: false}} />
       <Stack.Screen name="MapCustom" component={MapCustom} options={{headerShown: false}} />
       <Stack.Screen name="GuestMap" component={GuestMap} options={{headerShown: false}}/>
-      <Stack.Screen name="TransactionDetails" component={TransactionDetails} options={{headerShown: false}}/>
-      <Stack.Screen name="ChooseDate" component={ChooseDate} options={{headerShown: false}}/>
+      <Stack.Screen name="Location" component={Location} options={{headerShown: false}}/>
       <Stack.Screen name="OperatorHome" component={OperatorHome} options={{headerShown: false}}/>
       <Stack.Screen name="OperatorLive" component={OperatorLive} options={{headerShown: false}}/>
+      <Stack.Screen name="MessageOwner" component={MessageOwner} options={{headerShown: false}}/>
     </Stack.Navigator> 
   );
 }

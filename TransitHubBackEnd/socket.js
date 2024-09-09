@@ -8,7 +8,7 @@ let io;
 const setupSocket = (server) => {
   const io = require('socket.io')(server, {
       cors: {
-          origin: "http://localhost:8080"
+          origin: "*"
       }
   });
 
@@ -45,23 +45,3 @@ const saveMessageToDatabase = (message) => {
 
 
 module.exports = { setupSocket };
- // useEffect(() => {
-  //   fetch(`http://192.168.1.6:8080/get-Messages`, {
-  //     method: 'POST',
-  //     headers: {
-  //       Accept: 'application/json',
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       'conversationID': parseInt(currentConversation),
-  //     })
-  //   })
-  //   .then(response => response.json())
-  //     .then(data => {
-  //       setMessages(data.results);
-  //       setNewMessage('');
-  //     })
-  //   .catch(error => {
-  //     console.error('Error posting data to Express backend:', error);
-  //   });
-  // }, [currentConversation]);

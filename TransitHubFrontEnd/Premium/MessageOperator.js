@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput} from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal} from 'react-native';
 import io from 'socket.io-client';
+import config from '../config';
 
-const socket = io('http://192.168.1.9:8080');
+const socket = io(`${config.BASE_URL}`);
 
 export default function MessageOperator() {
     const [pID, setPID] = useState('');
@@ -13,9 +14,10 @@ export default function MessageOperator() {
     const [currentOperator, setCurrentOperator] = useState('');
     const [currentOwner, setCurrentOwner] = useState('');
     const [currentConversation, setCurrentConversation] = useState('');
+    const [displayOwners, setDisplayOwners] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const flatListRef = useRef(null);
-
+    const [chatModal, setChatModal] = useState(false);
+    
     useEffect(() => {
         const getUserID = async () => {
             const id = await AsyncStorage.getItem('premiumUserID');
@@ -28,58 +30,94 @@ export default function MessageOperator() {
         getUserID();
     }, []);
 
-    useEffect(() => {
-        if (pID && userType) {
-            fetch(`http://192.168.1.9:8080/get-Messages`, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    'premiumUserID': parseInt(pID),
-                    'userType': userType
-                })
-            })
+    const getMessage = () => {
+        fetch(`${config.BASE_URL}/select-Messages`, {
+            method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                'conversationID': currentConversation,
+              })
+          })
             .then(response => response.json())
             .then(data => {
+                console.log('current convo:',currentConversation)
                 setMessages(data.results);
+            //   console.log(data.results)
             })
             .catch(error => {
-                console.error('Error fetching existing messages:', error);
-            });
-            fetch(`http://192.168.1.9:8080/get-ConversationIDOP`, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    'premiumUserID': parseInt(pID),
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                setCurrentConversation(data.conversationID);
-                setCurrentOperator(data.operatorID);
-                setCurrentOwner(data.ownerID);
-            })
-            .catch(error => {
-                console.error('Error fetching existing messages:', error);
-            })
+              console.error('Error fetching existing messages:', error);
+        });
+    };
+    const handleConvo = (firstName, lastName, ownerID) => {
+        fetch(`${config.BASE_URL}/get-ConversationIDOP`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            'premiumUserID': parseInt(pID),
+            'ownerID': ownerID
+          })
+        })
+        .then(response => response.json())
+          .then(data => {      
+            setCurrentConversation(data.conversationID);
+            setCurrentOwner(data.ownerID); 
+            setCurrentOperator(data.operatorID);
+            setCurrentName(firstName + ' ' + lastName);
+            console.log('current owner:', ownerID)
+            console.log('current operator:', currentOperator)
+            socket.emit('join_conversation', { conversationID: data.conversationID });
+            setChatModal(true); 
+          })
+          .catch(error => {
+            console.error('Error fetching conversation ID:', error);
+          });
+    };
+    useEffect(() => {
+        if (pID) {
+          fetch(`${config.BASE_URL}/list-Owner?premiumUserID=${parseInt(pID)}`, {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            }
+          })
+          .then(response => response.text().then(text => {
+            console.log('Raw response:', text);
+            return JSON.parse(text);
+          }))
+          .then(data => {
+            setDisplayOwners(data);
+          })
+          .catch(error => {
+            console.error('Error fetching data from Express backend:', error);
+          });
         }
-    }, [userType, pID]);
+    }, [pID]);
+
+    useEffect(() => {
+        if (currentConversation) {
+            getMessage();
+        }
+    }, [currentConversation]);
+    
+    
 
     useEffect(() => {
         socket.on('message', (message) => {
+          if (message.conversationID === currentConversation) {
             setMessages(prevMessages => [...prevMessages, message]);
-            flatListRef.current?.scrollToEnd({ animated: true });
+          }
         });
-    
         return () => {
-            socket.off('message');
+          socket.off('message');
         };
-    }, [newMessage]);
+    }, [currentConversation]);
 
     const sendMessage = () => {
         if (newMessage.trim() === '') {
@@ -95,11 +133,12 @@ export default function MessageOperator() {
             text: newMessage,
             created_at: formattedDate,
         };
+        // Emit the message to the server
         socket.emit('send_message', message);
-        setMessages(prevMessages => [...prevMessages, message]); 
+        // Clear the newMessage field
         setNewMessage('');
-        flatListRef.current?.scrollToEnd({ animated: true });
     };
+    
 
     const renderMessages = ({ item }) => {
         if (userType === item.userType) {
@@ -120,27 +159,45 @@ export default function MessageOperator() {
             );
         }
     };
+    const renderItem = ({ item }) => (
+        <TouchableOpacity style={styles.itemContainer} onPress={() => handleConvo(item.firstName, item.lastName, item.ownerID)}>
+          <View style={styles.textContainer}>
+            <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
+            <Text style={styles.message}>View Conversation</Text>
+          </View>
+        </TouchableOpacity>
+      );
 
     return (
         <View style={styles.chatModal}>
             <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderMessages}
-                keyExtractor={(item, index) => index.toString()}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                data={displayOwners}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.ownerID.toString()}
             />
-            <View style={styles.searchContainer}>
-                <TextInput
-                    style={styles.searchInput}
-                    value={newMessage}
-                    placeholder="Type your message..."
-                    onChangeText={(text) => setNewMessage(text)}
-                />
-                <TouchableOpacity style={styles.searchButton} onPress={sendMessage}>
-                    <Text style={styles.searchButtonText}>Send</Text>
-                </TouchableOpacity>
-            </View>
+            <Modal animationType='slide' visible={chatModal} onRequestClose={() => {setChatModal(false)}} style={{height: "auto"}}>
+                <View style={styles.chatModal}>
+                    <View style={{flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: 'maroon', height: 60}}>
+                        <Text style={{alignSelf: 'center', fontSize: 24, color: 'white', fontWeight: '600'}}>{currentName}</Text>
+                    </View>
+                    <FlatList
+                        data={messages}
+                        renderItem={renderMessages}
+                        keyExtractor={(item, index) => index.toString()}
+                    />
+                    <View style={styles.searchContainer}>
+                        <TextInput
+                            style={styles.searchInput}
+                            value={newMessage}
+                            placeholder="Type your message..."
+                            onChangeText={(text) => setNewMessage(text)}
+                        />
+                        <TouchableOpacity style={styles.searchButton} onPress={sendMessage}>
+                            <Text style={styles.searchButtonText}>Send</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
