@@ -24,8 +24,8 @@ const FilterModal = ({ open, onClose, onApply }) => {
                     margin="normal"
                 >
                     <MenuItem value="">Any</MenuItem>
-                    <MenuItem value="Operator">Operator</MenuItem>
-                    <MenuItem value="Owner">Owner</MenuItem>
+                    <MenuItem value="operator">Operator</MenuItem>
+                    <MenuItem value="owner">Owner</MenuItem>
                 </TextField>
                 <TextField
                     type="date"

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import Sidebar from "../../layout/sidebar";
-import { userData } from "../data/sampleData";
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import '../styles/style.css';
 import ManageUserModal from '../../layout/manageUserModal';
 import UpdateUserModal from '../../layout/updateUserModal';
-import FilterModal from '../../layout/filterModal'; // Import the new FilterModal component
+import FilterModal from '../../layout/filterModal';
+import config from "../../config";
 
 export default function ManageUser() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -15,11 +15,12 @@ export default function ManageUser() {
     const [modalOpen, setModalOpen] = useState(false);
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [filterModalOpen, setFilterModalOpen] = useState(false); // New state for filter modal
+    const [filterModalOpen, setFilterModalOpen] = useState(false);
     const [userTypeFilter, setUserTypeFilter] = useState(""); 
     const [dateRange, setDateRange] = useState({ start: "", end: "" }); 
+    const [userData, setUserData] = useState([]);
     const itemsPerPage = 15;
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate();
 
     useEffect(() => {
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -27,6 +28,13 @@ export default function ManageUser() {
             navigate('/');
         }
     }, [navigate]);
+
+    useEffect(() => {
+        fetch(`${config.BASE_URL}/premiumUsers`)
+            .then(response => response.json())
+            .then(data => setUserData(data))
+            .catch(error => console.error('Error fetching user data:', error));
+    }, []);
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);
@@ -60,8 +68,8 @@ export default function ManageUser() {
         const matchesSearchTerm = `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesUserType = userTypeFilter ? user.userType === userTypeFilter : true;
         const matchesDateRange = dateRange.start && dateRange.end
-            ? new Date(user.dateCreated) >= new Date(dateRange.start) &&
-              new Date(user.dateCreated) <= new Date(dateRange.end)
+            ? new Date(user.created_at) >= new Date(dateRange.start) &&
+              new Date(user.created_at) <= new Date(dateRange.end)
             : true;
         return matchesSearchTerm && matchesUserType && matchesDateRange;
     };
@@ -83,7 +91,7 @@ export default function ManageUser() {
             `${user.firstName} ${user.lastName}`,
             user.email,
             user.userType,
-            user.dateCreated
+            formatDate(user.created_at)
         ]);
 
         const csvContent = [
@@ -112,6 +120,16 @@ export default function ManageUser() {
     const handleApplyFilters = (filters) => {
         setUserTypeFilter(filters.userType);
         setDateRange({ start: filters.startDate, end: filters.endDate });
+    };
+
+    // Date formatting function
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
     };
 
     return (
@@ -157,7 +175,7 @@ export default function ManageUser() {
                                             <td>{owner.firstName} {owner.lastName}</td>
                                             <td>{owner.email}</td>
                                             <td>{owner.userType}</td>
-                                            <td>{owner.dateCreated}</td>
+                                            <td>{formatDate(owner.created_at)}</td>
                                             <td>
                                                 <button
                                                     onClick={() => handleManageClick(owner)}
