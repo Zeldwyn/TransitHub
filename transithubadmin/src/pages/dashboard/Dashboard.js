@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';  // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import '../styles/style.css';
 import Sidebar from "../../layout/sidebar";
-import { weeklyData, userData, deliveryRate } from "../data/sampleData";
+import { weeklyData, deliveryRate } from "../data/sampleData";
+import config from "../../config";
+
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+};
 
 export default function Dashboard() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const itemsPerPage = 5;
     const navigate = useNavigate();
 
@@ -21,6 +33,23 @@ export default function Dashboard() {
             navigate('/');
         }
     }, [navigate]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch(`${config.BASE_URL}/premiumUsers`);
+                const data = await response.json();
+                console.log(data); // Check data format here
+                setUsers(data); // Set the users state
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
 
     const toggleSidebar = () => {
         setIsSidebarExpanded(!isSidebarExpanded);
@@ -46,9 +75,9 @@ export default function Dashboard() {
         return diffDays <= 30;
     };
 
-    const filteredUsers = userData.filter(user =>
+    const filteredUsers = users.filter(user =>
         `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        isRecentlyCreated(user.dateCreated)
+        isRecentlyCreated(user.created_at) // Ensure correct date field
     );
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -61,7 +90,6 @@ export default function Dashboard() {
     };
 
     const handleManageClick = (user) => {
-        // Navigate to /manage-user route
         navigate('/manage-user');
     };
 
@@ -124,22 +152,28 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {currentItems.map((user, index) => (
-                                        <tr key={index} className="tbodyTr">
-                                            <td>{user.firstName} {user.lastName}</td>
-                                            <td>{user.email}</td>
-                                            <td>{user.userType}</td>
-                                            <td>{user.dateCreated}</td>
-                                            <td>
-                                                <button
-                                                    onClick={() => handleManageClick(user)}
-                                                    className="manageButton"
-                                                >
-                                                    Manage
-                                                </button>
-                                            </td>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="5">Loading...</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        currentItems.map((user, index) => (
+                                            <tr key={index} className="tbodyTr">
+                                                <td>{user.firstName} {user.lastName}</td>
+                                                <td>{user.email}</td>
+                                                <td>{user.userType}</td>
+                                                <td>{formatDate(user.created_at)}</td> {/* Format date here */}
+                                                <td>
+                                                    <button
+                                                        onClick={() => handleManageClick(user)}
+                                                        className="manageButton"
+                                                    >
+                                                        Manage
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                             <div className="paginationContainer">

@@ -1,6 +1,19 @@
 import React from "react";
 import '../pages/styles/style.css';
 
+const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false // Use 24-hour time format
+    });
+};
+
 const ManageUserModal = ({ user, onClose, onUpdate, onDelete }) => {
     return (
         <div className="modal-overlay">
@@ -15,7 +28,7 @@ const ManageUserModal = ({ user, onClose, onUpdate, onDelete }) => {
                     <p>First Name: {user.firstName}</p>
                     <p>Last Name: {user.lastName}</p>
                     <p>User Type: {user.userType}</p>
-                    <p>Date Created: {user.dateCreated}</p>
+                    <p>Date Created: {formatDateTime(user.created_at)}</p> {/* Format date and time */}
                 </div>
                 <div className="button-container">
                     <button
