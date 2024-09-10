@@ -33,6 +33,10 @@ export default function Location() {
         additionalInfo: ""
     });
 
+    // State for input values
+    const [fromInput, setFromInput] = useState('');
+    const [toInput, setToInput] = useState('');
+
     const calculateDistance = async () => {
         if (fromCoords && toCoords) {
             const origin = `${fromCoords.latitude},${fromCoords.longitude}`;
@@ -40,6 +44,9 @@ export default function Location() {
             
             try {
                 const response = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${GOOGLE_MAPS_API_KEY}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 const result = await response.json();
                 
                 if (result.rows[0].elements[0].status === "OK") {
@@ -124,9 +131,11 @@ export default function Location() {
                     />
                 )}
             </MapView>
+            
             <View style={styles.mapControls}>
+            <Text>Pickup:</Text>
                 <GooglePlacesAutocomplete
-                    placeholder='Enter starting location'
+                    placeholder='Enter pickup location'
                     onPress={(data, details = null) => {
                         if (details) {
                             const location = details.geometry.location;
@@ -147,7 +156,10 @@ export default function Location() {
                         }
                     }}
                     styles={styles.autocomplete}
+                    debounce={500}
                 />
+                
+                <Text>Delivery Address:</Text>
                 <GooglePlacesAutocomplete
                     placeholder='Enter destination'
                     onPress={(data, details = null) => {
@@ -170,7 +182,13 @@ export default function Location() {
                         }
                     }}
                     styles={styles.autocomplete}
+                    debounce={500}
                 />
+                {/* Don't remove, for some reason if walaon ni d ma click ang suggested place */}
+                <Text
+                    style={styles.inputText}
+                />
+                {/* Dont remove above ^^ */}
                 <View style={styles.buttonContainer}>
                     <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
                     <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
@@ -246,30 +264,22 @@ export default function Location() {
         </ScrollView>
     );
 
-    const renderFinalScreen = () => (
-        <View style={[styles.detailContainer, {paddingTop: 40, alignItems: 'center'}]}>
-            <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
-            <Text style={styles.label}>Summary of Transaction</Text>
-            <Text style={styles.microLabel}>Client Name:</Text>
-            <TextInput style={styles.input} editable={false} />
-            <Text style={styles.microLabel}>Date:</Text>
-            <TextInput style={styles.input} editable={false}/>
-            <Text style={styles.microLabel}>Distance:</Text>
-            <TextInput style={styles.input} editable={false}/>
-            <Text style={styles.microLabel}>Expected Duration:</Text>
-            <TextInput style={styles.input} editable={false}/>
-            <Text style={styles.microLabel}>Expected Fee:</Text>
-            <TextInput style={styles.input} editable={false}/>
-            <Text style={styles.microLabel} multiline numberOfLines={3}>Additional Notes:</Text>
-            <TextInput style={[styles.input, styles.additionalInfo]} editable={false}/>
-            <View style={[styles.buttonRow, {top: 720}]}>
-                <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
-                    <Text style={styles.buttonText}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('OwnerDrawer')}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                </TouchableOpacity>
-            </View>  
+    const renderReviewScreen = () => (
+        <View style={styles.reviewContainer}>
+            <Text style={styles.label}>Review Your Details</Text>
+            <Text style={styles.detailText}>From Location: {transactionDetails.fromLocation}</Text>
+            <Text style={styles.detailText}>To Location: {transactionDetails.toLocation}</Text>
+            <Text style={styles.detailText}>Package Width: {transactionDetails.packageWidth}</Text>
+            <Text style={styles.detailText}>Package Height: {transactionDetails.packageHeight}</Text>
+            <Text style={styles.detailText}>Package Weight: {transactionDetails.packageWeight}</Text>
+            <Text style={styles.detailText}>First 2km Rate: {transactionDetails.first2km}</Text>
+            <Text style={styles.detailText}>Succeeding Rate/km: {transactionDetails.succeedingRate}</Text>
+            <Text style={styles.detailText}>Expected Distance: {transactionDetails.expectedDistance}</Text>
+            <Text style={styles.detailText}>Expected Fee: {transactionDetails.expectedFee}</Text>
+            <Text style={styles.detailText}>Additional Info: {transactionDetails.additionalInfo}</Text>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+                <Text style={styles.buttonText}>Back</Text>
+            </TouchableOpacity>
         </View>
     );
 
@@ -277,34 +287,24 @@ export default function Location() {
         <SafeAreaView style={styles.container}>
             {currentScreen === 'map' && renderMapScreen()}
             {currentScreen === 'details' && renderDetailsScreen()}
-            {currentScreen === 'final' && renderFinalScreen()}
+            {currentScreen === 'review' && renderReviewScreen()}
 
-            <Modal
-                transparent={true}
-                visible={isCalendarVisible}
-                animationType="slide"
-                onRequestClose={() => setCalendarVisible(false)}
-            >
-                <TouchableWithoutFeedback onPress={() => setCalendarVisible(false)}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                    <Calendar
-                        onDayPress={handleDayPress}
-                        markingType={'period'}
-                        markedDates={markedDates}
-                        theme={{
-                            arrowColor: 'maroon',
-                            textDayFontSize: 16,
-                            textMonthFontSize: 16,
-                        }}
-                    />
-                    </View>
-                </View>
-                </TouchableWithoutFeedback>
-            </Modal>
+            {isCalendarVisible && (
+                <Modal transparent={true} visible={isCalendarVisible}>
+                    <TouchableWithoutFeedback onPress={() => setCalendarVisible(false)}>
+                        <View style={styles.modalContainer}>
+                            <Calendar
+                                markedDates={markedDates}
+                                onDayPress={handleDayPress}
+                            />
+                        </View>
+                    </TouchableWithoutFeedback>
+                </Modal>
+            )}
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
 container: {
@@ -316,6 +316,7 @@ autocomplete: {
         flex: 0,
         width: '100%',
         marginTop: 5,
+        zIndex: 1,
     },
     textInput: {
         height: 45,
@@ -412,6 +413,14 @@ input: {
     padding: 10,
     marginBottom: 20,
     backgroundColor: 'white',
+    color: 'black',
+},
+
+inputText: {
+    width: '100%',
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#E3B130',
     color: 'black',
 },
 additionalInfo: {
