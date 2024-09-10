@@ -211,18 +211,23 @@ app.post('/add-GuestUser', async (req, res) => {
 //TRANSACTIONS
 app.post('/add-Transaction', async (req, res) => {
     const {
-        toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+        toCoords, fromCoords, clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
         notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
     } = req.body;
 
+    // Format coordinates as POINT for MySQL
+    const formattedToCoords = `POINT(${toCoords.latitude} ${toCoords.longitude})`;
+    const formattedFromCoords = `POINT(${fromCoords.latitude} ${fromCoords.longitude})`;
+
     const sql = `
         INSERT INTO transaction (
-            toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+            toCoords, fromCoords, clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
             notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (ST_GeomFromText(?), ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    pool.query(sql, [toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+    pool.query(sql, [
+        formattedToCoords, formattedFromCoords, clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
         notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
     ], (err, result) => {
         if (err) { 
@@ -233,6 +238,7 @@ app.post('/add-Transaction', async (req, res) => {
         }
     });
 });
+
 
 app.post('/add-booking', (req, res) => {
     const {finalFee,transactionID, operatorID, premiumUserID } = req.body;

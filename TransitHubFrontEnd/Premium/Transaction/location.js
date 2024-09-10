@@ -42,7 +42,7 @@ export default function Location() {
     const [pID, setPID] = useState('');
     const [selectedOperatorID, setSelectedOperatorID] = useState(null);
     const [selectedOperatorDetails, setSelectedOperatorDetails] = useState('');
-    
+
     useEffect(() => {
         const getUserID = async () => {
           const id = await AsyncStorage.getItem('premiumUserID');
@@ -54,55 +54,71 @@ export default function Location() {
 
       const handleSubmit = async () => {
         try {
+            const transactionData = {
+                toCoords,
+                fromCoords,
+                clientName,
+                itemDescription,
+                packageWeight,
+                itemQuantity,
+                vehicleFee,
+                notes,
+                first2km,
+                succeedingKm,
+                expectedDistance,
+                startDate,
+                endDate,
+                expectedDuration,
+                expectedFee,
+            };
             const transactionResponse = await fetch(`${config.BASE_URL}/add-Transaction`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
-                    notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
-                }),
+                body: JSON.stringify(transactionData),
             });
-        
-            const transactionData = await transactionResponse.json();
-            console.log('Response from Express backend (Transaction):', transactionData);
-        
-            if (transactionData.status === 1) {
-                setTransactionID(transactionData.transactionID);
-                console.log('TransactionID: ', transactionData.transactionID);
+    
+            const transactionResult = await transactionResponse.json();
+            console.log('Response from Express backend (Transaction):', transactionResult);
+    
+            if (transactionResponse.status === 200 && transactionResult.status === 1) {
+                console.log('TransactionID:', transactionResult.transactionID);
+    
+                const bookingData = {
+                    finalFee: expectedFee,
+                    transactionID: transactionResult.transactionID,
+                    operatorID: selectedOperatorID,
+                    premiumUserID: parseInt(pID),
+                };
+    
                 const bookingResponse = await fetch(`${config.BASE_URL}/add-Booking`, {
                     method: 'POST',
                     headers: {
                         Accept: 'application/json',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        finalFee: expectedFee,
-                        transactionID: transactionData.transactionID,
-                        operatorID: selectedOperatorID,
-                        premiumUserID: parseInt(pID),
-                    }),
+                    body: JSON.stringify(bookingData),
                 });
     
-                const bookingData = await bookingResponse.json();
-                console.log('Response from Express backend (Booking):', bookingData);
-        
+                const bookingResult = await bookingResponse.json();
+                console.log('Response from Express backend (Booking):', bookingResult);
+    
                 if (bookingResponse.status === 200) {
                     console.log('Booking added successfully');
+                    navigation.navigate('OwnerDrawer');
                 } else {
-                    console.error('Failed to add booking:', bookingData.err);
+                    console.error('Failed to add booking:', bookingResult.err);
                 }
             } else {
-                console.error('Failed to add transaction:', transactionData.err);
+                console.error('Failed to add transaction:', transactionResult.err);
             }
         } catch (error) {
             console.error('Error posting data to Express backend:', error);
         }
-        navigation.navigate('OwnerDrawer')
     };
-
+    
     useEffect(() => {
         if (isOperatorVisible === true) {
           fetch(`${config.BASE_URL}/available-Operators`, {
@@ -206,7 +222,7 @@ export default function Location() {
             </MapView>
             
             <View style={styles.mapControls}>
-            <Text>Pickup:</Text>
+            {/* <Text>Pickup:</Text> */}
                 <GooglePlacesAutocomplete
                     placeholder='Enter pickup location'
                     onPress={(data, details = null) => {
@@ -224,14 +240,16 @@ export default function Location() {
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
                         bounds: {
-                            southwest: { lat: 5.0, lng: 115.0 },
-                            northeast: { lat: 21.0, lng: 127.0 },
-                        }
+                            southwest: { lat: 8.0, lng: 123.0 }, // Southwest corner
+                            northeast: { lat: 11.5, lng: 125.0 }, // Northeast corner
+                        },
+                        strictBounds: true,
                     }}
-                    styles={styles.autocomplete}  
+                    styles={styles.autocomplete}   
+                    debounce={500} 
                 />
                 
-                <Text>Delivery Address:</Text>
+                {/* <Text>Delivery Address:</Text> */}
                 <GooglePlacesAutocomplete
                     placeholder='Enter destination'
                     onPress={(data, details = null) => {
@@ -244,16 +262,18 @@ export default function Location() {
                             });
                         }
                     }}
+        
                     fetchDetails={true}
                     query={{
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
                         bounds: {
-                            southwest: { lat: 5.0, lng: 115.0 },
-                            northeast: { lat: 21.0, lng: 127.0 },
-                        }
+                            southwest: { lat: 8.0, lng: 123.0 }, // Southwest corner
+                            northeast: { lat: 11.5, lng: 125.0 }, // Northeast corner
+                        },
                     }}
-                    styles={styles.autocomplete}
+                    styles={styles.autocomplete}  
+                    debounce={500}
                 />
                 {/* Don't remove, for some reason if walaon ni d ma click ang suggested place */}
                 <Text
@@ -287,20 +307,20 @@ export default function Location() {
                     <Text style={styles.microLabel}>Item Description</Text>
                         <TextInput style={styles.input} onChangeText={text => setItemDescription(text)} value={itemDescription}/>        
                     <Text style={styles.microLabel}>Weight</Text>
-                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setPackageWeight(text)} value={packageWeight + 'kg'}/>
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setPackageWeight(text)} value={packageWeight}/>
                     <Text style={styles.microLabel}>Quantity</Text>
                         <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setItemQuantity(text)} value={itemQuantity}/>
                     <Text style={styles.microLabel} >Vehicle Fee: </Text>
-                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setVehicleFee(text)} value={`₱` +vehicleFee}/>                 
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setVehicleFee(text)} value={vehicleFee}/>                 
                 </View>
     
                 <View style={styles.rightColumn}>
                     <Text style={styles.microLabel} >Notes</Text>
                         <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setNotes(text)} value={notes}/>      
                     <Text style={styles.microLabel}>First 2km:</Text>      
-                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setFirst2km(text)} value={`₱` +first2km}/>
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setFirst2km(text)} value={first2km}/>
                     <Text style={styles.microLabel}>Succeeding km:</Text>
-                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setSucceedingKm(text)} value={`₱` +succeedingKm}/>      
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setSucceedingKm(text)} value={succeedingKm}/>      
                     <Text style={styles.microLabel}>Distance:</Text>
                         <TextInput value={expectedDistance + ' km'} style={styles.input} editable={false}/>
                     <Text style={styles.microLabel}>Date:</Text>
@@ -468,10 +488,12 @@ autocomplete: {
         flex: 0,
         width: '100%',
         marginTop: 5,
+        zIndex: 1,
     },
     textInput: {
         height: 45,
         borderColor: '#ccc',
+        zIndex: 1,
     },
 },
 button: {
@@ -492,6 +514,7 @@ buttonText: {
 },
 mapControls: {
     zIndex: 1,
+    height: 'auto',
     padding: 10,
     backgroundColor: '#E3B130',
 },
