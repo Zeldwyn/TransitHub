@@ -8,7 +8,7 @@ import { GOOGLE_MAPS_API_KEY } from '@env';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 Geocoder.init(GOOGLE_MAPS_API_KEY);
 
@@ -16,21 +16,21 @@ export default function Location() {
     const navigation = useNavigation();
     const [fromCoords, setFromCoords] = useState(null);
     const [toCoords, setToCoords] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(null);
+    const [markedDates, setMarkedDates] = useState({});
     const [isCalendarVisible, setCalendarVisible] = useState(false);
     const [packageHeightUnit, setPackageHeightUnit] = useState('');
     const [currentScreen, setCurrentScreen] = useState('map');
+    const isButtonDisabled = !fromCoords || !toCoords;
     const [transactionDetails, setTransactionDetails] = useState({
         fromLocation: "",
         toLocation: "",
-        packageWidth: "",
-        packageHeight: "",
         packageWeight: "",
         first2km: "",
         succeedingRate: "",
         expectedDistance: "",
         expectedFee: "",
-        additionalInfo: ""
+        additionalInfo: "",
+        expectedDuration: "" // Add this field for duration
     });
 
     const calculateDistance = async () => {
@@ -48,14 +48,17 @@ export default function Location() {
                 if (result.rows[0].elements[0].status === "OK") {
                     const distanceInMeters = result.rows[0].elements[0].distance.value;
                     const distanceInKm = (distanceInMeters / 1000).toFixed(2);
+                    const durationInSeconds = result.rows[0].elements[0].duration.value;
+                    const durationInMinutes = Math.ceil(durationInSeconds / 60); // Convert seconds to minutes
                     
                     setTransactionDetails((prevDetails) => ({
                         ...prevDetails,
                         expectedDistance: distanceInKm,
+                        expectedDuration: durationInMinutes,
                     }));
                 }
             } catch (error) {
-                console.error("Error fetching distance:", error);
+                console.error("Error fetching distance and duration:", error);
             }
         }
     };
@@ -66,24 +69,38 @@ export default function Location() {
         }
     }, [fromCoords, toCoords]);
 
-    const markedDates = {
-        '2024-09-20': {
-            marked: true,
-            dotColor: 'maroon',
-            color: '#c17171',
-            textColor: 'black',
-        },
-    };
 
     const handleDayPress = (day) => {
-        setSelectedDate(formatDate(day.dateString));
-        setCalendarVisible(false);
+        const date = day.dateString;
+        setMarkedDates((prevMarkedDates) => {
+            const updatedMarkedDates = { ...prevMarkedDates };
+            if (updatedMarkedDates[date]) {
+                delete updatedMarkedDates[date];
+            } else {
+                updatedMarkedDates[date] = {
+                    selected: true,
+                    marked: true,
+                    selectedColor: 'maroon',
+                };
+            }
+            return updatedMarkedDates;
+        });
     };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear().toString().slice(-2); 
+        return `${month}/${day}/${year}`;
+    };
+    const getFormattedDateRange = () => {
+        const dates = Object.keys(markedDates);
+        if (dates.length === 0) return ''; 
+        const sortedDates = dates.sort((a, b) => new Date(a) - new Date(b));
+        const firstDate = formatDate(sortedDates[0]);
+        const lastDate = formatDate(sortedDates[sortedDates.length - 1]);
+        return sortedDates.length === 1 ? firstDate : `${firstDate} - ${lastDate}`;
     };
 
     const [region, setRegion] = useState({
@@ -187,7 +204,8 @@ export default function Location() {
                 {/* Dont remove above ^^ */}
                 <View style={styles.buttonContainer}>
                     <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
-                    <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
+                    <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')} >
+                        {/* disabled={isButtonDisabled} */}
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
                 </View>
@@ -201,92 +219,55 @@ export default function Location() {
             contentContainerStyle={styles.detailContentContainer}
             showsVerticalScrollIndicator={false}
         >
+            <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
             <Text style={styles.label}>Input Additional Details</Text>
+            
             <View style={styles.detailsColumn}>
                 <View style={styles.leftColumn}>
-                    <Text style={styles.miniLabel}>Package Details:</Text>
-                    <Text style={styles.microLabel}>Unit*</Text>
-                    <View style={styles.pickerContainer}>
-                        <Picker
-                            selectedValue={packageHeightUnit}
-                            style={styles.picker}
-                            onValueChange={(heightunit) => {
-                                setPackageHeightUnit(heightunit);
-                                setTransactionDetails(prev => ({ ...prev, packageHeightUnit: heightunit }));
-                            }}
-                        >
-                            <Picker.Item label="in" value="inch" />
-                            <Picker.Item label="cm" value="centimeter" />
-                            <Picker.Item label="ft" value="feet" />
-                        </Picker>
-                    </View>
-                    
-                    <Text style={styles.microLabel}>Width*</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={transactionDetails.packageWidth}
-                        onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, packageWidth: text }))}
-                    />
-                    <Text style={styles.microLabel}>Height*</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={transactionDetails.packageHeight}
-                        onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, packageHeight: text }))}
-                    />
-                    <Text style={styles.microLabel}>Weight*</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={transactionDetails.packageWeight}
-                        onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, packageWeight: text }))}
-                    />
+                    {/* <Text style={styles.miniLabel}>Package Details:</Text> */}
+                    <Text style={styles.microLabel}>Client Name:</Text>
+                     <TextInput style={[styles.input, {textAlign: 'center'}]} />
+                    <Text style={styles.microLabel}>Item Description</Text>
+                    <TextInput style={styles.input} />        
+                    <Text style={styles.microLabel}>Weight</Text>
+                    <TextInput style={styles.input} keyboardType='number-pad'/>
+                    <Text style={styles.microLabel}>Quantity</Text>
+                    <TextInput style={styles.input} keyboardType='number-pad'/>
+                    <Text style={styles.microLabel} >Vehicle Fee: </Text>
+                    <TextInput style={styles.input} keyboardType='number-pad'/>                 
                 </View>
     
                 <View style={styles.rightColumn}>
-                    <Text style={styles.miniLabel}>Rate:</Text>
-                    <Text style={styles.microLabel}>First 2km:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={transactionDetails.first2km}
-                        onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, first2km: text }))}
-                    />
+                    <Text style={styles.microLabel} >Notes</Text>
+                        <TextInput style={[styles.input, {textAlign: 'left'}]}/>      
+                    <Text style={styles.microLabel}>First 2km:</Text>      
+                        <TextInput style={styles.input} keyboardType='number-pad'/>
                     <Text style={styles.microLabel}>Succeeding km:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={transactionDetails.succeedingRate}
-                        onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, succeedingRate: text }))}
-                    />
+                        <TextInput style={styles.input} keyboardType='number-pad'/>      
                     <Text style={styles.microLabel}>Distance:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={`${transactionDetails.expectedDistance} km`}
-                        editable={false}
-                    />
+                        <TextInput value={transactionDetails.expectedDistance + ' km'} style={styles.input} editable={false}/>
                     <Text style={styles.microLabel}>Date:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={selectedDate}
-                        placeholder="Select a date"
-                        editable={false}
-                    />
+                        <TextInput
+                            value={getFormattedDateRange()}
+                            style={[styles.input, {textAlign: 'left'}]}
+                            placeholder="Select a date"
+                            editable={false}
+                        />
                     <TouchableOpacity onPress={() => setCalendarVisible(true)} style={styles.icons}>
                         <Ionicons name="calendar-outline" size={22} color="black" />
                     </TouchableOpacity>
                 </View>
             </View>
-            <Text style={styles.microLabel}>Client Name:</Text>
-            <TextInput
-                style={[styles.input, { textAlign: 'center' }]}
-                value={transactionDetails.clientName}
-                onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, clientName: text }))}
-            />
-            <Text style={styles.microLabel}>Additional Notes:</Text>
-            <TextInput
-                style={[styles.input, styles.additionalInfo]}
-                multiline
-                numberOfLines={3}
-                value={transactionDetails.additionalInfo}
-                onChangeText={(text) => setTransactionDetails(prev => ({ ...prev, additionalInfo: text }))}
-            />
+                
+            <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10}}>
+                <TouchableOpacity style={styles.operatorIcon}>
+                    <FontAwesome5 name="user-alt" size={40} color="white" /> 
+                </TouchableOpacity>
+                <View style={{width: '70%'}}>
+                    <Text style={styles.microLabel}>Choose Operator:</Text>
+                    <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false}/>
+                </View>         
+            </View>  
             <View style={styles.buttonRow}>
                 <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('map')}>
                     <Text style={styles.buttonText}>Back</Text>
@@ -308,13 +289,13 @@ export default function Location() {
             <TextInput style={styles.input} value={transactionDetails.clientName} editable={false} />
             
             <Text style={styles.microLabel}>Date:</Text>
-            <TextInput style={styles.input} value={selectedDate} editable={false} />
+            <TextInput style={styles.input} editable={false} />
             
             <Text style={styles.microLabel}>Distance:</Text>
             <TextInput style={styles.input} value={`${transactionDetails.expectedDistance}`} editable={false} />
             
             <Text style={styles.microLabel}>Expected Duration:</Text>
-            <TextInput style={styles.input} editable={false}/>
+            <TextInput style={styles.input} editable={false} value={transactionDetails.expectedDuration +  'mins'}/>
 
             <Text style={styles.microLabel}>Expected Fee:</Text>
             <TextInput style={styles.input} editable={false}/>
@@ -332,6 +313,9 @@ export default function Location() {
         </View>
     );
     
+    const renderChooseOperator = () => {
+        
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -350,14 +334,18 @@ export default function Location() {
                     <View style={styles.modalContent}>
                     <Calendar
                         onDayPress={handleDayPress}
-                        markingType={'period'}
-                        markedDates={markedDates}
+                        markingType={'multi-dot'}
+                        markedDates={markedDates} 
                         theme={{
                             arrowColor: 'maroon',
                             textDayFontSize: 16,
                             textMonthFontSize: 16,
                         }}
                     />
+                    
+                    <TouchableOpacity style={styles.button} onPress={() => setCalendarVisible(false)}>
+                        <Text style={styles.buttonText}>Confirm</Text>
+                    </TouchableOpacity>
                     </View>
                 </View>
                 </TouchableWithoutFeedback>
@@ -368,156 +356,157 @@ export default function Location() {
 
 
 const styles = StyleSheet.create({
+container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+},
+autocomplete: {
     container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    autocomplete: {
-        container: {
-            flex: 0,
-            width: '100%',
-            marginTop: 5,
-            zIndex: 1,
-        },
-        textInput: {
-            height: 45,
-            borderColor: '#ccc',
-            zIndex: 1,
-        },
-    },
-    button: {
-        backgroundColor: '#8A252C',
-        borderRadius: 5,
-        width: '40%',
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: 10,
+        flex: 0,
+        width: '100%',
+        marginTop: 5,
         zIndex: 1,
     },
-    buttonText: {
-        color: '#fff',
-        fontWeight: 'normal',
-        fontSize: 15,
-        textAlign: 'center',
-    },
-    mapControls: {
-        height: 'auto',
-        padding: 10,
-        backgroundColor: '#E3B130',
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    logoImage: {
-        width: '80%',
-        height: 100,
-        marginBottom: -20,
-    },
-    map: {
-        flex: 1,
-        width: '100%',
-        height: '80%',
-    },
-    icons: {
-        position: 'absolute',
-        top: '50%',
-        right: 5,
-        top: 310
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: '#ffffff',
-        borderRadius: 10,
-        alignItems: 'center',
-        padding: 20,
-    },
-    detailContainer: {
-        flex: 1,
-        backgroundColor: '#E3B130',
-        padding: 20,
-        height: '100%'
-    },
-    detailContentContainer: {
-        alignItems: 'center',
-        paddingTop: 20,
-        height: '100%'
-    },
-    detailsColumn: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    leftColumn: {
-        width: '45%',
-    },
-    rightColumn: {
-        width: '45%',
-    },
-    pickerContainer: {
-        width: '100%',
-        height: 50,
-        marginBottom: 10,
-        backgroundColor: 'white',
-        borderRadius: 10,
-        overflow: 'hidden', // Ensures the border radius applies to the Picker
+    textInput: {
+        height: 45,
         borderColor: '#ccc',
-        borderWidth: 1,
+        zIndex: 1,
     },
-    picker: {
-        width: '100%',
-        height: '100%',
-    },
-    input: {
-        width: '100%',
-        height: 36,
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 20,
-        backgroundColor: 'white',
-        color: 'black',
-    },
-    inputText: {
-        width: '100%',
-        height: 40,
-        backgroundColor: '#E3B130',
-    },
-    additionalInfo: {
-        height: 60,
-        textAlignVertical: 'top',
-    },
-    miniLabel: {
-        fontSize: 17,
-        fontWeight: '700',
-        marginBottom: 10,
-        marginLeft: 5
-    },
-    microLabel: {
-        fontSize: 15,
-        fontWeight: '500',
-        marginBottom: 5,
-        marginLeft: 10
-    },
-    label: {
-        color: 'black',
-        fontSize: 22,
-        fontWeight: '800',
-        alignSelf: 'center',
-        marginBottom: 20,
-        marginTop: 20
-    },
-    buttonRow: {
-        position: 'absolute',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        top: 650,
-    },
+},
+button: {
+    backgroundColor: '#8A252C',
+    borderRadius: 5,
+    width: '40%',
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    zIndex: 1,
+},
+buttonText: {
+    color: '#fff',
+    fontWeight: 'normal',
+    fontSize: 15,
+    textAlign: 'center',
+},
+mapControls: {
+    zIndex: 1,
+
+    padding: 10,
+    backgroundColor: '#E3B130',
+},
+buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+},
+logoImage: {
+    width: '80%',
+    height: 100,
+    marginBottom: -20,
+},
+map: {
+    zIndex: 0,
+flex: 1,
+    width: '100%',
+    height: '80%',
+},
+icons: {
+    position: 'absolute',
+        right: 5,
+    top: 358
+
+},
+operatorIcon: {
+    borderColor: 'white', 
+    borderWidth: 1, 
+    borderRadius: 5,
+    width: 70, 
+    height: 70, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    left: 20,
+    top: 5
+},
+modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+},
+modalContent: {
+    width: '80%',
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    alignItems: 'center',
+    padding: 20,
+},
+detailContainer: {
+    flex: 1,
+    backgroundColor: '#E3B130',
+    padding: 20,
+    height: '100%'
+},
+detailContentContainer: {
+    alignItems: 'center',
+    paddingTop: 20,
+    minHeight: '100%'
+},
+detailsColumn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+},
+leftColumn: {
+    width: '48%',
+},
+rightColumn: {
+    width: '48%',
+},
+input: {
+    width: '100%',
+    height: 36,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+    backgroundColor: 'white',
+    color: 'black',
+    textAlign: 'center'
+},
+inputText: {
+    width: '100%',
+    height: 40,
+    backgroundColor: '#E3B130',
+},
+additionalInfo: {
+    height: 60,
+    textAlignVertical: 'top',
+},
+miniLabel: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginLeft: 5
+},
+microLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 5,
+    marginLeft: 10
+},
+label: {
+    color: 'black',
+    fontSize: 22,
+    fontWeight: '800',
+    alignSelf: 'center',
+    marginBottom: 20,
+    marginTop: 20
+},
+buttonRow: {
+    position: 'absolute',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    top: 700,
+},
+    
 });
