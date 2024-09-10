@@ -275,11 +275,6 @@ export default function Location() {
                     styles={styles.autocomplete}  
                     debounce={500}
                 />
-                {/* Don't remove, for some reason if walaon ni d ma click ang suggested place */}
-                <Text
-                    style={styles.inputText}
-                />
-                {/* Dont remove above why is that ^^ */}
                 <View style={styles.buttonContainer}>
                     <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
                     <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')} >
@@ -299,7 +294,7 @@ export default function Location() {
         >
             <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
             <Text style={styles.label}>Input Additional Details</Text>
-            
+    
             <View style={styles.detailsColumn}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.microLabel}>Client Name:</Text>
@@ -335,7 +330,7 @@ export default function Location() {
                     </TouchableOpacity>
                 </View>
             </View>
-                
+    
             <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10}}>
                 <TouchableOpacity style={styles.operatorIcon} onPress={() => setIsOperatorVisible(true)}>
                     <FontAwesome5 name="user-alt" size={40} color="white" /> 
@@ -345,6 +340,7 @@ export default function Location() {
                     <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false} value={selectedOperatorDetails}/>
                 </View>         
             </View>  
+    
             <View style={styles.buttonRow}>
                 <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('map')}>
                     <Text style={styles.buttonText}>Back</Text>
@@ -365,36 +361,39 @@ export default function Location() {
             
 
     const renderFinalScreen = () => (
-        <View style={[styles.detailContainer, {paddingTop: 40, alignItems: 'center'}]}>
-            <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
-            <Text style={styles.label}>Summary of Transaction</Text>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.detailContainer}>
+                <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
+                <Text style={styles.label}>Summary of Transaction</Text>
+                
+                <Text style={styles.microLabel}>Client Name:</Text>
+                <TextInput style={styles.input} value={clientName} editable={false} />
+                
+                <Text style={styles.microLabel}>Date:</Text>
+                <TextInput style={styles.input} editable={false} value={formattedDateRange}/>
+                
+                <Text style={styles.microLabel}>Distance:</Text>
+                <TextInput style={styles.input} value={expectedDistance} editable={false} />
+                
+                <Text style={styles.microLabel}>Expected Duration:</Text>
+                <TextInput style={styles.input} editable={false} value={expectedDuration + ' mins'}/>
+                
+                <Text style={styles.microLabel}>Expected Fee:</Text>
+                <TextInput style={styles.input} editable={false} value={`₱${expectedFee.toString()}`}/>
+                
+                <Text style={styles.microLabel}>Additional Notes:</Text>
+                <TextInput style={[styles.input, styles.additionalInfo]} editable={false} value={notes}/>
             
-            <Text style={styles.microLabel}>Client Name:</Text>
-            <TextInput style={styles.input} value={clientName} editable={false} />
-            
-            <Text style={styles.microLabel}>Date:</Text>
-            <TextInput style={styles.input} editable={false} value={formattedDateRange}/>
-            
-            <Text style={styles.microLabel}>Distance:</Text>
-            <TextInput style={styles.input} value={expectedDistance} editable={false} />
-            
-            <Text style={styles.microLabel}>Expected Duration:</Text>
-            <TextInput style={styles.input} editable={false} value={expectedDuration +  'mins'}/>
-
-            <Text style={styles.microLabel}>Expected Fee:</Text>
-            <TextInput style={styles.input} editable={false} value={`₱` + expectedFee.toString()}/>
-            <Text style={styles.microLabel}>Additional Notes:</Text>
-            <TextInput style={[styles.input, styles.additionalInfo]} editable={false} value={notes}/>
-            
-            <View style={[styles.buttonRow, {top: 720}]}>
-                <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
-                    <Text style={styles.buttonText}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => handleSubmit()}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                </TouchableOpacity>
-            </View>  
-        </View>
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => handleSubmit()}>
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                </View>  
+            </View>
+        </ScrollView>
     );
     
     const renderChooseOperator = ({ item }) => {
@@ -451,10 +450,10 @@ export default function Location() {
                 transparent={true}
                 visible={isOperatorVisible}
                 animationType="slide"
-                onRequestClose={() => setCalendarVisible(false)}
+                onRequestClose={() => setIsOperatorVisible(false)}
             >
                 <View style={styles.operatorModal}>
-                    <Text style={[styles.miniLabel, {marginTop: -50}]}>Available Operators on</Text>
+                    <Text style={[styles.miniLabel, {marginTop: 0}]}>Available Operators on</Text>
                     <Text style={styles.label}>{formattedDateRange}</Text>
                     <View style={styles.operatorModalContent}>
                         <FlatList
@@ -463,13 +462,13 @@ export default function Location() {
                             keyExtractor={(item) => item.operatorID.toString()}
                         />
                     </View>
-                <View style={[styles.buttonRow, {top: 650}]}>
-                    <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
-                        <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
-                        <Text style={styles.buttonText}>Confirm</Text>
-                    </TouchableOpacity>
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
+                            <Text style={styles.buttonText}>Back</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
+                            <Text style={styles.buttonText}>Confirm</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>  
             </Modal>
@@ -479,190 +478,189 @@ export default function Location() {
 
 
 const styles = StyleSheet.create({
-container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-},
-autocomplete: {
     container: {
-        flex: 0,
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    autocomplete: {
+        container: {
+            flex: 0,
+            width: '100%',
+            marginTop: 5,
+            zIndex: 1,
+        },
+        textInput: {
+            height: 45,
+            borderColor: '#ccc',
+            zIndex: 1,
+        },
+    },
+    button: {
+        backgroundColor: '#8A252C',
+        borderRadius: 5,
+        width: '40%',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: 10,
+        zIndex: 1,
+    },
+    buttonText: {
+        color: '#fff',
+        fontWeight: 'normal',
+        fontSize: 15,
+        textAlign: 'center',
+    },
+    mapControls: {
+        zIndex: 5,
+        height: 'auto',
+        padding: 10,
+        backgroundColor: '#E3B130',
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    logoImage: {
         width: '100%',
-        marginTop: 5,
-        zIndex: 1,
+        height: 100,
+        marginBottom: -20,
     },
-    textInput: {
-        height: 45,
-        borderColor: '#ccc',
-        zIndex: 1,
+    map: {
+        zIndex: 0,
+        flex: 1,
+        width: '100%',
+        height: '80%',
     },
-},
-button: {
-    backgroundColor: '#8A252C',
-    borderRadius: 5,
-    width: '40%',
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 10,
-    zIndex: 1,
-},
-buttonText: {
-    color: '#fff',
-    fontWeight: 'normal',
-    fontSize: 15,
-    textAlign: 'center',
-},
-mapControls: {
-    zIndex: 1,
-    height: 'auto',
-    padding: 10,
-    backgroundColor: '#E3B130',
-},
-buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-},
-logoImage: {
-    width: '80%',
-    height: 100,
-    marginBottom: -20,
-},
-map: {
-    zIndex: 0,
-flex: 1,
-    width: '100%',
-    height: '80%',
-},
-icons: {
-    position: 'absolute',
-    right: 5,
-    top: 358
-},
-operatorIcon: {
-    borderColor: 'white', 
-    borderWidth: 1, 
-    borderRadius: 5,
-    width: 70, 
-    height: 70, 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    left: 20,
-    top: 5
-},
-modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-},
-modalContent: {
-    width: '80%',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    alignItems: 'center',
-    padding: 20,
-},
-detailContainer: {
-    flex: 1,
-    backgroundColor: '#E3B130',
-    padding: 20,
-    height: '100%'
-},
-detailContentContainer: {
-    alignItems: 'center',
-    paddingTop: 20,
-    minHeight: '100%'
-},
-detailsColumn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-},
-leftColumn: {
-    width: '48%',
-},
-rightColumn: {
-    width: '48%',
-},
-input: {
-    width: '100%',
-    height: 36,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
-    backgroundColor: 'white',
-    color: 'black',
-    textAlign: 'center'
-},
-inputText: {
-    width: '100%',
-    height: 40,
-    backgroundColor: '#E3B130',
-},
-additionalInfo: {
-    height: 60,
-    textAlignVertical: 'top',
-},
-miniLabel: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 10,
-    marginLeft: 5
-},
-microLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginBottom: 5,
-    marginLeft: 10
-},
-label: {
-    color: 'black',
-    fontSize: 22,
-    fontWeight: '800',
-    alignSelf: 'center',
-    marginBottom: 20,
-    marginTop: 20
-},
-buttonRow: {
-    position: 'absolute',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    top: 700,
-},
-operatorModal: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 10,
-    margin: 10
-},
-operatorModalContent: {
-    height: '70%',
-    width: '100%'
-},
-email: {
-    fontSize: 12.5,
-  },
-name: {
-    fontSize: 15,
-},
-itemContainer: {
-    flexDirection: 'row',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'maroon',
-    backgroundColor: '#fff',
-    marginVertical: 5,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    elevation: 3,
-  },
-textContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center'
-},
+    icons: {
+        position: 'absolute',
+        right: 5,
+        top: 358
+    },
+    operatorIcon: {
+        borderColor: 'white', 
+        borderWidth: 1, 
+        borderRadius: 5,
+        width: 70, 
+        height: 70, 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        left: 20,
+        top: 5
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        alignItems: 'center',
+        padding: 20,
+    },
+    detailContainer: {
+        flex: 1,
+        backgroundColor: '#E3B130',
+        padding: 20,
+    },
+    detailContentContainer: {
+        flexGrow: 1, 
+        alignItems: 'center',
+        paddingTop: 20,
+    },
+    detailsColumn: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    leftColumn: {
+        width: '48%',
+    },
+    rightColumn: {
+        width: '48%',
+    },
+    input: {
+        width: '100%',
+        height: 36,
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 20,
+        backgroundColor: 'white',
+        color: 'black',
+        textAlign: 'center',
+    },
+    inputText: {
+        backgroundColor: '#E3B130',
+    },
+    additionalInfo: {
+        height: 60,
+        textAlignVertical: 'top',
+    },
+    miniLabel: {
+        fontSize: 17,
+        fontWeight: '700',
+        marginBottom: 10,
+        marginLeft: 5,
+    },
+    microLabel: {
+        fontSize: 15,
+        fontWeight: '500',
+        marginBottom: 5,
+        marginLeft: 10,
+    },
+    label: {
+        color: 'black',
+        fontSize: 22,
+        fontWeight: '800',
+        alignSelf: 'center',
+        marginBottom: 20,
+        marginTop: 20,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        paddingHorizontal: 10,
+        marginTop: 10,
+        marginBottom:20,
+    },
+    operatorModal: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 10,
+        margin: 10,
+    },
+    operatorModalContent: {
+        height: '70%',
+        width: '100%',
+    },
+    email: {
+        fontSize: 12.5,
+    },
+    name: {
+        fontSize: 15,
+    },
+    itemContainer: {
+        flexDirection: 'row',
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: 'maroon',
+        backgroundColor: '#fff',
+        marginVertical: 5,
+        marginHorizontal: 10,
+        borderRadius: 10,
+        elevation: 3,
+    },
+    textContainer: {
+        flex: 1,
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+    },
 });
