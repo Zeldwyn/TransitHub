@@ -144,7 +144,7 @@ export default function ManageUser() {
                                 <div className="searchExportContainer">
                                     <input
                                         type="text"
-                                        placeholder="Search Users"
+                                        placeholder="Search Names"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="searchInput"
