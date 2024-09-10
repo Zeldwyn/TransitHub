@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import config from "../config";
 
 export default function OperatorHome() {
     const [pID, setPID] = useState('');
@@ -29,18 +30,22 @@ export default function OperatorHome() {
 
     useEffect(() => {
         const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
         const formattedDate = today.toLocaleDateString('en-US', options);
         setCurrentDate(formattedDate);
 
-        // Sample data for deliveries, remove if naa nay backend
-        const sampleDeliveries = [
-            { id: '1', item: 'Client', from: 'Location A', to: 'Location B', fee: '1000' },
-            { id: '2', item: 'Client', from: 'Location C', to: 'Location D', fee: '1500' },
-            { id: '3', item: 'Client', from: 'Location E', to: 'Location F', fee: '2000' }
-        ];
-        setDeliveries(sampleDeliveries);
+        fetchDeliveries(formattedDate);
     }, []);
+
+    const fetchDeliveries = async (date) => {
+        try {
+            const response = await fetch(`YOUR_BACKEND_API_URL/deliveries?date=${date}`);
+            const data = await response.json();
+            setDeliveries(data);
+        } catch (error) {
+            console.error("Error fetching deliveries:", error);
+        }
+    };
 
     const handlePress = (id) => {
         setExpandedItemId(expandedItemId === id ? null : id);
@@ -49,13 +54,13 @@ export default function OperatorHome() {
     const renderItem = ({ item }) => (
         <View style={styles.deliveryItem}>
             <TouchableOpacity onPress={() => handlePress(item.id)} style={styles.itemHeader}>
-                <Text style={styles.deliveryText}>{item.item}</Text>
+                <Text style={styles.deliveryText}>{item.clientName}</Text>
             </TouchableOpacity>
             {expandedItemId === item.id && (
                 <View style={styles.details}>
-                    <Text style={styles.detailText}>Pickup Location: {item.from}</Text>
-                    <Text style={styles.detailText}>Delivery Location: {item.to}</Text>
-                    <Text style={styles.detailText}>Fee: ₱{item.fee}</Text>
+                    <Text style={styles.detailText}>Pickup Location: {item.fromCoords}</Text>
+                    <Text style={styles.detailText}>Delivery Location: {item.toCoords}</Text>
+                    <Text style={styles.detailText}>Fee: ₱{item.finalFee}</Text>
                     <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('OperatorLive')}>
                         <Text style={styles.startButtonText}>Deliver</Text>
                     </TouchableOpacity>
