@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
@@ -9,6 +9,8 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useRegion, calculateDistance, computeDateRange, getFormattedDateRange, calculateFee} from './transacFunctions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 Geocoder.init(GOOGLE_MAPS_API_KEY);
 
@@ -18,57 +20,124 @@ export default function Location() {
     const [toCoords, setToCoords] = useState(null);
     const [markedDates, setMarkedDates] = useState({});
     const [isCalendarVisible, setCalendarVisible] = useState(false);
-    const [packageHeightUnit, setPackageHeightUnit] = useState('');
+    const [isOperatorVisible, setIsOperatorVisible] = useState(false);
     const [currentScreen, setCurrentScreen] = useState('map');
     const isButtonDisabled = !fromCoords || !toCoords;
-    const [transactionDetails, setTransactionDetails] = useState({
-        fromLocation: "",
-        toLocation: "",
-        packageWeight: "",
-        first2km: "",
-        succeedingRate: "",
-        expectedDistance: "",
-        expectedFee: "",
-        additionalInfo: "",
-        expectedDuration: "" // Add this field for duration
-    });
+    const [clientName, setClientName] = useState('');
+    const [itemDescription, setItemDescription] = useState('');
+    const [packageWeight, setPackageWeight] = useState('');
+    const [itemQuantity, setItemQuantity] = useState('');
+    const [vehicleFee, setVehicleFee] = useState('');
+    const [notes, setNotes] = useState('');
+    const [first2km, setFirst2km] = useState('');
+    const [succeedingKm, setSucceedingKm] = useState('');
+    const [expectedDistance, setExpectedDistance] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [expectedDuration, setExpectedDuration] = useState('');
+    const [expectedFee, setExpectedFee] = useState('');
+    const { region, setRegion } = useRegion();
+    const [formattedDateRange, setFormattedDateRange] = useState('');
+    const [availableOperators, setAvailableOperators] = useState([]);
+    const [pID, setPID] = useState('');
+    const [selectedOperatorID, setSelectedOperatorID] = useState(null);
+    const [selectedOperatorDetails, setSelectedOperatorDetails] = useState('');
+    
+    useEffect(() => {
+        const getUserID = async () => {
+          const id = await AsyncStorage.getItem('premiumUserID');
+          console.log("ID: ", id);
+          setPID(id);
+        };
+        getUserID();
+      }, []);
 
-    const calculateDistance = async () => {
-        if (fromCoords && toCoords) {
-            const origin = `${fromCoords.latitude},${fromCoords.longitude}`;
-            const destination = `${toCoords.latitude},${toCoords.longitude}`;
-            
-            try {
-                const response = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${GOOGLE_MAPS_API_KEY}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+      const handleSubmit = async () => {
+        try {
+            const transactionResponse = await fetch(`${config.BASE_URL}/add-Transaction`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+                    notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
+                }),
+            });
+        
+            const transactionData = await transactionResponse.json();
+            console.log('Response from Express backend (Transaction):', transactionData);
+        
+            if (transactionData.status === 1) {
+                setTransactionID(transactionData.transactionID);
+                console.log('TransactionID: ', transactionData.transactionID);
+                const bookingResponse = await fetch(`${config.BASE_URL}/add-Booking`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        finalFee: expectedFee,
+                        transactionID: transactionData.transactionID,
+                        operatorID: selectedOperatorID,
+                        premiumUserID: parseInt(pID),
+                    }),
+                });
+    
+                const bookingData = await bookingResponse.json();
+                console.log('Response from Express backend (Booking):', bookingData);
+        
+                if (bookingResponse.status === 200) {
+                    console.log('Booking added successfully');
+                } else {
+                    console.error('Failed to add booking:', bookingData.err);
                 }
-                const result = await response.json();
-                
-                if (result.rows[0].elements[0].status === "OK") {
-                    const distanceInMeters = result.rows[0].elements[0].distance.value;
-                    const distanceInKm = (distanceInMeters / 1000).toFixed(2);
-                    const durationInSeconds = result.rows[0].elements[0].duration.value;
-                    const durationInMinutes = Math.ceil(durationInSeconds / 60); // Convert seconds to minutes
-                    
-                    setTransactionDetails((prevDetails) => ({
-                        ...prevDetails,
-                        expectedDistance: distanceInKm,
-                        expectedDuration: durationInMinutes,
-                    }));
-                }
-            } catch (error) {
-                console.error("Error fetching distance and duration:", error);
+            } else {
+                console.error('Failed to add transaction:', transactionData.err);
             }
+        } catch (error) {
+            console.error('Error posting data to Express backend:', error);
         }
+        navigation.navigate('OwnerDrawer')
     };
 
     useEffect(() => {
-        if (fromCoords && toCoords) {
-            calculateDistance();
+        if (isOperatorVisible === true) {
+          fetch(`${config.BASE_URL}/available-Operators`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                premiumUserID: parseInt(pID),
+                startDate: startDate,
+                endDate: endDate
+            }),
+          })
+          .then(response => {
+            if (!response.ok) {
+              console.error(`Error: ${response.status} - ${response.statusText}`);
+              throw new Error('Network response was not ok in operator');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log(data)
+            setAvailableOperators(data);
+          })
+          .catch(error => {
+            console.error('Error fetching data from Express backend:', error);
+          });
         }
-    }, [fromCoords, toCoords]);
-
+      }, [isOperatorVisible]);
+      
+    
+    const handleCalculate = async () => {
+        await calculateDistance(fromCoords, toCoords, setExpectedDistance, setExpectedDuration, GOOGLE_MAPS_API_KEY);
+    };
 
     const handleDayPress = (day) => {
         const date = day.dateString;
@@ -83,32 +152,23 @@ export default function Location() {
                     selectedColor: 'maroon',
                 };
             }
+            const { startDate, endDate } = computeDateRange(markedDates);
+            setStartDate(startDate);
+            setEndDate(endDate);
             return updatedMarkedDates;
         });
     };
+    useEffect(() => {
+        if (fromCoords && toCoords) {
+            handleCalculate();
+        }
+    }, [fromCoords, toCoords]);
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear().toString().slice(-2); 
-        return `${month}/${day}/${year}`;
-    };
-    const getFormattedDateRange = () => {
-        const dates = Object.keys(markedDates);
-        if (dates.length === 0) return ''; 
-        const sortedDates = dates.sort((a, b) => new Date(a) - new Date(b));
-        const firstDate = formatDate(sortedDates[0]);
-        const lastDate = formatDate(sortedDates[sortedDates.length - 1]);
-        return sortedDates.length === 1 ? firstDate : `${firstDate} - ${lastDate}`;
-    };
-
-    const [region, setRegion] = useState({
-        latitude: 10.3157,
-        longitude: 123.8854,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-    });
+    useEffect(() => {
+        const formattedRange = getFormattedDateRange(markedDates);
+        setFormattedDateRange(formattedRange);
+    }, [markedDates]);
+    
 
     const renderMapScreen = () => (
         <>
@@ -168,8 +228,7 @@ export default function Location() {
                             northeast: { lat: 21.0, lng: 127.0 },
                         }
                     }}
-                    styles={styles.autocomplete}
-                    debounce={500}
+                    styles={styles.autocomplete}  
                 />
                 
                 <Text>Delivery Address:</Text>
@@ -195,13 +254,12 @@ export default function Location() {
                         }
                     }}
                     styles={styles.autocomplete}
-                    debounce={500}
                 />
                 {/* Don't remove, for some reason if walaon ni d ma click ang suggested place */}
                 <Text
                     style={styles.inputText}
                 />
-                {/* Dont remove above ^^ */}
+                {/* Dont remove above why is that ^^ */}
                 <View style={styles.buttonContainer}>
                     <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
                     <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')} >
@@ -224,31 +282,30 @@ export default function Location() {
             
             <View style={styles.detailsColumn}>
                 <View style={styles.leftColumn}>
-                    {/* <Text style={styles.miniLabel}>Package Details:</Text> */}
                     <Text style={styles.microLabel}>Client Name:</Text>
-                     <TextInput style={[styles.input, {textAlign: 'center'}]} />
+                        <TextInput style={[styles.input, {textAlign: 'center'}]} onChangeText={text => setClientName(text)} value={clientName}/>
                     <Text style={styles.microLabel}>Item Description</Text>
-                    <TextInput style={styles.input} />        
+                        <TextInput style={styles.input} onChangeText={text => setItemDescription(text)} value={itemDescription}/>        
                     <Text style={styles.microLabel}>Weight</Text>
-                    <TextInput style={styles.input} keyboardType='number-pad'/>
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setPackageWeight(text)} value={packageWeight + 'kg'}/>
                     <Text style={styles.microLabel}>Quantity</Text>
-                    <TextInput style={styles.input} keyboardType='number-pad'/>
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setItemQuantity(text)} value={itemQuantity}/>
                     <Text style={styles.microLabel} >Vehicle Fee: </Text>
-                    <TextInput style={styles.input} keyboardType='number-pad'/>                 
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setVehicleFee(text)} value={`₱` +vehicleFee}/>                 
                 </View>
     
                 <View style={styles.rightColumn}>
                     <Text style={styles.microLabel} >Notes</Text>
-                        <TextInput style={[styles.input, {textAlign: 'left'}]}/>      
+                        <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setNotes(text)} value={notes}/>      
                     <Text style={styles.microLabel}>First 2km:</Text>      
-                        <TextInput style={styles.input} keyboardType='number-pad'/>
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setFirst2km(text)} value={`₱` +first2km}/>
                     <Text style={styles.microLabel}>Succeeding km:</Text>
-                        <TextInput style={styles.input} keyboardType='number-pad'/>      
+                        <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setSucceedingKm(text)} value={`₱` +succeedingKm}/>      
                     <Text style={styles.microLabel}>Distance:</Text>
-                        <TextInput value={transactionDetails.expectedDistance + ' km'} style={styles.input} editable={false}/>
+                        <TextInput value={expectedDistance + ' km'} style={styles.input} editable={false}/>
                     <Text style={styles.microLabel}>Date:</Text>
                         <TextInput
-                            value={getFormattedDateRange()}
+                            value={formattedDateRange}
                             style={[styles.input, {textAlign: 'left'}]}
                             placeholder="Select a date"
                             editable={false}
@@ -260,19 +317,26 @@ export default function Location() {
             </View>
                 
             <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10}}>
-                <TouchableOpacity style={styles.operatorIcon}>
+                <TouchableOpacity style={styles.operatorIcon} onPress={() => setIsOperatorVisible(true)}>
                     <FontAwesome5 name="user-alt" size={40} color="white" /> 
                 </TouchableOpacity>
                 <View style={{width: '70%'}}>
                     <Text style={styles.microLabel}>Choose Operator:</Text>
-                    <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false}/>
+                    <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false} value={selectedOperatorDetails}/>
                 </View>         
             </View>  
             <View style={styles.buttonRow}>
                 <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('map')}>
                     <Text style={styles.buttonText}>Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('final')}>
+                <TouchableOpacity 
+                    style={styles.button} 
+                    onPress={() => {
+                        const fee = calculateFee(first2km, succeedingKm, expectedDistance, vehicleFee);
+                        setExpectedFee(fee);
+                        setCurrentScreen('final');      
+                    }}
+                >
                     <Text style={styles.buttonText}>Continue</Text>
                 </TouchableOpacity>
             </View>    
@@ -286,36 +350,49 @@ export default function Location() {
             <Text style={styles.label}>Summary of Transaction</Text>
             
             <Text style={styles.microLabel}>Client Name:</Text>
-            <TextInput style={styles.input} value={transactionDetails.clientName} editable={false} />
+            <TextInput style={styles.input} value={clientName} editable={false} />
             
             <Text style={styles.microLabel}>Date:</Text>
-            <TextInput style={styles.input} editable={false} />
+            <TextInput style={styles.input} editable={false} value={formattedDateRange}/>
             
             <Text style={styles.microLabel}>Distance:</Text>
-            <TextInput style={styles.input} value={`${transactionDetails.expectedDistance}`} editable={false} />
+            <TextInput style={styles.input} value={expectedDistance} editable={false} />
             
             <Text style={styles.microLabel}>Expected Duration:</Text>
-            <TextInput style={styles.input} editable={false} value={transactionDetails.expectedDuration +  'mins'}/>
+            <TextInput style={styles.input} editable={false} value={expectedDuration +  'mins'}/>
 
             <Text style={styles.microLabel}>Expected Fee:</Text>
-            <TextInput style={styles.input} editable={false}/>
+            <TextInput style={styles.input} editable={false} value={`₱` + expectedFee.toString()}/>
             <Text style={styles.microLabel}>Additional Notes:</Text>
-            <TextInput style={[styles.input, styles.additionalInfo]} value={transactionDetails.additionalInfo} editable={false} />
+            <TextInput style={[styles.input, styles.additionalInfo]} editable={false} value={notes}/>
             
             <View style={[styles.buttonRow, {top: 720}]}>
                 <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
                     <Text style={styles.buttonText}>Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('OwnerDrawer')}>
+                <TouchableOpacity style={styles.button} onPress={() => handleSubmit()}>
                     <Text style={styles.buttonText}>Submit</Text>
                 </TouchableOpacity>
             </View>  
         </View>
     );
     
-    const renderChooseOperator = () => {
-        
-    }
+    const renderChooseOperator = ({ item }) => {
+        const isSelected = item.operatorID === selectedOperatorID;
+
+        return (
+            <TouchableOpacity style={[
+                styles.itemContainer,
+                isSelected && { borderBottomColor: 'green' }]}
+                onPress={() => {setSelectedOperatorID(item.operatorID); setSelectedOperatorDetails(item.firstName + ' ' + item.lastName);}}
+            >
+                <View style={styles.textContainer}>
+                    <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
+                    <Text style={styles.email}>{item.email}</Text>
+                </View> 
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -350,6 +427,32 @@ export default function Location() {
                 </View>
                 </TouchableWithoutFeedback>
             </Modal>
+            <Modal
+                transparent={true}
+                visible={isOperatorVisible}
+                animationType="slide"
+                onRequestClose={() => setCalendarVisible(false)}
+            >
+                <View style={styles.operatorModal}>
+                    <Text style={[styles.miniLabel, {marginTop: -50}]}>Available Operators on</Text>
+                    <Text style={styles.label}>{formattedDateRange}</Text>
+                    <View style={styles.operatorModalContent}>
+                        <FlatList
+                            data={availableOperators}
+                            renderItem={renderChooseOperator}
+                            keyExtractor={(item) => item.operatorID.toString()}
+                        />
+                    </View>
+                <View style={[styles.buttonRow, {top: 650}]}>
+                    <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
+                        <Text style={styles.buttonText}>Confirm</Text>
+                    </TouchableOpacity>
+                    </View>
+                </View>  
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -365,12 +468,10 @@ autocomplete: {
         flex: 0,
         width: '100%',
         marginTop: 5,
-        zIndex: 1,
     },
     textInput: {
         height: 45,
         borderColor: '#ccc',
-        zIndex: 1,
     },
 },
 button: {
@@ -391,7 +492,6 @@ buttonText: {
 },
 mapControls: {
     zIndex: 1,
-
     padding: 10,
     backgroundColor: '#E3B130',
 },
@@ -413,9 +513,8 @@ flex: 1,
 },
 icons: {
     position: 'absolute',
-        right: 5,
+    right: 5,
     top: 358
-
 },
 operatorIcon: {
     borderColor: 'white', 
@@ -508,5 +607,39 @@ buttonRow: {
     justifyContent: 'space-between',
     top: 700,
 },
-    
+operatorModal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    margin: 10
+},
+operatorModalContent: {
+    height: '70%',
+    width: '100%'
+},
+email: {
+    fontSize: 12.5,
+  },
+name: {
+    fontSize: 15,
+},
+itemContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'maroon',
+    backgroundColor: '#fff',
+    marginVertical: 5,
+    marginHorizontal: 10,
+    borderRadius: 10,
+    elevation: 3,
+  },
+textContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center'
+},
 });

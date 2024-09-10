@@ -209,17 +209,45 @@ app.post('/add-GuestUser', async (req, res) => {
 //END
 
 //TRANSACTIONS
-app.post('/add-PremiumTransaction', async (req, res) => {
-    const { premiumUserID, toLocation, fromLocation } = req.body;   
-    const sql = `INSERT INTO transactionPremium (premiumUserID, toLocation, fromLocation, status) VALUES (?, ?, ?, ?)`;
-    pool.query(sql, [premiumUserID, toLocation, fromLocation, 'Ongoing'], (err, result) => {
+app.post('/add-Transaction', async (req, res) => {
+    const {
+        toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+        notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
+    } = req.body;
+
+    const sql = `
+        INSERT INTO transaction (
+            toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+            notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    pool.query(sql, [toCoords, fromCoords, client, itemDescription, packageWeight, itemQuantity, vehicleFee,
+        notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
+    ], (err, result) => {
         if (err) { 
-            res.status(400).json({ status: 0, err}); 
+            res.status(400).json({ status: 0, err }); 
         } else {
             const transactionID = result.insertId;
             res.status(200).json({ status: 1, transactionID: transactionID });
         }
-    });  
+    });
+});
+
+app.post('/add-booking', (req, res) => {
+    const {finalFee,transactionID, operatorID, premiumUserID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => { 
+        if(exists) {
+            const query = ` INSERT INTO booking (finalFee, status, transactionID, operatorID, ownerID) VALUES (?, ?, ?, ?, ?)`;
+            pool.query(query, [finalFee, 'Pending', transactionID, operatorID, id], (err, result) => {
+                if (err) {
+                    console.error('Error inserting booking:', err);
+                    return res.status(400).json({err});
+                }
+                res.status(200).json({ message: 'Booking added successfully'});
+            });
+        }
+    });   
 });
 
 app.put('/transaction-Status', (req, res) => {
@@ -680,8 +708,64 @@ app.get('/admin-details', (req, res) => {
 
 //END
 
+app.post('/tester', (req, res) => {
+    const { premiumUserID } = req.body;
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => { 
+        if(exists) {
+            const sql = `SELECT * FROM bookingDetails WHERE ownerID = ?`;
+            pool.query(sql, [id], (err, result) => {
+                if (err) {
+                    return res.status(500).json({ success: false, error: 'Internal server error' });
+                }
+                if (result.length > 0) {
+                    res.status(200).json(result);
+                } else {
+                    res.status(404).json({ success: false, error: 'Booking not found' });
+                }
+            });
+        }
+    }); 
+});
+app.post('/available-Operators', (req, res) => {
+    const { premiumUserID, startDate, endDate } = req.body; 
+    let allOperators = [];
+    let bookedOperators = [];
+
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => { 
+        if (exists) {
+            const sql1 = 'SELECT operatorID FROM operator_owner WHERE ownerID = ?';
+            pool.query(sql1, [id], (err, result) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Internal server error1' });
+                }
+                allOperators = result.map(row => row.operatorID);
+                const sql2 = `
+                    SELECT operatorID 
+                    FROM bookingDetails 
+                    WHERE ownerID = ? 
+                    AND startDate <= ? 
+                    AND endDate >= ?`;
+                pool.query(sql2, [id, startDate, endDate], (err, result) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Internal server error2' });
+                    }
+                    bookedOperators = result.map(row => row.operatorID);
+                    const availableOperators = allOperators.filter(operatorID => !bookedOperators.includes(operatorID));
+                    const sql3 = `SELECT * FROM operatorDetails WHERE operatorID IN (?)`;
+                    pool.query(sql3, [availableOperators], (err, operatorDetails) => {
+                        if (err) {
+                            return res.status(500).json({ error: 'Failed to retrieve operator details' });
+                        }
+
+                        res.status(200).json(operatorDetails);
+                    });
+                });
+            });
+        } else {
+            res.status(404).json({ error: 'Owner not found' });
+        }
+    }); 
+});
+
 
 module.exports = app;
-
-// if existing ang conversation with ownerID and operatorID di mo buhat new conversation e return ang conversation ID
-// create-Conversation
