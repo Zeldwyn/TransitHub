@@ -141,6 +141,10 @@ export default function OperatorHome() {
         setExpandedItemId(expandedItemId === id ? null : id);
     };
 
+    const handleDeliverPress = (deliveryId) => {
+        navigation.navigate('OperatorLive', { deliveryId, operatorID: pID });
+    };
+
     const renderItem = ({ item }) => {
         return (
             <View style={styles.deliveryItem}>
@@ -152,7 +156,7 @@ export default function OperatorHome() {
                         <Text style={styles.detailText}>Pickup Location: {item.fromLocation}</Text>
                         <Text style={styles.detailText}>Delivery Location: {item.toLocation}</Text>
                         <Text style={styles.detailText}>Expected Fee: ₱{item.finalFee}</Text>
-                        <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('OperatorLive')}>
+                        <TouchableOpacity style={styles.startButton} onPress={() => handleDeliverPress(item.id)}>
                             <Text style={styles.startButtonText}>Deliver</Text>
                         </TouchableOpacity>
                     </View>
@@ -265,5 +269,6 @@ const styles = StyleSheet.create({
     startButtonText: {
         color: '#ffffff',
         fontSize: 16,
+        fontWeight: 'bold',
     },
 });

@@ -1,27 +1,75 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Animated, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import haversine from 'haversine';
 import * as Location from 'expo-location';
 import { GOOGLE_MAPS_API_KEY } from '@env';
+import config from "../config";
+import { Button } from 'react-native-paper';
 
-export default function OperatorLive() {
+export default function OperatorLive({ route, navigation }) {
+    const { deliveryId, operatorID } = route.params;
     const [routeVisible, setRouteVisible] = useState(false);
     const [finishButtonEnabled, setFinishButtonEnabled] = useState(false);
     const [deliveryStatus, setDeliveryStatus] = useState('In Progress');
     const [currentPosition, setCurrentPosition] = useState(null);
     const [estimatedTime, setEstimatedTime] = useState(null);
     const [distance, setDistance] = useState(null);
-    const [note, setNote] = useState('');
+    const [note, setNote] = useState(''); // Set note here
+    const [clientName, setClientName] = useState('');
     const [panelHeight] = useState(new Animated.Value(75));
     const [panelExpanded, setPanelExpanded] = useState(false);
     const [locationPromptVisible, setLocationPromptVisible] = useState(false);
+    const [deliveryAddress, setDeliveryAddress] = useState(null);
     const mapRef = useRef(null);
 
-    const deliveryAddress = { latitude: 10.283431, longitude: 123.859688 };
-
     useEffect(() => {
+        const fetchDeliveryDetails = async () => {
+            try {
+                const response = await fetch(`${config.BASE_URL}/delivery/${deliveryId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+        
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    console.error(`Error fetching delivery details: ${response.status} - ${errorMessage}`);
+                    throw new Error('Network response was not ok');
+                }
+        
+                const data = await response.json();
+        
+                const [fromLat, fromLng] = data.fromCoords.split(', ').map(coord => parseFloat(coord));
+                const [toLat, toLng] = data.toCoords.split(', ').map(coord => parseFloat(coord));
+        
+                setDeliveryAddress({
+                    latitude: toLat,
+                    longitude: toLng,
+                });
+                setNote(data.notes || '');
+                setClientName(data.clientName || '');
+        
+                if (toLat && toLng) {
+                    startTrackingLocation();
+                }
+        
+            } catch (error) {
+                console.error('Error fetching delivery details:', error);
+                Alert.alert('Error', 'Unable to fetch delivery details.');
+            }
+        };
+
+        fetchDeliveryDetails();
+
+        return () => {
+            // Cleanup if needed
+        };
+    }, [deliveryId]);
+
+    const startTrackingLocation = async () => {
         let locationSubscription;
         (async () => {
             const servicesEnabled = await Location.hasServicesEnabledAsync();
@@ -32,14 +80,13 @@ export default function OperatorLive() {
 
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                console.log('Permission to access location was denied');
+                Alert.alert('Permission Required', 'Location permission is needed to track delivery.');
                 return;
             }
 
             locationSubscription = await Location.watchPositionAsync(
                 { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
                 (location) => {
-                    console.log('Location update:', location);
                     setCurrentPosition({
                         latitude: location.coords.latitude,
                         longitude: location.coords.longitude,
@@ -53,7 +100,7 @@ export default function OperatorLive() {
                 locationSubscription.remove();
             }
         };
-    }, []);
+    };
 
     useEffect(() => {
         if (currentPosition && mapRef.current) {
@@ -67,11 +114,11 @@ export default function OperatorLive() {
     }, [currentPosition]);
 
     useEffect(() => {
-        if (currentPosition) {
+        if (currentPosition && deliveryAddress) {
             const distanceToDestination = haversine(currentPosition, deliveryAddress, { unit: 'meter' });
             setFinishButtonEnabled(distanceToDestination < 50);
         }
-    }, [currentPosition]);
+    }, [currentPosition, deliveryAddress]);
 
     const handleStartDelivery = async () => {
         setRouteVisible(true);
@@ -79,25 +126,24 @@ export default function OperatorLive() {
     };
 
     const calculateETA = async () => {
-        if (currentPosition && routeVisible) {
+        if (currentPosition && deliveryAddress && routeVisible) {
             const origins = `${currentPosition.latitude},${currentPosition.longitude}`;
             const destinations = `${deliveryAddress.latitude},${deliveryAddress.longitude}`;
-    
+
             try {
                 const response = await fetch(
                     `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&departure_time=now&key=${GOOGLE_MAPS_API_KEY}`
                 );
                 const data = await response.json();
-    
+
                 if (data.status === 'ZERO_RESULTS') {
-                    console.warn('No route found between the origin and destination.');
                     setEstimatedTime('No route available');
                     setDistance('N/A');
                     return;
                 }
-    
+
                 const duration = data?.rows?.[0]?.elements?.[0]?.duration_in_traffic?.value;
-    
+
                 if (duration) {
                     const minutes = Math.floor(duration / 60);
                     const hours = Math.floor(minutes / 60);
@@ -105,29 +151,57 @@ export default function OperatorLive() {
                 } else {
                     setEstimatedTime('ETA not available');
                 }
-    
+
                 const distanceInMeters = haversine(currentPosition, deliveryAddress, { unit: 'meter' });
                 setDistance((distanceInMeters / 1000).toFixed(2));
-    
+
             } catch (error) {
                 console.error('Error fetching ETA:', error);
                 setEstimatedTime('Error calculating ETA');
             }
         }
-    };    
-
-    const handleFinishDelivery = () => {
-        setDeliveryStatus("Delivered");
-        setRouteVisible(false);
     };
 
-    const handleCancelDelivery = () => {
+    const handleFinishDelivery = async () => {
+        setDeliveryStatus("Delivered");
+        setRouteVisible(false);
+        try {
+            await fetch(`${config.BASE_URL}/finish-delivery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Delivered',
+                    // Include other necessary data
+                }),
+            });
+        } catch (error) {
+            console.error('Error finishing delivery:', error);
+        }
+    };
+
+    const handleCancelDelivery = async () => {
         setRouteVisible(false);
         setFinishButtonEnabled(false);
         setEstimatedTime(null);
         setDeliveryStatus("Cancelled");
         setDistance(null);
         setCurrentPosition(null);
+        try {
+            await fetch(`${config.BASE_URL}/cancel-delivery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Cancelled',
+                    // Include other necessary data
+                }),
+            });
+        } catch (error) {
+            console.error('Error cancelling delivery:', error);
+        }
     };
 
     const togglePanel = () => {
@@ -142,11 +216,6 @@ export default function OperatorLive() {
         setPanelExpanded(!panelExpanded);
     };
 
-    const defaultCoordinates = {
-        latitude: 37.7749,
-        longitude: -122.4194
-    };
-
     const handlePromptClose = () => {
         setLocationPromptVisible(false);
         // Optionally redirect the user to the device settings
@@ -158,8 +227,8 @@ export default function OperatorLive() {
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude: currentPosition ? currentPosition.latitude : defaultCoordinates.latitude,
-                    longitude: currentPosition ? currentPosition.longitude : defaultCoordinates.longitude,
+                    latitude: currentPosition ? currentPosition.latitude : deliveryAddress?.latitude || 0,
+                    longitude: currentPosition ? currentPosition.longitude : deliveryAddress?.longitude || 0,
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
                 }}
@@ -176,9 +245,11 @@ export default function OperatorLive() {
                 {currentPosition && (
                     <Marker coordinate={currentPosition} title="Current Location" />
                 )}
-                <Marker coordinate={deliveryAddress} title="Delivery Address" />
+                {deliveryAddress && (
+                    <Marker coordinate={deliveryAddress} title="Delivery Address" />
+                )}
 
-                {routeVisible && currentPosition && (
+                {routeVisible && currentPosition && deliveryAddress && (
                     <MapViewDirections
                         origin={currentPosition}
                         destination={deliveryAddress}
@@ -204,27 +275,27 @@ export default function OperatorLive() {
                                 <Text style={styles.detailLabel}>DISTANCE</Text>
                                 <Text style={styles.detailLabel}>ESTIMATED DELIVERY TIME</Text>
                             </View>
-                            <Text style={styles.Note}>Note: {note || 'No additional note'}</Text>
+                            <Text style={styles.note}>Client Name: {clientName || 'No client name'}</Text>
+                            <Text style={styles.note}>Note: {note || 'No additional note'}</Text>
                         </>
                     )}
                 </View>
                 <View style={styles.buttonsContainer}>
                     {!routeVisible && (
                         <TouchableOpacity style={styles.button} onPress={handleStartDelivery}>
-                            <Text style={styles.buttonText}>Start Delivery</Text>
+                        <Text style={styles.buttonText}>Start Delivery</Text>
                         </TouchableOpacity>
                     )}
                     {routeVisible && (
                         <>
                             <TouchableOpacity
-                                style={[styles.button, { backgroundColor: finishButtonEnabled ? '#4CAF50' : '#9E9E9E' }]}
-                                onPress={handleFinishDelivery}
+                                style={[styles.button, { backgroundColor: finishButtonEnabled ? '#800000' : '#ccc' }]}
+                                onPress={finishButtonEnabled ? handleFinishDelivery : () => {}}
                                 disabled={!finishButtonEnabled}
                             >
                                 <Text style={styles.buttonText}>Finish Delivery</Text>
                             </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.button} onPress={handleCancelDelivery}>
+                            <TouchableOpacity style={[styles.button, { backgroundColor: '#dc3545' }]} onPress={handleCancelDelivery}>
                                 <Text style={styles.buttonText}>Cancel Delivery</Text>
                             </TouchableOpacity>
                         </>
@@ -233,10 +304,10 @@ export default function OperatorLive() {
             </Animated.View>
 
             {locationPromptVisible && (
-                <View style={styles.promptContainer}>
-                    <Text style={styles.promptText}>Please enable location services to proceed with delivery tracking.</Text>
-                    <TouchableOpacity style={styles.promptButton} onPress={handlePromptClose}>
-                        <Text style={styles.promptButtonText}>OK</Text>
+                <View style={styles.locationPrompt}>
+                    <Text style={styles.promptText}>Location services are not enabled. Please enable them in settings.</Text>
+                    <TouchableOpacity onPress={handlePromptClose}>
+                        <Text style={styles.promptButton}>Close</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -247,99 +318,84 @@ export default function OperatorLive() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
     },
     map: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
     },
     statusContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 15,
-        borderTopRightRadius: 15,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+        backgroundColor: '#f0f0f0',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 10,
     },
     expandButton: {
-        alignItems: 'center',
-        marginBottom: 10,
+        width:'100%',
+        alignSelf: 'center',
+        padding: 10,
+        backgroundColor: 'maroon',
+        borderRadius: 5,
     },
     expandButtonText: {
         fontSize: 16,
-        color: '#800000',
+        textAlign: 'center', 
+        color: 'white',
     },
     statusTextContainer: {
-        alignItems: 'center',
-        marginBottom: 20,
+        marginVertical: 10,
     },
     detailRow: {
-        marginTop:25,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        width: '100%',
+        marginBottom: 5,
     },
     detailTextBold: {
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 16,
     },
     detailLabel: {
-        color: '#888888',
         fontSize: 14,
+        color: '#888',
     },
-    Note: {
-        marginTop: 10,
-        color: '#555555',
-        fontSize: 12,
+    note: {
+        fontSize: 16,
+        marginVertical: 5,
     },
     buttonsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
     },
     button: {
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        backgroundColor: '#800000',
+        backgroundColor: 'maroon',
+        padding: 10,
         borderRadius: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonText: {
-        color: '#FFFFFF',
         fontSize: 16,
+        color: 'white',
+        textAlign: 'center',
     },
-    promptContainer: {
+    locationPrompt: {
         position: 'absolute',
-        bottom: 80,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 10,
+        bottom: 10,
+        left: 10,
+        right: 10,
+        backgroundColor: '#fff',
+        padding: 10,
+        borderRadius: 5,
+        borderColor: '#ddd',
+        borderWidth: 1,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
     },
     promptText: {
         fontSize: 16,
-        marginBottom: 10,
-        textAlign: 'center',
+        marginBottom: 5,
     },
     promptButton: {
-        backgroundColor: '#007BFF',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-    },
-    promptButtonText: {
-        color: '#FFFFFF',
         fontSize: 16,
+        color: '#007BFF',
     },
 });
 

@@ -250,6 +250,7 @@ export default function Location() {
                     }}
                     styles={styles.autocomplete}   
                     debounce={500} 
+                    enablePoweredByContainer={false}
                 />
                 
                 {/* <Text>Delivery Address:</Text> */}
@@ -277,6 +278,7 @@ export default function Location() {
                     }}
                     styles={styles.autocomplete}  
                     debounce={500}
+                    enablePoweredByContainer={false}
                 />
                 <View style={styles.buttonContainer}>
                     <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
@@ -496,6 +498,9 @@ const styles = StyleSheet.create({
             height: 45,
             borderColor: '#ccc',
             zIndex: 1,
+        },
+        activeRow: {
+            backgroundColor: '#E3B130', // Change this to the color you want when active
         },
     },
     button: {

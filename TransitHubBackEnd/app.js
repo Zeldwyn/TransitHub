@@ -867,5 +867,40 @@ app.get('/getOperatorID', (req, res) => {
     });
 });
 
+app.get('/delivery/:bookingID', (req, res) => {
+    const { bookingID } = req.params;
+
+    const query = `
+        SELECT
+            b.bookingID AS id,
+            t.clientName,
+            CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromCoords,
+            CONCAT(t.toLatitude, ", ", t.toLongitude) AS toCoords,
+            b.finalFee,
+            t.notes AS notes,         -- Ensure this field is included
+            CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromAddress,
+            CONCAT(t.toLatitude, ", ", t.toLongitude) AS toAddress
+        FROM
+            booking b
+        JOIN
+            transaction t ON b.transactionID = t.transactionID
+        WHERE
+            b.bookingID = ?;
+    `;
+
+    pool.query(query, [bookingID], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Delivery not found' });
+        }
+
+        res.json(results[0]);
+    });
+});
+
 
 module.exports = app;
