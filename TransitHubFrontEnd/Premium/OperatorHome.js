@@ -3,47 +3,137 @@ import { View, Image, StyleSheet, Text, FlatList, TouchableOpacity } from 'react
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import config from "../config";
+import { GOOGLE_MAPS_API_KEY } from '@env';
 
 export default function OperatorHome() {
     const [pID, setPID] = useState('');
     const [userType, setUserType] = useState('');
-    const [isOwner, setIsOwner] = useState(true);
     const [currentDate, setCurrentDate] = useState('');
     const [deliveries, setDeliveries] = useState([]);
     const [expandedItemId, setExpandedItemId] = useState(null);
+    const [locationCache, setLocationCache] = useState({});
     const navigation = useNavigation();
 
     useEffect(() => {
         const getType = async () => {
-            const type = await AsyncStorage.getItem('userType');
-            const id = await AsyncStorage.getItem('premiumUserID');
-            if (type === "owner") {
-                setIsOwner(true);
-            } else if (type === "operator") {
-                setIsOwner(false);
+            try {
+                const type = await AsyncStorage.getItem('userType');
+                if (type === "owner") {
+                    const ownerID = await AsyncStorage.getItem('premiumUserID');
+                    setUserType(type);
+                    if (ownerID) {
+                        console.log('Owner ID:', ownerID);
+                        setPID(ownerID); 
+                    } else {
+                        console.log('Owner ID not found');
+                    }
+                } else if (type === "operator") {
+                    const premiumUserID = await AsyncStorage.getItem('premiumUserID');
+                    setUserType(type);
+                    if (premiumUserID) {
+                        try {
+                            const response = await fetch(`${config.BASE_URL}/getOperatorID?premiumUserID=${premiumUserID}`);
+                            const data = await response.json();
+                            if (response.ok) {
+                                setPID(data.operatorID); 
+                            } else {
+                                console.log('Operator ID not found:', data.error);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching operator ID:', error);
+                        }
+                    } else {
+                        console.log('Premium User ID not found');
+                    }
+                } else {
+                    console.log('User type is undefined or invalid');
+                }
+            } catch (error) {
+                console.error("Error retrieving user data:", error);
             }
-            setUserType(type);
-            setPID(id);
         };
         getType();
     }, []);
+    
+    useEffect(() => {
+        if (pID) { 
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0]; 
+            fetchDeliveries(formattedDate);
+        } else {
+            console.log('pID is not set, skipping delivery fetch');
+        }
+    }, [pID]); 
 
     useEffect(() => {
         const today = new Date();
-        const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = today.toLocaleDateString('en-US', options);
         setCurrentDate(formattedDate);
 
-        fetchDeliveries(formattedDate);
-    }, []);
+        if (pID) {
+            fetchDeliveries(today.toISOString().split('T')[0]);
+        }
+    }, [pID]); 
 
     const fetchDeliveries = async (date) => {
         try {
-            const response = await fetch(`YOUR_BACKEND_API_URL/deliveries?date=${date}`);
-            const data = await response.json();
-            setDeliveries(data);
+            const apiUrl = `${config.BASE_URL}/deliveries?date=${date}&operatorID=${pID}`;
+            console.log(`Fetching deliveries from: ${apiUrl}`);
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                console.log('Deliveries data:', data);
+
+                const updatedDeliveries = await Promise.all(data.map(async (delivery) => {
+                    console.log('Delivery item:', delivery); // Check each item
+                    const fromLocation = await getLocationFromCoords(delivery.fromCoords);
+                    const toLocation = await getLocationFromCoords(delivery.toCoords);
+                    return { ...delivery, fromLocation, toLocation };
+                }));
+
+                setDeliveries(updatedDeliveries);
+            } else {
+                throw new Error("Expected JSON but received something else.");
+            }
         } catch (error) {
             console.error("Error fetching deliveries:", error);
+        }
+    };
+
+    const getLocationFromCoords = async (coords) => {
+        if (!coords || locationCache[coords]) {
+            return locationCache[coords] || "Unknown location";
+        }
+
+        try {
+            const [latitude, longitude] = coords.split(",");
+            const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`;
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                if (data.results && data.results.length > 0) {
+                    const address = data.results[0].formatted_address;
+                    setLocationCache(prevCache => ({ ...prevCache, [coords]: address }));
+                    return address;
+                }
+            }
+            return "Unknown location";
+        } catch (error) {
+            console.error("Error fetching location:", error);
+            return "Unknown location";
         }
     };
 
@@ -51,23 +141,25 @@ export default function OperatorHome() {
         setExpandedItemId(expandedItemId === id ? null : id);
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.deliveryItem}>
-            <TouchableOpacity onPress={() => handlePress(item.id)} style={styles.itemHeader}>
-                <Text style={styles.deliveryText}>{item.clientName}</Text>
-            </TouchableOpacity>
-            {expandedItemId === item.id && (
-                <View style={styles.details}>
-                    <Text style={styles.detailText}>Pickup Location: {item.fromCoords}</Text>
-                    <Text style={styles.detailText}>Delivery Location: {item.toCoords}</Text>
-                    <Text style={styles.detailText}>Fee: ₱{item.finalFee}</Text>
-                    <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('OperatorLive')}>
-                        <Text style={styles.startButtonText}>Deliver</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
+    const renderItem = ({ item }) => {
+        return (
+            <View style={styles.deliveryItem}>
+                <TouchableOpacity onPress={() => handlePress(item.id)} style={styles.itemHeader}>
+                    <Text style={styles.deliveryText}>{item.clientName}</Text>
+                </TouchableOpacity>
+                {expandedItemId === item.id && (
+                    <View style={styles.details}>
+                        <Text style={styles.detailText}>Pickup Location: {item.fromLocation}</Text>
+                        <Text style={styles.detailText}>Delivery Location: {item.toLocation}</Text>
+                        <Text style={styles.detailText}>Expected Fee: ₱{item.finalFee}</Text>
+                        <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('OperatorLive')}>
+                            <Text style={styles.startButtonText}>Deliver</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -78,12 +170,16 @@ export default function OperatorHome() {
             />
             <Text style={styles.date}>{currentDate}</Text>
             <Text style={styles.label}>Deliveries for today</Text>
-            <FlatList
-                data={deliveries}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.deliveryList}
-            />
+            {deliveries.length === 0 ? (
+                <Text style={styles.noDeliveries}>No deliveries for today</Text>
+            ) : (
+                <FlatList
+                    data={deliveries}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={styles.deliveryList}
+                />
+            )}
         </View>
     );
 }
@@ -122,6 +218,12 @@ const styles = StyleSheet.create({
         color: '#222',
         marginBottom: 10,
     },
+    noDeliveries: {
+        fontSize: 16,
+        textAlign: 'center',
+        color: '#888',
+        marginTop: 20,
+    },
     deliveryList: {
         flexGrow: 1,
     },
@@ -133,42 +235,35 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 3,
+        padding: 10,
     },
     itemHeader: {
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 8,
-        borderTopRightRadius: 8,
+        padding: 10,
+        backgroundColor: '#e0e0e0',
+        borderRadius: 5,
     },
     deliveryText: {
-        fontSize: 18,
-        color: '#333',
+        fontSize: 16,
         fontWeight: 'bold',
     },
     details: {
-        padding: 15,
-        backgroundColor: '#f0f0f0',
-        borderBottomLeftRadius: 8,
-        borderBottomRightRadius: 8,
+        padding: 10,
+        backgroundColor: '#ffffff',
+        borderRadius: 5,
     },
     detailText: {
         fontSize: 14,
-        color: '#666',
         marginBottom: 5,
     },
     startButton: {
-        marginTop: 10,
-        paddingVertical: 10,
-        backgroundColor: 'maroon',
+        backgroundColor: '#007bff',
         borderRadius: 5,
+        padding: 10,
         alignItems: 'center',
     },
     startButtonText: {
         color: '#ffffff',
         fontSize: 16,
-        fontWeight: 'bold',
     },
 });

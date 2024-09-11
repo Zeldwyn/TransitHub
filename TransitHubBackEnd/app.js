@@ -807,5 +807,65 @@ app.get('/bookingsOperator', (req, res) => {
     });
 });
 
+app.get('/deliveries', (req, res) => {
+    const { date, operatorID } = req.query;
+
+    // Validate that operatorID and date are passed in the query
+    if (!operatorID || !date) {
+        return res.status(400).json({ error: 'Missing operatorID or date' });
+    }
+
+    console.log('Received operatorID:', operatorID);  // Log to check if operatorID is being passed correctly
+    console.log('Received date:', date);
+
+    const query = `
+        SELECT
+            b.bookingID AS id,
+            t.clientName,
+            CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromCoords,
+            CONCAT(t.toLatitude, ", ", t.toLongitude) AS toCoords,
+            b.finalFee
+        FROM
+            booking b
+        JOIN
+            transaction t ON b.transactionID = t.transactionID
+        WHERE
+            t.startDate = ? AND
+            b.operatorID = ?;
+    `;
+
+    pool.query(query, [date, operatorID], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        console.log('Query results:', results);  // Log the results to verify correctness
+
+        // Return the results to the frontend
+        res.json(results);
+    });
+});
+app.get('/getOperatorID', (req, res) => {
+    const { premiumUserID } = req.query;
+
+    if (!premiumUserID) {
+        return res.status(400).json({ error: 'premiumUserID is required' });
+    }
+
+    pool.query('SELECT operatorID FROM operator WHERE premiumUserID = ?', [premiumUserID], (error, results) => {
+        if (error) {
+            console.error('Error fetching operator ID:', error.message);
+            return res.status(500).json({ error: 'Internal server error', details: error.message });
+        }
+
+        if (results.length > 0) {
+            res.json({ operatorID: results[0].operatorID });
+        } else {
+            res.status(404).json({ error: 'Operator ID not found' });
+        }
+    });
+});
+
 
 module.exports = app;
