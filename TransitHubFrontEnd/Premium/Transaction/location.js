@@ -174,8 +174,6 @@ export default function Location() {
                     selectedColor: 'maroon',
                 };
             }
-    
-            // Compute date range using updatedMarkedDates instead of markedDates state
             const { firstDate, lastDate } = computeDateRange(updatedMarkedDates);
             setStartDate(firstDate);
             setEndDate(lastDate);
@@ -186,6 +184,7 @@ export default function Location() {
             return updatedMarkedDates;
         });
     };
+
     useEffect(() => {
         if (fromCoords && toCoords) {
             handleCalculate();
