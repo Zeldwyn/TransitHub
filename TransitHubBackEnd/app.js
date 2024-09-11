@@ -770,5 +770,42 @@ app.post('/available-Operators', (req, res) => {
     }); 
 });
 
+app.get('/bookingsOperator', (req, res) => {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+        return res.status(400).json({ error: 'Month and year parameters are required' });
+    }
+
+    const query = `
+        SELECT
+            b.bookingID,
+            b.transactionID,
+            b.operatorID,
+            b.ownerID,
+            t.clientName,
+            t.startDate,
+            t.endDate,
+            o.firstName AS operatorFirstName,
+            o.lastName AS operatorLastName
+        FROM
+            booking b
+            JOIN operator_owner oo ON b.operatorID = oo.operatorID AND b.ownerID = oo.ownerID
+            JOIN premiumUser o ON oo.operatorID = o.premiumUserID
+            JOIN transaction t ON b.transactionID = t.transactionID
+        WHERE 
+            (MONTH(t.startDate) = ? AND YEAR(t.startDate) = ?) OR 
+            (MONTH(t.endDate) = ? AND YEAR(t.endDate) = ?)
+    `;
+
+    pool.query(query, [parseInt(month, 10), parseInt(year, 10), parseInt(month, 10), parseInt(year, 10)], (error, results) => {
+        if (error) {
+            console.error('Error fetching bookings:', error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        res.json(results);
+    });
+});
+
 
 module.exports = app;

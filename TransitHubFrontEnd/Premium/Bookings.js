@@ -1,21 +1,76 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Text, FlatList, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'; 
 import { Calendar } from 'react-native-calendars';
+import config from "../config";
+
+const monthMapping = {
+    January: 1,
+    February: 2,
+    March: 3,
+    April: 4,
+    May: 5,
+    June: 6,
+    July: 7,
+    August: 8,
+    September: 9,
+    October: 10,
+    November: 11,
+    December: 12
+};
 
 export default function Bookings() {
     const [selectedMonth, setSelectedMonth] = useState('September');
     const [isCalendarVisible, setCalendarVisible] = useState(false);
     const [isSearchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [bookings, setBookings] = useState([]);
 
-    const filteredBookings = bookings.filter(
-        booking =>
-            (new Date(booking.startDate).toLocaleString('default', { month: 'long' }) === selectedMonth || 
-             new Date(booking.endDate).toLocaleString('default', { month: 'long' }) === selectedMonth) &&
-            booking.name.toLowerCase().includes(searchText.toLowerCase())
-    );
+    useEffect(() => {
+        fetchBookings();
+    }, [selectedMonth]);
+
+    const fetchBookings = async () => {
+        try {
+            const year = new Date().getFullYear();
+            const month = monthMapping[selectedMonth]; 
+    
+            if (month === undefined) {
+                console.error('Invalid month selected');
+                return;
+            }
+            const response = await fetch(`${config.BASE_URL}/bookingsOperator?month=${month}&year=${year}`);
+            
+            if (!response.ok) {
+                console.error('Failed to fetch. Status:', response.status);
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            console.log('Fetched bookings data:', data);
+            setBookings(data);
+        } catch (error) {
+            console.error('Error fetching bookings:', error);
+        }
+    };
+
+    const filteredBookings = bookings.filter(booking => {
+        const startDate = new Date(booking.startDate);
+        const endDate = new Date(booking.endDate);
+    
+        const bookingMonthStart = startDate.getMonth() + 1;
+        const bookingMonthEnd = endDate.getMonth() + 1;
+        const bookingYearStart = startDate.getFullYear();
+        const bookingYearEnd = endDate.getFullYear();
+    
+        const isWithinMonth = (
+            (bookingMonthStart === monthMapping[selectedMonth] && bookingYearStart === new Date().getFullYear()) || 
+            (bookingMonthEnd === monthMapping[selectedMonth] && bookingYearEnd === new Date().getFullYear()) ||
+            (bookingMonthStart < monthMapping[selectedMonth] && bookingMonthEnd > monthMapping[selectedMonth] && bookingYearStart === new Date().getFullYear())
+        );
+    
+        return isWithinMonth;
+    });
 
     const markedDates = {};
     bookings.forEach((booking) => {
@@ -27,8 +82,8 @@ export default function Bookings() {
             markedDates[dateString] = {
                 marked: true,
                 dotColor: 'blue',
-                startingDay: dateString === booking.startDate,
-                endingDay: dateString === booking.endDate,
+                startingDay: dateString === booking.startDate.split('T')[0],
+                endingDay: dateString === booking.endDate.split('T')[0],
                 color: 'lightblue',
                 textColor: 'black',
             };
@@ -42,20 +97,13 @@ export default function Bookings() {
                 <Picker
                     selectedValue={selectedMonth}
                     style={styles.picker}
-                    onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                    onValueChange={(itemValue) => {
+                        setSelectedMonth(itemValue);
+                    }}
                 >
-                    <Picker.Item label="January" value="January" />
-                    <Picker.Item label="February" value="February" />
-                    <Picker.Item label="March" value="March" />
-                    <Picker.Item label="April" value="April" />
-                    <Picker.Item label="May" value="May" />
-                    <Picker.Item label="June" value="June" />
-                    <Picker.Item label="July" value="July" />
-                    <Picker.Item label="August" value="August" />
-                    <Picker.Item label="September" value="September" />
-                    <Picker.Item label="October" value="October" />
-                    <Picker.Item label="November" value="November" />
-                    <Picker.Item label="December" value="December" />
+                    {Object.keys(monthMapping).map(month => (
+                        <Picker.Item key={month} label={month} value={month} />
+                    ))}
                 </Picker>
                 <View style={styles.icons}>
                     <TouchableOpacity onPress={() => setCalendarVisible(true)}>
@@ -75,16 +123,16 @@ export default function Bookings() {
                     onChangeText={(text) => setSearchText(text)}
                 />
             )}
-            {/* Check if filteredBookings is not empty */}
+            {/* Display filtered bookings */}
             {filteredBookings.length > 0 ? (
                 <FlatList
                     data={filteredBookings}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.bookingID.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.bookingItem}>
                             <View style={styles.details}>
-                                <Text style={styles.name}>{item.name}</Text>
-                                <Text style={styles.date}>{`${item.startDate} - ${item.endDate}`}</Text>
+                                <Text style={styles.name}>{item.operatorFirstName} {item.operatorLastName}</Text>
+                                <Text style={styles.date}>{`${item.startDate.split('T')[0]} - ${item.endDate.split('T')[0]}`}</Text>
                             </View>
                         </View>
                     )}
@@ -95,7 +143,6 @@ export default function Bookings() {
                 </View>
             )}
 
-            {/* Calendar Modal */}
             <Modal
                 transparent={true}
                 visible={isCalendarVisible}
@@ -117,33 +164,6 @@ export default function Bookings() {
         </View>
     );
 }
-
-const bookings = [              //temporary 
-    {
-        id: '1',
-        name: 'Miles Morales',
-        startDate: '2024-09-20',
-        endDate: '2024-09-23',
-    },
-    {
-        id: '2',
-        name: 'Peter Parker',
-        startDate: '2024-09-24',
-        endDate: '2024-09-26',
-    },
-    {
-        id: '3',
-        name: 'Gwen Stacy',
-        startDate: '2024-09-27',
-        endDate: '2024-09-30',
-    },
-    {
-        id: '4',
-        name: 'Pavitr Prabhakar',
-        startDate: '2024-10-01',
-        endDate: '2024-10-03',
-    },
-];
 
 const styles = StyleSheet.create({
     container: {
@@ -173,38 +193,30 @@ const styles = StyleSheet.create({
         marginLeft: 15,
     },
     searchBar: {
-        height: 40,
-        borderColor: '#ccc',
+        borderColor: 'gray',
         borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 10,
-        marginBottom: 10,
-        backgroundColor: '#ffffff',
-    },
-    bookingItem: {
-        flexDirection: 'row',
-        backgroundColor: '#ffffff',
+        borderRadius: 5,
         padding: 10,
         marginBottom: 10,
-        borderRadius: 10,
-        alignItems: 'center',
     },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 15,
+    bookingItem: {
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10,
+        elevation: 1,
     },
     details: {
-        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     name: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
     },
     date: {
-        fontSize: 16,
-        color: '#555',
+        fontSize: 14,
+        color: 'gray',
     },
     noBookingsContainer: {
         flex: 1,
@@ -212,30 +224,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     noBookingsText: {
-        fontSize: 18,
-        color: '#555',
+        fontSize: 16,
+        color: 'gray',
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '90%',
         backgroundColor: '#ffffff',
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
     },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
     closeModal: {
-        marginTop: 20,
-        color: '#007BFF',
-        fontSize: 16,
+        marginTop: 10,
+        color: 'blue',
     },
 });

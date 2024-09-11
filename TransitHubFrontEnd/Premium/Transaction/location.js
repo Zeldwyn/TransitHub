@@ -16,16 +16,8 @@ Geocoder.init(GOOGLE_MAPS_API_KEY);
 
 export default function Location() {
     const navigation = useNavigation();
-    // const [fromCoords, setFromCoords] = useState(null);
-    // const [toCoords, setToCoords] = useState(null);
-    const [toCoords, setToCoords] = useState({
-        latitude: 10.252449,
-        longitude: 123.839234,
-    });
-    const [fromCoords, setFromCoords] = useState({
-        latitude: 10.303360,
-        longitude: 123.866245,
-    });
+    const [fromCoords, setFromCoords] = useState(null);
+    const [toCoords, setToCoords] = useState(null);
     
     const [markedDates, setMarkedDates] = useState({});
     const [isCalendarVisible, setCalendarVisible] = useState(false);
