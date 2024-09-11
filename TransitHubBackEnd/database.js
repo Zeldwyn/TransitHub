@@ -50,10 +50,12 @@ pool.getConnection((err, connection) => {
         )`     
         ,
         `
-        CREATE TABLE IF NOT EXISTS transaction (
+       CREATE TABLE IF NOT EXISTS transaction (
             transactionID INT AUTO_INCREMENT PRIMARY KEY,
-            toCoords POINT NOT NULL,
-            fromCoords POINT NOT NULL,
+            toLatitude DECIMAL(10, 6) NOT NULL,
+            toLongitude DECIMAL(10, 6) NOT NULL,
+            fromLatitude DECIMAL(10, 6) NOT NULL,
+            fromLongitude DECIMAL(10, 6) NOT NULL,
             clientName VARCHAR(100) NOT NULL,
             itemDescription VARCHAR(100),
             packageWeight DECIMAL(10, 2) NOT NULL,
@@ -68,8 +70,8 @@ pool.getConnection((err, connection) => {
             expectedDuration DECIMAL(10, 2),
             expectedFee DECIMAL(10, 2),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        `,
+        )`
+        ,
         `
         CREATE TABLE IF NOT EXISTS booking (
             bookingID INT AUTO_INCREMENT PRIMARY KEY,

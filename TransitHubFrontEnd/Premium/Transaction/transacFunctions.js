@@ -41,10 +41,10 @@ export const calculateDistance = async (fromCoords, toCoords, setExpectedDistanc
 export const computeDateRange = (markedDates) => {
     const dates = Object.keys(markedDates);
     if (dates.length === 0) {
-        return { startDate: "", endDate: "" };
+        return { firstDate: "", lastDate: "" };
     }
     const sortedDates = dates.sort();
-    return { startDate: sortedDates[0], endDate: sortedDates[sortedDates.length - 1] };
+    return { firstDate: sortedDates[0], lastDate: sortedDates[sortedDates.length - 1] };
 };
 
 const formatDate = (dateString) => {

@@ -16,8 +16,17 @@ Geocoder.init(GOOGLE_MAPS_API_KEY);
 
 export default function Location() {
     const navigation = useNavigation();
-    const [fromCoords, setFromCoords] = useState(null);
-    const [toCoords, setToCoords] = useState(null);
+    // const [fromCoords, setFromCoords] = useState(null);
+    // const [toCoords, setToCoords] = useState(null);
+    const [toCoords, setToCoords] = useState({
+        latitude: 10.252449,
+        longitude: 123.839234,
+    });
+    const [fromCoords, setFromCoords] = useState({
+        latitude: 10.303360,
+        longitude: 123.866245,
+    });
+    
     const [markedDates, setMarkedDates] = useState({});
     const [isCalendarVisible, setCalendarVisible] = useState(false);
     const [isOperatorVisible, setIsOperatorVisible] = useState(false);
@@ -50,26 +59,22 @@ export default function Location() {
           setPID(id);
         };
         getUserID();
-      }, []);
+    }, []);
 
-      const handleSubmit = async () => {
+    const handleSubmit = async () => {
         try {
             const transactionData = {
-                toCoords,
-                fromCoords,
-                clientName,
-                itemDescription,
-                packageWeight,
-                itemQuantity,
-                vehicleFee,
-                notes,
-                first2km,
-                succeedingKm,
-                expectedDistance,
-                startDate,
-                endDate,
-                expectedDuration,
-                expectedFee,
+                toCoords: {
+                    latitude: toCoords.latitude,
+                    longitude: toCoords.longitude,
+                },
+                fromCoords: {
+                    latitude: fromCoords.latitude,
+                    longitude: fromCoords.longitude,
+                },        
+                clientName, itemDescription, packageWeight, itemQuantity,
+                vehicleFee, notes, first2km, succeedingKm,
+                expectedDistance, startDate,  endDate, expectedDuration, expectedFee,               
             };
             const transactionResponse = await fetch(`${config.BASE_URL}/add-Transaction`, {
                 method: 'POST',
@@ -159,6 +164,7 @@ export default function Location() {
         const date = day.dateString;
         setMarkedDates((prevMarkedDates) => {
             const updatedMarkedDates = { ...prevMarkedDates };
+    
             if (updatedMarkedDates[date]) {
                 delete updatedMarkedDates[date];
             } else {
@@ -168,9 +174,15 @@ export default function Location() {
                     selectedColor: 'maroon',
                 };
             }
-            const { startDate, endDate } = computeDateRange(markedDates);
-            setStartDate(startDate);
-            setEndDate(endDate);
+    
+            // Compute date range using updatedMarkedDates instead of markedDates state
+            const { firstDate, lastDate } = computeDateRange(updatedMarkedDates);
+            setStartDate(firstDate);
+            setEndDate(lastDate);
+    
+            console.log('start date: ', firstDate);
+            console.log('end date: ', lastDate);
+    
             return updatedMarkedDates;
         });
     };
@@ -298,9 +310,9 @@ export default function Location() {
             <View style={styles.detailsColumn}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.microLabel}>Client Name:</Text>
-                        <TextInput style={[styles.input, {textAlign: 'center'}]} onChangeText={text => setClientName(text)} value={clientName}/>
+                        <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setClientName(text)} value={clientName}/>
                     <Text style={styles.microLabel}>Item Description</Text>
-                        <TextInput style={styles.input} onChangeText={text => setItemDescription(text)} value={itemDescription}/>        
+                        <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setItemDescription(text)} value={itemDescription}/>        
                     <Text style={styles.microLabel}>Weight</Text>
                         <TextInput style={styles.input} keyboardType='number-pad' onChangeText={text => setPackageWeight(text)} value={packageWeight}/>
                     <Text style={styles.microLabel}>Quantity</Text>
@@ -332,7 +344,7 @@ export default function Location() {
             </View>
     
             <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10}}>
-                <TouchableOpacity style={styles.operatorIcon} onPress={() => setIsOperatorVisible(true)}>
+                <TouchableOpacity style={styles.operatorIcon} onPress={() => {setIsOperatorVisible(true);}}>
                     <FontAwesome5 name="user-alt" size={40} color="white" /> 
                 </TouchableOpacity>
                 <View style={{width: '70%'}}>
