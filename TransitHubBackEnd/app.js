@@ -810,12 +810,11 @@ app.get('/bookingsOperator', (req, res) => {
 app.get('/deliveries', (req, res) => {
     const { date, operatorID } = req.query;
 
-    // Validate that operatorID and date are passed in the query
     if (!operatorID || !date) {
         return res.status(400).json({ error: 'Missing operatorID or date' });
     }
 
-    console.log('Received operatorID:', operatorID);  // Log to check if operatorID is being passed correctly
+    console.log('Received operatorID:', operatorID);  
     console.log('Received date:', date);
 
     const query = `
@@ -824,14 +823,16 @@ app.get('/deliveries', (req, res) => {
             t.clientName,
             CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromCoords,
             CONCAT(t.toLatitude, ", ", t.toLongitude) AS toCoords,
-            b.finalFee
+            b.finalFee,
+            b.status  -- Ensure this field is selected
         FROM
             booking b
         JOIN
             transaction t ON b.transactionID = t.transactionID
         WHERE
             t.startDate = ? AND
-            b.operatorID = ?;
+            b.operatorID = ? AND
+            b.status = 'Pending';  -- Ensure this filter is applied
     `;
 
     pool.query(query, [date, operatorID], (error, results) => {
@@ -839,10 +840,7 @@ app.get('/deliveries', (req, res) => {
             console.error('Database query error:', error);
             return res.status(500).json({ error: 'Internal Server Error' });
         }
-
-        console.log('Query results:', results);  // Log the results to verify correctness
-
-        // Return the results to the frontend
+        console.log('Query results:', results);  
         res.json(results);
     });
 });
@@ -902,5 +900,18 @@ app.get('/delivery/:bookingID', (req, res) => {
     });
 });
 
+
+app.put('/update-Deliverystatus', (req, res) => {
+    const { deliveryId, status } = req.body;
+
+    pool.query('UPDATE booking SET status = ? WHERE bookingID = ?', [status, deliveryId], (err, results) => {
+        if (err) {
+            console.error('Error updating delivery status:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        } else {
+            res.status(200).json({ message: 'Delivery status updated successfully' });
+        }
+    });
+});
 
 module.exports = app;

@@ -6,7 +6,6 @@ import haversine from 'haversine';
 import * as Location from 'expo-location';
 import { GOOGLE_MAPS_API_KEY } from '@env';
 import config from "../config";
-import { Button } from 'react-native-paper';
 
 export default function OperatorLive({ route, navigation }) {
     const { deliveryId, operatorID } = route.params;
@@ -61,11 +60,8 @@ export default function OperatorLive({ route, navigation }) {
                 Alert.alert('Error', 'Unable to fetch delivery details.');
             }
         };
-
         fetchDeliveryDetails();
-
         return () => {
-            // Cleanup if needed
         };
     }, [deliveryId]);
 
@@ -115,8 +111,8 @@ export default function OperatorLive({ route, navigation }) {
 
     useEffect(() => {
         if (currentPosition && deliveryAddress) {
-            const distanceToDestination = haversine(currentPosition, deliveryAddress, { unit: 'meter' });
-            setFinishButtonEnabled(distanceToDestination < 50);
+            const distanceToDestination = haversine(currentPosition, deliveryAddress, { unit: 'km' });
+            setFinishButtonEnabled(distanceToDestination < 0.10); // Enable when below 0.10 km or 100 meter
         }
     }, [currentPosition, deliveryAddress]);
 
@@ -163,24 +159,35 @@ export default function OperatorLive({ route, navigation }) {
     };
 
     const handleFinishDelivery = async () => {
-        setDeliveryStatus("Delivered");
-        setRouteVisible(false);
         try {
-            await fetch(`${config.BASE_URL}/finish-delivery`, {
-                method: 'POST',
+            const response = await fetch(`${config.BASE_URL}/update-Deliverystatus`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    status: 'Delivered',
-                    // Include other necessary data
+                    deliveryId: deliveryId,
+                    status: 'Completed',
                 }),
             });
+    
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                console.error(`Error updating delivery status: ${response.status} - ${errorMessage}`);
+                throw new Error('Failed to update delivery status.');
+            }
+    
+            setDeliveryStatus("Completed");
+            setRouteVisible(false);
+            Alert.alert('Success', 'Delivery has been marked as completed.');
+            navigation.goBack(); 
+    
         } catch (error) {
             console.error('Error finishing delivery:', error);
+            Alert.alert('Error', 'Unable to finish delivery.');
         }
     };
-
+    
     const handleCancelDelivery = async () => {
         setRouteVisible(false);
         setFinishButtonEnabled(false);
@@ -218,7 +225,6 @@ export default function OperatorLive({ route, navigation }) {
 
     const handlePromptClose = () => {
         setLocationPromptVisible(false);
-        // Optionally redirect the user to the device settings
     };
 
     return (
@@ -262,7 +268,7 @@ export default function OperatorLive({ route, navigation }) {
 
             <Animated.View style={[styles.statusContainer, { height: panelHeight }]}>
                 <TouchableOpacity style={styles.expandButton} onPress={togglePanel}>
-                    <Text style={styles.expandButtonText}>{panelExpanded ? 'Collapse' : 'Expand'}</Text>
+                    <Text style={styles.expandButtonText}>{panelExpanded ? 'Status' : 'Status'}</Text>
                 </TouchableOpacity>
                 <View style={styles.statusTextContainer}>
                     {routeVisible && (
@@ -294,9 +300,6 @@ export default function OperatorLive({ route, navigation }) {
                                 disabled={!finishButtonEnabled}
                             >
                                 <Text style={styles.buttonText}>Finish Delivery</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.button, { backgroundColor: '#dc3545' }]} onPress={handleCancelDelivery}>
-                                <Text style={styles.buttonText}>Cancel Delivery</Text>
                             </TouchableOpacity>
                         </>
                     )}

@@ -81,23 +81,25 @@ export default function OperatorHome() {
             const apiUrl = `${config.BASE_URL}/deliveries?date=${date}&operatorID=${pID}`;
             console.log(`Fetching deliveries from: ${apiUrl}`);
             const response = await fetch(apiUrl);
-
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
+    
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 const data = await response.json();
                 console.log('Deliveries data:', data);
-
-                const updatedDeliveries = await Promise.all(data.map(async (delivery) => {
+    
+                const pendingDeliveries = data.filter(delivery => delivery.status === "Pending");
+    
+                const updatedDeliveries = await Promise.all(pendingDeliveries.map(async (delivery) => {
                     console.log('Delivery item:', delivery); // Check each item
                     const fromLocation = await getLocationFromCoords(delivery.fromCoords);
                     const toLocation = await getLocationFromCoords(delivery.toCoords);
                     return { ...delivery, fromLocation, toLocation };
                 }));
-
+    
                 setDeliveries(updatedDeliveries);
             } else {
                 throw new Error("Expected JSON but received something else.");
@@ -105,7 +107,7 @@ export default function OperatorHome() {
         } catch (error) {
             console.error("Error fetching deliveries:", error);
         }
-    };
+    };    
 
     const getLocationFromCoords = async (coords) => {
         if (!coords || locationCache[coords]) {
