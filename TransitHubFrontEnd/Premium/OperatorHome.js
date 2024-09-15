@@ -193,7 +193,7 @@ export default function OperatorHome() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FFC93F',
         padding: 20,
     },
     welcome: {

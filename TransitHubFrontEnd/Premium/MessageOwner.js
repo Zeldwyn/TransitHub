@@ -164,7 +164,7 @@ export default function MessageOwner() {
 const styles = StyleSheet.create({
 container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFC93F',
     marginTop: StatusBar.currentHeight
 },
 sendContainer: {

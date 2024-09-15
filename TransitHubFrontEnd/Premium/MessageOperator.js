@@ -208,6 +208,10 @@ container: {
     backgroundColor: '#f5f5f5',
     margin: 3,
 },
+list:{
+    borderColor: "maroon",
+  borderWidth: 2,
+},
 searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -239,9 +243,9 @@ itemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    padding: 12,
+    borderColor: "maroon",
+    borderWidth: 2,
     backgroundColor: '#fff',
     marginVertical: 5,
     marginHorizontal: 10,
@@ -250,6 +254,7 @@ itemContainer: {
 },
 textContainer: {
     flex: 1,
+    
 },
 name: {
     fontSize: 18,
@@ -261,6 +266,7 @@ message: {
 },
 chatModal: {
     flex: 1,
+    backgroundColor: '#FFC93F',
 },
 sender: {
     backgroundColor: "maroon",
