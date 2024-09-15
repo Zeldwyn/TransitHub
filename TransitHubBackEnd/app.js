@@ -1078,5 +1078,61 @@ app.get('/bookingDetails/:bookingID', (req, res) => {
     });
 });
 
+app.get('/weekly-sales', (req, res) => {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting database connection:', err);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        connection.query(`
+            SELECT
+                DATE(t.startDate) AS date,
+                SUM(b.finalFee) AS totalSales,
+                COUNT(*) AS totalDeliveries,
+                SUM(t.itemQuantity) AS totalItems,
+                AVG(b.finalFee) AS averageSalesPerDay,
+                MAX(b.finalFee) AS highestSalesDay,
+                MIN(b.finalFee) AS lowestSalesDay
+            FROM
+                booking b
+                JOIN transaction t ON b.transactionID = t.transactionID
+            WHERE
+                t.startDate >= CURDATE() - INTERVAL 7 DAY
+            GROUP BY
+                DATE(t.startDate)
+            ORDER BY
+                DATE(t.startDate) ASC
+        `, (error, results) => {
+            if (error) {
+                console.error('Error executing query:', error);
+                connection.release();
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+
+            // Calculate additional metrics
+            const totalSales = results.reduce((acc, day) => acc + day.totalSales, 0);
+            const totalDeliveries = results.reduce((acc, day) => acc + day.totalDeliveries, 0);
+            const averageSalesPerDay = totalSales / 7;
+            const highestSalesDay = Math.max(...results.map(day => day.highestSalesDay));
+            const lowestSalesDay = Math.min(...results.map(day => day.lowestSalesDay));
+
+            connection.release();
+            res.json({
+                data: results,
+                metrics: {
+                    totalSales,
+                    totalDeliveries,
+                    averageSalesPerDay,
+                    highestSalesDay,
+                    lowestSalesDay
+                }
+            });
+        });
+    });
+});
+
+
+
 
 module.exports = app;

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import '../styles/style.css';
 import Sidebar from "../../layout/sidebar";
-import { weeklyData, deliveryRate } from "../data/sampleData";
 import config from "../../config";
 
 const formatDate = (dateString) => {
@@ -24,6 +22,8 @@ export default function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [weeklySales, setWeeklySales] = useState([]);
+    const [metrics, setMetrics] = useState({});
     const itemsPerPage = 5;
     const navigate = useNavigate();
 
@@ -35,12 +35,28 @@ export default function Dashboard() {
     }, [navigate]);
 
     useEffect(() => {
+        const fetchWeeklySales = async () => {
+            try {
+                const response = await fetch(`${config.BASE_URL}/weekly-sales`);
+                const data = await response.json();
+                setWeeklySales(data.data);
+                setMetrics(data.metrics);
+            } catch (error) {
+                console.error('Error fetching weekly sales:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchWeeklySales();
+    }, []);
+
+    useEffect(() => {
         const fetchUsers = async () => {
             try {
                 const response = await fetch(`${config.BASE_URL}/premiumUsers`);
                 const data = await response.json();
-                console.log(data); // Check data format here
-                setUsers(data); // Set the users state
+                setUsers(data);
             } catch (error) {
                 console.error('Error fetching users:', error);
             } finally {
@@ -55,18 +71,6 @@ export default function Dashboard() {
         setIsSidebarExpanded(!isSidebarExpanded);
     };
 
-    const totalDeliveries = weeklyData.reduce((total, day) => total + day.deliveries, 0);
-    const totalSales = weeklyData.reduce((total, day) => total + day.sales, 0);
-
-    // Calculate unique drivers
-    const uniqueDrivers = new Set(deliveryRate.map(delivery => delivery.operator));
-    const totalDrivers = uniqueDrivers.size;
-
-    // Calculate delivery success rate
-    const totalDeliveriesCount = deliveryRate.length;
-    const successfulDeliveriesCount = deliveryRate.filter(delivery => delivery.status === "Arrived").length;
-    const deliverySuccessRate = totalDeliveriesCount > 0 ? (successfulDeliveriesCount / totalDeliveriesCount * 100).toFixed(2) : 0;
-
     const isRecentlyCreated = (dateCreated) => {
         const accountDate = new Date(dateCreated);
         const currentDate = new Date();
@@ -77,7 +81,7 @@ export default function Dashboard() {
 
     const filteredUsers = users.filter(user =>
         `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        isRecentlyCreated(user.created_at) // Ensure correct date field
+        isRecentlyCreated(user.created_at)
     );
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -106,23 +110,23 @@ export default function Dashboard() {
                         <div className="cardsContainer">
                             <div className="card">
                                 <LocalShippingOutlinedIcon className="icon" />
-                                <p>{totalDeliveries.toLocaleString()}</p>
+                                <p>{metrics.totalDeliveries?.toLocaleString() || 0}</p>
                                 <h2>Total Deliveries</h2>
                             </div>
                             <div className="card">
                                 <AttachMoneyOutlinedIcon className="icon" />
-                                <p>₱{totalSales.toLocaleString()}</p>
+                                <p>₱{parseFloat(metrics.totalSales || 0).toFixed(2).toLocaleString()}</p>
                                 <h2>Total Sales</h2>
                             </div>
                             <div className="card">
-                                <PersonOutlineOutlinedIcon className="icon" />
-                                <p>{totalDrivers}</p>
-                                <h2>Total Drivers</h2>
+                                <BarChartOutlinedIcon className="icon" />
+                                <p>₱{parseFloat(metrics.highestSalesDay || 0).toFixed(2).toLocaleString()}</p>
+                                <h2>Highest Sale</h2>
                             </div>
                             <div className="card">
                                 <BarChartOutlinedIcon className="icon" />
-                                <p>{deliverySuccessRate}% Delivery Success Rate</p>
-                                <h2>Performance Overview</h2>
+                                <p>₱{parseFloat(metrics.lowestSalesDay || 0).toFixed(2).toLocaleString()}</p>
+                                <h2>Lowest Sale</h2>
                             </div>
                         </div>
                     </div>
@@ -162,7 +166,7 @@ export default function Dashboard() {
                                                 <td>{user.firstName} {user.lastName}</td>
                                                 <td>{user.email}</td>
                                                 <td>{user.userType}</td>
-                                                <td>{formatDate(user.created_at)}</td> {/* Format date here */}
+                                                <td>{formatDate(user.created_at)}</td>
                                                 <td>
                                                     <button
                                                         onClick={() => handleManageClick(user)}
@@ -182,9 +186,6 @@ export default function Dashboard() {
                                         key={index + 1}
                                         onClick={() => handlePageChange(index + 1)}
                                         className="paginationButton"
-                                        style={{
-                                            backgroundColor: currentPage === index + 1 ? '#4DB6AC' : '#21222D',
-                                        }}
                                     >
                                         {index + 1}
                                     </button>
