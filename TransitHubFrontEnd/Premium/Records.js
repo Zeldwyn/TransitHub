@@ -1,55 +1,91 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons'; // Import Ionicons
+import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import config from '../config';
 
 export default function Records() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
-  const [pID, setPID] = useState('');
+  const [pID, setPID] = useState(''); // premiumUserID
+  const [operatorID, setOperatorID] = useState(''); // Added for operatorID
+  const [userType, setUserType] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [activeTab, setActiveTab] = useState('Pending');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getUserID = async () => {
-      const id = await AsyncStorage.getItem('premiumUserID');
-      console.log("ID: ", id);
-      setPID(id);
-    };
-    getUserID();
-  }, []);
+      try {
+        const id = await AsyncStorage.getItem('premiumUserID');
+        const oid = await AsyncStorage.getItem('operatorID');
+        const type = await AsyncStorage.getItem('userType');
+        console.log("Fetched premium ID:", id);
+        //console.log("Fetched operator ID:", oid); fuck this no record for transport operator, kapoy na
+        console.log("Fetched User Type:", type);
 
-  useEffect(() => {
-    fetch(`${config.BASE_URL}/display-TransactionPremium`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        "premiumUserID": parseInt(pID),
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data) {
-          setTransactionData(data.result);
-          console.log(data.result);
-          setError(null);
+        setPID(id);
+        setOperatorID(oid); 
+        setUserType(type);
+
+        if (id && type) {
+          fetchData(type, id, oid); 
         } else {
-          setError('Failed to fetch transaction data');
+          setError('User data is not available');
+          setLoading(false); 
         }
-      })
-      .catch((error) => {
-        setError('Failed to fetch transaction data');
-        console.error('Error:', error);
-      });
-  }, [pID]);
+      } catch (error) {
+        setError('Failed to get user data');
+        console.error('AsyncStorage error:', error);
+        setLoading(false); 
+      }
+    };
 
-  const handleRecordPress = (record) => {
-    setSelectedRecord(record);
-    setModalVisible(true);
+    getUserID();
+  }, [activeTab]);
+
+  const fetchData = async (userType, premiumUserID, operatorID) => {
+    setLoading(true);
+    try {
+      let endpoint = activeTab === 'Pending' ? '/pendingBookings' : '/completedBookings';
+      let query = `?userType=${userType}&premiumUserID=${premiumUserID}`;
+      if (userType === 'operator') {
+        query += `&operatorID=${operatorID}`;
+      }
+
+      const response = await fetch(`${config.BASE_URL}${endpoint}${query}`);
+      const data = await response.json();
+
+      console.log("Fetched transaction data:", data); // Debugging line
+
+      if (response.ok) {
+        setTransactionData(data);
+      } else {
+        setError('Failed to fetch data');
+      }
+    } catch (err) {
+      setError('Failed to fetch data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBookingDetails = async (bookingID) => {
+    try {
+      const response = await fetch(`${config.BASE_URL}/bookingDetails/${bookingID}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setSelectedRecord(data);
+        setModalVisible(true);
+      } else {
+        setError('Failed to fetch booking details');
+      }
+    } catch (err) {
+      setError('Failed to fetch booking details');
+      console.error(err);
+    }
   };
 
   const closeModal = () => {
@@ -57,22 +93,44 @@ export default function Records() {
     setSelectedRecord(null);
   };
 
-  const exportAsPDF = () => {
-    // Handle PDF export functionality here
-    console.log('Export as PDF');
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    fetchData(userType, pID, operatorID); // Fetch data based on the active tab
   };
+
+  const handleExport = () => {
+ 
+    console.log('Exporting data:', selectedRecord);
+  };
+
+  const { width } = Dimensions.get('window'); // Get screen width
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <View style={styles.navBar}>
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'Pending' && styles.activeNavButton]}
+          onPress={() => handleTabChange('Pending')}
+        >
+          <Text style={styles.navButtonText}>Pending</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'Completed' && styles.activeNavButton]}
+          onPress={() => handleTabChange('Completed')}
+        >
+          <Text style={styles.navButtonText}>Completed</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.list}>
         {error && <Text style={styles.errorText}>{error}</Text>}
-        {transactionData.length === 0 && !error && <Text>Loading...</Text>}
+        {loading && !error && <Text style={styles.loadingText}>Loading...</Text>}
+        {transactionData.length === 0 && !error && !loading && <Text style={styles.noDataText}>No records found</Text>}
         {transactionData.map((transaction, index) => (
-          <TouchableOpacity key={index} onPress={() => handleRecordPress(transaction)}>
+          <TouchableOpacity key={index} onPress={() => fetchBookingDetails(transaction.bookingID)}>
             <View style={styles.transactionBox}>
-              <Text style={styles.text}>To Location: {transaction.toLocation}</Text>
-              <Text style={styles.text}>From Location: {transaction.fromLocation}</Text>
-              <Text style={styles.date}>Date: {transaction.created_at}</Text>
+              <Text style={styles.text}>Client Name: {transaction.clientName || 'N/A'}</Text>
+              <Text style={styles.text}>Date Booked: {transaction.startDate ? new Date(transaction.startDate).toLocaleDateString() : 'N/A'}</Text>
+              <Text style={styles.text}>Fee: ₱{transaction.expectedFee || 'N/A'}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -86,35 +144,32 @@ export default function Records() {
           onRequestClose={closeModal}
         >
           <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
+            <View style={[styles.modalContainer, { width: width * 0.9 }]}>
               <Text style={styles.modalTitle}>Transaction Details</Text>
-              <View style={styles.modalDetails}>
-                <Text style={styles.modalText}>To Location:</Text>
-                <Text style={styles.modalDetailText}>{selectedRecord.toLocation}</Text>
-              </View>
-              <View style={styles.modalDetails}>
-                <Text style={styles.modalText}>From Location:</Text>
-                <Text style={styles.modalDetailText}>{selectedRecord.fromLocation}</Text>
-              </View>
-              <View style={styles.modalDetails}>
-                <Text style={styles.modalText}>Date:</Text>
-                <Text style={styles.modalDetailText}>{selectedRecord.created_at}</Text>
-              </View>
-              <Text style={styles.modalText}>Package Width:</Text>
-              <Text style={styles.modalText}>Package Height:</Text>
-              <Text style={styles.modalText}>Package Weight:</Text>
-              <Text style={styles.modalText}>First 2Km:</Text>
-              <Text style={styles.modalText}>Succeeding Km:</Text>
-              <Text style={styles.modalText}>Distance:</Text>
-              <Text style={styles.modalText}>Fuel Allowance:</Text>
-              <Text style={styles.modalText}>Total Fee:</Text>
-              <Text style={styles.modalText}>Additional Info:</Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={exportAsPDF}>
-                  <Icon name="document-text" size={30} color="black" />
+              <ScrollView contentContainerStyle={styles.modalContent}>
+                <View style={styles.modalDetails}>
+                  <Text style={styles.modalText}>Operator Name:</Text>
+                  <Text style={styles.modalValue}>{selectedRecord.operatorFirstName} {selectedRecord.operatorLastName || 'N/A'}</Text>
+                </View>
+                <View style={styles.modalDetails}>
+                  <Text style={styles.modalText}>Operator Email:</Text>
+                  <Text style={styles.modalValue}>{selectedRecord.operatorEmail || 'N/A'}</Text>
+                </View>
+                {Object.entries(selectedRecord).map(([key, value]) => (
+                  key !== 'bookingID' && key !== 'operatorFirstName' && key !== 'operatorLastName' && key !== 'operatorEmail' ? (
+                    <View key={key} style={styles.modalDetails}>
+                      <Text style={styles.modalText}>{key.replace(/([A-Z])/g, ' $1').toUpperCase()}:</Text>
+                      <Text style={styles.modalValue}>{value || 'N/A'}</Text>
+                    </View>
+                  ) : null
+                ))}
+              </ScrollView>
+              <View style={styles.modalButtonsContainer}>
+                <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                  <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={closeModal}>
-                  <Icon name="close" size={30} color="black" />
+                <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
+                  <Text style={styles.exportButtonText}>Export</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -128,67 +183,115 @@ export default function Records() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: "#FFC93F",
+    padding: 10,
   },
-  errorText: {
-    color: 'red',
+  navBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     marginBottom: 10,
   },
+  navButton: {
+    padding: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 3,
+    width: "50%",
+    borderBottomColor: 'transparent',
+  },
+  activeNavButton: {
+    borderBottomColor: '#4CAF50',
+  },
+  navButtonText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: '#333',
+  },
+  list: {
+    flex: 1,
+  },
   transactionBox: {
-    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
     padding: 15,
-    marginVertical: 10,
-    backgroundColor: 'maroon',
+    borderRadius: 5,
+    marginBottom: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 1,
   },
   text: {
     fontSize: 16,
-    color: 'white',
-    margin: 3,
+    color: '#333',
   },
-  date: {
-    fontSize: 12,
-    flexDirection: 'row-reverse',
-    color: 'white',
-    margin: 3,
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
   },
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    width: '90%',
-    padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    alignItems: 'flex-start',
+    height: "70%",
+    padding: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
+  },
+  modalContent: {
+    flexGrow: 1,
   },
   modalDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 5,
+    marginBottom: 10,
   },
   modalText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  modalDetailText: {
+  modalValue: {
     fontSize: 16,
-    flex: 1,
-    textAlign: 'right', // Adjust alignment as needed
+    color: '#333',
   },
-  buttonContainer: {
+  closeButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  exportButton: {
+    backgroundColor: '#FFC107',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%',
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  modalButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-    paddingHorizontal: 20,
+    marginTop: 10,
   },
 });

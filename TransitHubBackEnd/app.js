@@ -140,13 +140,42 @@ app.post('/validate-AdminLogin', (req, res) => {
 app.post('/validate-Login', async (req, res) => {
     const { email, password } = req.body;
     const sql = `SELECT email, password, userType, premiumUserID FROM premiumUser WHERE email = ? AND password = ?`;
+    
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
             res.status(500).json({ success: false, error: 'Internal server error Validate Login' });
         } else {
             if (result.length > 0) {
                 console.log('Login successful');
-                res.status(200).json({ isValid: true, userType: result[0].userType, id: result[0].premiumUserID});
+
+                const userType = result[0].userType;
+                const premiumUserID = result[0].premiumUserID;
+
+                // If user is an owner, fetch the ownerID
+                if (userType === 'owner') {
+                    const ownerSql = `SELECT ownerID FROM owner WHERE premiumUserID = ?`; // Assuming owner is related to premiumUserID
+                    pool.query(ownerSql, [premiumUserID], (err, ownerResult) => {
+                        if (err) {
+                            res.status(500).json({ success: false, error: 'Internal server error fetching ownerID' });
+                        } else if (ownerResult.length > 0) {
+                            res.status(200).json({
+                                isValid: true,
+                                userType: userType,
+                                id: premiumUserID,
+                                ownerID: ownerResult[0].ownerID, // Send ownerID for owner
+                            });
+                        } else {
+                            res.status(400).json({ success: false, error: 'No ownerID found for this user' });
+                        }
+                    });
+                } else {
+                    // For non-owner users, just send the premiumUserID
+                    res.status(200).json({
+                        isValid: true,
+                        userType: userType,
+                        id: premiumUserID, // Send the premiumUserID as id
+                    });
+                }
             } else {
                 console.log('Invalid login credentials');
                 res.status(400).json({ isValid: false });
@@ -154,6 +183,7 @@ app.post('/validate-Login', async (req, res) => {
         }
     });
 });
+
 
 app.post('/user-Details', async (req, res) => {
     const { premiumUserID } = req.body;
@@ -771,10 +801,10 @@ app.post('/available-Operators', (req, res) => {
 });
 
 app.get('/bookingsOperator', (req, res) => {
-    const { month, year } = req.query;
+    const { month, year, ownerID } = req.query; // Capture ownerID from the query params
 
-    if (!month || !year) {
-        return res.status(400).json({ error: 'Month and year parameters are required' });
+    if (!month || !year || !ownerID) {
+        return res.status(400).json({ error: 'Month, year, and ownerID parameters are required' });
     }
 
     const query = `
@@ -794,11 +824,12 @@ app.get('/bookingsOperator', (req, res) => {
             JOIN premiumUser o ON oo.operatorID = o.premiumUserID
             JOIN transaction t ON b.transactionID = t.transactionID
         WHERE 
-            (MONTH(t.startDate) = ? AND YEAR(t.startDate) = ?) OR 
-            (MONTH(t.endDate) = ? AND YEAR(t.endDate) = ?)
+            oo.ownerID = ? AND
+            ((MONTH(t.startDate) = ? AND YEAR(t.startDate) = ?) OR 
+            (MONTH(t.endDate) = ? AND YEAR(t.endDate) = ?))
     `;
 
-    pool.query(query, [parseInt(month, 10), parseInt(year, 10), parseInt(month, 10), parseInt(year, 10)], (error, results) => {
+    pool.query(query, [ownerID, parseInt(month, 10), parseInt(year, 10), parseInt(month, 10), parseInt(year, 10)], (error, results) => {
         if (error) {
             console.error('Error fetching bookings:', error);
             return res.status(500).json({ error: 'Internal Server Error' });
@@ -900,7 +931,6 @@ app.get('/delivery/:bookingID', (req, res) => {
     });
 });
 
-
 app.put('/update-Deliverystatus', (req, res) => {
     const { deliveryId, status } = req.body;
 
@@ -913,5 +943,140 @@ app.put('/update-Deliverystatus', (req, res) => {
         }
     });
 });
+
+app.get('/completedBookings', (req, res) => {
+    const { userType, premiumUserID, operatorID } = req.query;
+
+    if (!userType || !premiumUserID) {
+        return res.status(400).json({ error: 'Missing required query parameters' });
+    }
+
+    let query = `
+        SELECT 
+            b.bookingID,
+            t.clientName,
+            t.startDate,
+            t.endDate,
+            t.expectedFee,
+            b.finalFee,
+            t.transactionID,
+            b.status,
+            b.operatorID,
+            b.ownerID
+        FROM booking b
+        JOIN transaction t ON b.transactionID = t.transactionID
+        WHERE b.status = 'completed'
+    `;
+    const queryParams = [];
+
+    if (userType === 'owner') {
+        query += ' AND b.ownerID = ?';
+        queryParams.push(premiumUserID);
+    } else if (userType === 'operator') {
+        query += ' AND t.operatorID = ?';
+        queryParams.push(operatorID);
+    }
+
+    pool.query(query, queryParams, (error, results) => {
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+app.get('/pendingBookings', (req, res) => {
+    const { userType, premiumUserID, operatorID } = req.query;
+
+    if (!userType || !premiumUserID) {
+        return res.status(400).json({ error: 'Missing required query parameters' });
+    }
+
+    let query = `
+        SELECT 
+            b.bookingID,
+            t.clientName,
+            t.startDate,
+            t.endDate,
+            t.expectedFee,
+            b.finalFee,
+            t.transactionID,
+            b.status,
+            b.operatorID,
+            b.ownerID
+        FROM booking b
+        JOIN transaction t ON b.transactionID = t.transactionID
+        WHERE b.status = 'pending'
+    `;
+    const queryParams = [];
+
+    if (userType === 'owner') {
+        query += ' AND b.ownerID = ?';
+        queryParams.push(premiumUserID);
+    } else if (userType === 'operator') {
+        query += ' AND t.operatorID = ?';
+        queryParams.push(operatorID);
+    }
+
+    pool.query(query, queryParams, (error, results) => {
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+app.get('/bookingDetails/:bookingID', (req, res) => {
+    const { bookingID } = req.params;
+
+    if (!bookingID) {
+        return res.status(400).json({ error: 'Booking ID is required' });
+    }
+
+    const query = `
+        SELECT
+            b.bookingID,
+            b.transactionID,
+            b.operatorID,
+            b.ownerID,
+            t.clientName,
+            t.itemDescription,
+            t.packageWeight,
+            t.itemQuantity,
+            t.vehicleFee,
+            t.notes,
+            t.first2km,
+            t.succeedingKm,
+            t.expectedDistance,
+            t.startDate,
+            t.endDate,
+            t.expectedDuration,
+            t.expectedFee,
+            op.firstName AS operatorFirstName,
+            op.lastName AS operatorLastName,
+            op.email AS operatorEmail
+        FROM
+            booking b
+            JOIN transaction t ON b.transactionID = t.transactionID
+            JOIN operator o ON b.operatorID = o.operatorID
+            JOIN premiumUser op ON o.premiumUserID = op.premiumUserID
+        WHERE
+            b.bookingID = ?;
+    `;
+
+    pool.query(query, [bookingID], (error, results) => {
+        if (error) {
+            console.error('Database error:', error);
+            return res.status(500).json({ error: 'Failed to fetch booking details' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
 
 module.exports = app;

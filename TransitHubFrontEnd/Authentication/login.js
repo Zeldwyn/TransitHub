@@ -27,7 +27,7 @@ export default function Login() {
       });
   
       const data = await response.json();
-      console.log('Response from Express backend:', data);
+      console.log('Response from Express backend:', data);  // Debugging: Check the entire response
   
       if (!data.isValid) {
         setPasswordValidate('Invalid Credentials');
@@ -35,18 +35,21 @@ export default function Login() {
         await AsyncStorage.setItem('email', email);
         await AsyncStorage.setItem('userType', data.userType);
         await AsyncStorage.setItem('premiumUserID', data.id.toString());
-        
-        setEmail(''); 
-        setPassword('');
-        console.log('TEXT FIELD CLEARED');
-
-        setPasswordValidate('');
   
         if (data.userType === 'owner') {
+          if (data.ownerID) {  // Ensure ownerID is available
+            await AsyncStorage.setItem('ownerID', data.ownerID.toString());
+          } else {
+            console.warn('OwnerID is undefined in the backend response');  // Log if ownerID is missing
+          }
           navigation.navigate('OwnerDrawer');
         } else if (data.userType === 'operator') {
           navigation.navigate('OperatorDrawer');
         }
+  
+        setEmail('');
+        setPassword('');
+        setPasswordValidate('');
       }
     } catch (error) {
       console.error('Error during login:', error);

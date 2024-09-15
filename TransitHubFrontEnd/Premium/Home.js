@@ -101,10 +101,6 @@ export default function OwnerHome() {
                 <TouchableOpacity onPress={() => navigation.navigate('Location')}>
                     <Image style={styles.options} source={require('../assets/img/package.png')} />
                 </TouchableOpacity>
-                <View style={{ width: 20 }} />
-                <TouchableOpacity onPress={() => navigation.navigate('MapCustom')}>
-                    <Image style={styles.options} source={require('../assets/img/custom.png')} />
-                </TouchableOpacity>
             </View>
             {!isOwner && (
                 <View style={styles.temp}>

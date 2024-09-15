@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'; 
 import { Calendar } from 'react-native-calendars';
 import config from "../config";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const monthMapping = {
     January: 1,
@@ -26,29 +27,36 @@ export default function Bookings() {
     const [isSearchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [bookings, setBookings] = useState([]);
+    const [ownerID, setOwnerID] = useState(null); // Ensure ownerID state
 
     useEffect(() => {
-        fetchBookings();
-    }, [selectedMonth]);
-
-    const fetchBookings = async () => {
-        try {
-            const year = new Date().getFullYear();
-            const month = monthMapping[selectedMonth]; 
+        const fetchOwnerID = async () => {
+            const storedOwnerID = await AsyncStorage.getItem('ownerID');
+            if (storedOwnerID) {
+                setOwnerID(storedOwnerID);
+                fetchBookingsForMonth(storedOwnerID);
+            }
+        };
     
-            if (month === undefined) {
-                console.error('Invalid month selected');
-                return;
-            }
-            const response = await fetch(`${config.BASE_URL}/bookingsOperator?month=${month}&year=${year}`);
-            
-            if (!response.ok) {
-                console.error('Failed to fetch. Status:', response.status);
-                throw new Error('Network response was not ok');
-            }
+        fetchOwnerID();
+    }, [selectedMonth]); // Fetch bookings when selectedMonth changes
+
+    const fetchBookingsForMonth = async (ownerID) => {
+        try {
+            const month = monthMapping[selectedMonth];
+            const year = new Date().getFullYear(); // Current year or set a specific year if needed
+      
+            const response = await fetch(`${config.BASE_URL}/bookingsOperator?month=${month}&year=${year}&ownerID=${ownerID}`);
             const data = await response.json();
-            console.log('Fetched bookings data:', data);
-            setBookings(data);
+      
+            console.log('API Response:', data); // Debug log to see the response data
+      
+            if (Array.isArray(data) && data.length > 0) {
+                setBookings(data); // Assuming you have a state variable for the bookings list
+            } else {
+                setBookings([]); // Set to empty array if no bookings
+                console.log('No bookings found for this month.');
+            }
         } catch (error) {
             console.error('Error fetching bookings:', error);
         }
@@ -97,9 +105,7 @@ export default function Bookings() {
                 <Picker
                     selectedValue={selectedMonth}
                     style={styles.picker}
-                    onValueChange={(itemValue) => {
-                        setSelectedMonth(itemValue);
-                    }}
+                    onValueChange={(itemValue) => setSelectedMonth(itemValue)}
                 >
                     {Object.keys(monthMapping).map(month => (
                         <Picker.Item key={month} label={month} value={month} />

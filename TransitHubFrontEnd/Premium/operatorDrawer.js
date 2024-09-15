@@ -47,10 +47,10 @@ export default function OperatorDrawer() {
         options={{ title: 'Message',drawerIcon: ({ focused, size }) => (
           <Ionicons name="chatbox-ellipses-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
       ),}}/>
-      <Drawer.Screen name="Records" component={Records} 
+      {/*<Drawer.Screen name="Records" component={Records} 
         options={{ title: 'Records', drawerIcon: ({ focused, size }) => (
           <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
-      ),}}/>
+      ),}}/> */}
       <Drawer.Screen name="Help" component={Help}
         options={{title: 'Help', drawerIcon: ({ focused, size }) => (
           <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/> 
