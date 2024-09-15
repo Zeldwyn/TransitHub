@@ -91,9 +91,8 @@ export default function Settings(){
         });  
   };
   return (
+    <View style={styles.container}>
     <ScrollView>
-      <View style={styles.container}>
-
       <Text style={styles.text2}>First Name</Text>
       <TextInput
           style={styles.input}
@@ -134,8 +133,8 @@ export default function Settings(){
       </Text> 
         
       <CustomButton title="Save Changes" onPress={handlePassword} />
+      </ScrollView>
       </View>
-    </ScrollView>
   );
 };   
 
@@ -150,10 +149,10 @@ const CustomButton = ({ title, onPress }) => {
 const styles = StyleSheet.create({
 container: {
   flex: 1, 
-  backgroundColor: '#0000',
+  backgroundColor: '#FFC93F',
   alignItems: 'center',
   justifyContent: 'center',
-  marginTop: 50,
+  paddingTop: 50,
 },
 text2: {
   fontSize: 15, 
@@ -165,11 +164,11 @@ button: {
   backgroundColor: '#8A252C',
   padding: 10,
   width: 300,
-  height: 40,
+  height: "auto",
   borderRadius: 5,
   alignItems: 'center',
   justifyContent: 'center',
-  marginTop: -20,
+  marginLeft: 15,
 },
 buttonText: {
   color: 'white',
@@ -191,7 +190,8 @@ input: {
   height: 40,
   width: 300,
   borderRadius: 5,
-  borderColor: 'black',
+  borderColor: "maroon",
+  borderWidth: 2,
   backgroundColor: 'white',
   margin: 12,
   borderWidth: 1,

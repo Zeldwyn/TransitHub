@@ -265,7 +265,7 @@ export default function AddOperator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFC93F',
     margin: 3,
   },
   searchContainer: {
@@ -278,7 +278,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    borderWidth: 1,
+    borderColor: "maroon",
+    borderWidth: 2,
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
@@ -321,8 +322,8 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'maroon',
+    borderColor: "maroon",
+    borderWidth: 2,
     backgroundColor: '#fff',
     marginVertical: 5,
     marginHorizontal: 10,

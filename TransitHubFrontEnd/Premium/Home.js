@@ -119,7 +119,7 @@ export default function OwnerHome() {
 const styles = StyleSheet.create({
 container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFC93F',
 },
 welcome: {
     fontSize: 30,

@@ -174,7 +174,7 @@ export default function Bookings() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#FFC93F',
         padding: 10,
     },
     header: {
@@ -186,6 +186,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffff',
         borderRadius: 10,
         marginBottom: 10,
+        borderColor: "maroon",
+        borderWidth: 2,
     },
     picker: {
         flex: 1,
@@ -211,6 +213,8 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 10,
         elevation: 1,
+        borderColor: "maroon",
+        borderWidth: 2,
     },
     details: {
         flexDirection: 'row',
