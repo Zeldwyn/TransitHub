@@ -1087,52 +1087,122 @@ app.get('/weekly-sales', (req, res) => {
 
         connection.query(`
             SELECT
-                DATE(t.startDate) AS date,
-                SUM(b.finalFee) AS totalSales,
-                COUNT(*) AS totalDeliveries,
-                SUM(t.itemQuantity) AS totalItems,
-                AVG(b.finalFee) AS averageSalesPerDay,
-                MAX(b.finalFee) AS highestSalesDay,
-                MIN(b.finalFee) AS lowestSalesDay
+                COUNT(*) AS totalUsers
             FROM
-                booking b
-                JOIN transaction t ON b.transactionID = t.transactionID
+                premiumUser
             WHERE
-                t.startDate >= CURDATE() - INTERVAL 7 DAY
-            GROUP BY
-                DATE(t.startDate)
-            ORDER BY
-                DATE(t.startDate) ASC
-        `, (error, results) => {
+                created_at >= CURDATE() - INTERVAL 7 DAY
+        `, (error, userResults) => {
             if (error) {
-                console.error('Error executing query:', error);
+                console.error('Error executing user query:', error);
                 connection.release();
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            // Calculate additional metrics
-            const totalSales = results.reduce((acc, day) => acc + day.totalSales, 0);
-            const totalDeliveries = results.reduce((acc, day) => acc + day.totalDeliveries, 0);
-            const averageSalesPerDay = totalSales / 7;
-            const highestSalesDay = Math.max(...results.map(day => day.highestSalesDay));
-            const lowestSalesDay = Math.min(...results.map(day => day.lowestSalesDay));
-
-            connection.release();
-            res.json({
-                data: results,
-                metrics: {
-                    totalSales,
-                    totalDeliveries,
-                    averageSalesPerDay,
-                    highestSalesDay,
-                    lowestSalesDay
+            connection.query(`
+                SELECT
+                    DATE(t.startDate) AS date,
+                    COUNT(*) AS totalDeliveries,
+                    MAX(b.finalFee) AS highestSalesDay,
+                    MIN(b.finalFee) AS lowestSalesDay
+                FROM
+                    booking b
+                    JOIN transaction t ON b.transactionID = t.transactionID
+                WHERE
+                    t.startDate >= CURDATE() - INTERVAL 7 DAY
+                GROUP BY
+                    DATE(t.startDate)
+                ORDER BY
+                    DATE(t.startDate) ASC
+            `, (error, salesResults) => {
+                if (error) {
+                    console.error('Error executing sales query:', error);
+                    connection.release();
+                    return res.status(500).json({ error: 'Internal Server Error' });
                 }
+
+                const totalDeliveries = salesResults.reduce((acc, day) => acc + day.totalDeliveries, 0);
+                const highestSalesDay = Math.max(...salesResults.map(day => day.highestSalesDay || 0));
+                const lowestSalesDay = Math.min(...salesResults.map(day => day.lowestSalesDay || 0));
+
+                connection.release();
+                res.json({
+                    data: salesResults, 
+                    metrics: {
+                        totalUsers: userResults[0].totalUsers,
+                        totalDeliveries,
+                        highestSalesDay,
+                        lowestSalesDay
+                    }
+                });
             });
         });
     });
 });
 
+app.get('/total-deliveries', (req, res) => {
+    const query = `
+        SELECT COUNT(*) AS totalDeliveries
+        FROM booking b
+        JOIN transaction t ON b.transactionID = t.transactionID
+        WHERE b.status = 'Completed';`;
 
+    pool.query(query, (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error fetching total deliveries' });
+        } else {
+            res.json({ totalDeliveries: results[0].totalDeliveries });
+        }
+    });
+});
+
+app.get('/total-sales', (req, res) => {
+    const query = `
+        SELECT SUM(b.finalFee) AS totalSales
+        FROM booking b
+        JOIN transaction t ON b.transactionID = t.transactionID
+        WHERE b.status = 'Completed';`;
+
+    pool.query(query, (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error fetching total sales' });
+        } else {
+            res.json({ totalSales: results[0].totalSales });
+        }
+    });
+});
+
+app.get('/average-delivery-distance', (req, res) => {
+    const query = `
+        SELECT AVG(t.expectedDistance) AS avgDistance
+        FROM transaction t
+        JOIN booking b ON t.transactionID = b.transactionID
+        WHERE b.status = 'Completed';`;
+
+    pool.query(query, (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error fetching average delivery distance' });
+        } else {
+            res.json({ avgDistance: results[0].avgDistance });
+        }
+    });
+});
+
+app.get('/average-feedback-rating', (req, res) => {
+    const query = `
+        SELECT AVG(rate) AS avgRating
+        FROM feedback;`;
+
+    pool.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching average feedback rating:', err);
+            res.status(500).json({ error: 'Error fetching average feedback rating' });
+        } else {
+            const avgRating = results[0].avgRating;
+            res.json({ avgRating: avgRating !== null ? avgRating : 0 });
+        }
+    });
+});
 
 
 module.exports = app;

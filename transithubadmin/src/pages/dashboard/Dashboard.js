@@ -104,8 +104,8 @@ export default function Dashboard() {
                 <div className="mainContainer">
                     <div className="cardContainer">
                         <div className="titlesContainer">
-                            <h1 className="header">Weekly Sales</h1>
-                            <h3 className="subHeader">Sales Summary</h3>
+                            <h1 className="header">Weekly Overview</h1>
+                            <h3 className="subHeader">Summary</h3>
                         </div>
                         <div className="cardsContainer">
                             <div className="card">
@@ -115,8 +115,8 @@ export default function Dashboard() {
                             </div>
                             <div className="card">
                                 <AttachMoneyOutlinedIcon className="icon" />
-                                <p>₱{parseFloat(metrics.totalSales || 0).toFixed(2).toLocaleString()}</p>
-                                <h2>Total Sales</h2>
+                                <p>{metrics.totalUsers?.toLocaleString() || 0}</p>
+                                <h2>Total Users Registered</h2>
                             </div>
                             <div className="card">
                                 <BarChartOutlinedIcon className="icon" />
