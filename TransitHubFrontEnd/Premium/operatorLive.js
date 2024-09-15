@@ -17,7 +17,7 @@ export default function OperatorLive({ route, navigation }) {
     const [distance, setDistance] = useState(null);
     const [note, setNote] = useState(''); // Set note here
     const [clientName, setClientName] = useState('');
-    const [panelHeight] = useState(new Animated.Value(75));
+    const [panelHeight] = useState(new Animated.Value(80));
     const [panelExpanded, setPanelExpanded] = useState(false);
     const [locationPromptVisible, setLocationPromptVisible] = useState(false);
     const [deliveryAddress, setDeliveryAddress] = useState(null);
@@ -60,10 +60,9 @@ export default function OperatorLive({ route, navigation }) {
                 Alert.alert('Error', 'Unable to fetch delivery details.');
             }
         };
+
         fetchDeliveryDetails();
-        return () => {
-        };
-    }, [deliveryId]);
+    }, [deliveryId, route.params?.refresh]);
 
     const startTrackingLocation = async () => {
         let locationSubscription;
@@ -118,6 +117,14 @@ export default function OperatorLive({ route, navigation }) {
 
     const handleStartDelivery = async () => {
         setRouteVisible(true);
+        setPanelExpanded(true); 
+    
+        Animated.timing(panelHeight, {
+            toValue: 300,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
+    
         await calculateETA();
     };
 
@@ -180,46 +187,25 @@ export default function OperatorLive({ route, navigation }) {
             setDeliveryStatus("Completed");
             setRouteVisible(false);
             Alert.alert('Success', 'Delivery has been marked as completed.');
-            navigation.goBack(); 
+            
+            // Navigate back and pass the refresh parameter
+            navigation.navigate('OperatorDrawer', { refresh: true });
     
         } catch (error) {
             console.error('Error finishing delivery:', error);
             Alert.alert('Error', 'Unable to finish delivery.');
         }
     };
-    
-    const handleCancelDelivery = async () => {
-        setRouteVisible(false);
-        setFinishButtonEnabled(false);
-        setEstimatedTime(null);
-        setDeliveryStatus("Cancelled");
-        setDistance(null);
-        setCurrentPosition(null);
-        try {
-            await fetch(`${config.BASE_URL}/cancel-delivery`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status: 'Cancelled',
-                    // Include other necessary data
-                }),
-            });
-        } catch (error) {
-            console.error('Error cancelling delivery:', error);
-        }
-    };
 
     const togglePanel = () => {
-        const toPanelHeight = panelExpanded ? 75 : 300;
-
+        const toPanelHeight = panelExpanded ? 80 : 280; 
+    
         Animated.timing(panelHeight, {
             toValue: toPanelHeight,
             duration: 300,
             useNativeDriver: false,
         }).start();
-
+    
         setPanelExpanded(!panelExpanded);
     };
 
@@ -267,44 +253,48 @@ export default function OperatorLive({ route, navigation }) {
             </MapView>
 
             <Animated.View style={[styles.statusContainer, { height: panelHeight }]}>
-                <TouchableOpacity style={styles.expandButton} onPress={togglePanel}>
-                    <Text style={styles.expandButtonText}>{panelExpanded ? 'Status' : 'Status'}</Text>
-                </TouchableOpacity>
-                <View style={styles.statusTextContainer}>
-                    {routeVisible && (
-                        <>
-                            <View style={styles.detailRow}>
-                                <Text style={styles.detailTextBold}>{distance || 'Calculating...'}</Text>
-                                <Text style={styles.detailTextBold}>{estimatedTime || 'Calculating...'}</Text>
-                            </View>
-                            <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>DISTANCE</Text>
-                                <Text style={styles.detailLabel}>ESTIMATED DELIVERY TIME</Text>
-                            </View>
-                            <Text style={styles.note}>Client Name: {clientName || 'No client name'}</Text>
-                            <Text style={styles.note}>Note: {note || 'No additional note'}</Text>
-                        </>
-                    )}
-                </View>
-                <View style={styles.buttonsContainer}>
-                    {!routeVisible && (
-                        <TouchableOpacity style={styles.button} onPress={handleStartDelivery}>
+    <TouchableOpacity style={styles.expandButton} onPress={togglePanel}>
+        <Text style={styles.expandButtonText}>{panelExpanded ? 'Status' : 'Status'}</Text>
+    </TouchableOpacity>
+    {panelExpanded && ( // Show only when the panel is expanded
+        <>
+            <View style={styles.statusTextContainer}>
+                {routeVisible && (
+                    <>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailTextBold}>{distance || 'Calculating...'}</Text>
+                            <Text style={styles.detailTextBold}>{estimatedTime || 'Calculating...'}</Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>DISTANCE</Text>
+                            <Text style={styles.detailLabel}>ESTIMATED DELIVERY TIME</Text>
+                        </View>
+                        <Text style={styles.note}>Client Name: {clientName || 'No client name'}</Text>
+                        <Text style={styles.note}>Note: {note || 'No additional note'}</Text>
+                    </>
+                )}
+            </View>
+            <View style={styles.buttonsContainer}>
+                {/* Show "Start Delivery" button only if routeVisible is false and panel is expanded */}
+                {!routeVisible && (
+                    <TouchableOpacity style={styles.button} onPress={handleStartDelivery}>
                         <Text style={styles.buttonText}>Start Delivery</Text>
-                        </TouchableOpacity>
-                    )}
-                    {routeVisible && (
-                        <>
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: finishButtonEnabled ? '#800000' : '#ccc' }]}
-                                onPress={finishButtonEnabled ? handleFinishDelivery : () => {}}
-                                disabled={!finishButtonEnabled}
-                            >
-                                <Text style={styles.buttonText}>Finish Delivery</Text>
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </View>
-            </Animated.View>
+                    </TouchableOpacity>
+                )}
+                {/* Show "Finish Delivery" button only if routeVisible is true */}
+                {routeVisible && (
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: finishButtonEnabled ? '#800000' : '#ccc' }]}
+                        onPress={finishButtonEnabled ? handleFinishDelivery : () => {}}
+                        disabled={!finishButtonEnabled}
+                    >
+                        <Text style={styles.buttonText}>Finish Delivery</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+        </>
+    )}
+</Animated.View>
 
             {locationPromptVisible && (
                 <View style={styles.locationPrompt}>
@@ -327,24 +317,32 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     statusContainer: {
-        backgroundColor: '#f0f0f0',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 10,
+        backgroundColor: '#FFC93F',
+        borderRadius: 20,
+        padding: 5,
+        margin: 10,
+        position: "absolute",
+        bottom: 20, 
+        left: 0,
+        right: 0, 
+        alignSelf: "center", 
     },
     expandButton: {
         width:'100%',
         alignSelf: 'center',
         padding: 10,
-        backgroundColor: 'maroon',
-        borderRadius: 5,
+        backgroundColor: '#FFC93F',
     },
     expandButtonText: {
-        fontSize: 16,
+        
+        fontSize: 25,
         textAlign: 'center', 
-        color: 'white',
+        color: 'black',
+        fontWeight: "bold"
     },
     statusTextContainer: {
+        paddingLeft: 20,
+        paddingRight: 20,
         marginVertical: 10,
     },
     detailRow: {
@@ -366,11 +364,12 @@ const styles = StyleSheet.create({
     },
     buttonsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
     },
     button: {
         backgroundColor: 'maroon',
         padding: 10,
+        marginLeft: 20,
         borderRadius: 5,
         alignItems: 'center',
         justifyContent: 'center',
