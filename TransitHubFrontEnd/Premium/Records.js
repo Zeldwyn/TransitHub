@@ -1,12 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Dimensions, Alert, TextInput } from 'react-native';
 import config from '../config';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import Icon from 'react-native-vector-icons/Ionicons'; 
 
 export default function Records() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
-  const [pID, setPID] = useState(''); // premiumUserID
+  const [pID, setPID] = useState(''); 
   const [operatorID, setOperatorID] = useState(''); // Added for operatorID
   const [userType, setUserType] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -21,7 +24,6 @@ export default function Records() {
         const oid = await AsyncStorage.getItem('operatorID');
         const type = await AsyncStorage.getItem('userType');
         console.log("Fetched premium ID:", id);
-        //console.log("Fetched operator ID:", oid); fuck this no record for transport operator, kapoy na
         console.log("Fetched User Type:", type);
 
         setPID(id);
@@ -98,9 +100,93 @@ export default function Records() {
     fetchData(userType, pID, operatorID); // Fetch data based on the active tab
   };
 
-  const handleExport = () => {
- 
-    console.log('Exporting data:', selectedRecord);
+const convertToCSV = (data) => {
+  if (!data || data.length === 0) return '';
+
+  if (Array.isArray(data)) {
+    // Handle array of objects
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(','), // Header row
+      ...data.map(row =>
+        headers.map(header => JSON.stringify(row[header] || '')).join(',')
+      ) // Data rows
+    ];
+
+    return csvRows.join('\n');
+  } else if (typeof data === 'object') {
+    // Handle single object
+    const headers = Object.keys(data);
+    const csvRows = [
+      headers.join(','), // Header row
+      headers.map(header => JSON.stringify(data[header] || '')).join(',')
+    ];
+
+    return csvRows.join('\n');
+  }
+
+  return '';
+};
+
+const handleExport = async () => {
+  if (!selectedRecord) {
+    Alert.alert('No data to export');
+    return;
+  }
+
+  const clientName = selectedRecord.clientName || 'UnknownClient';
+  const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_'); // Replace non-alphanumeric characters with underscores
+  const fileName = `${sanitizedClientName}_data.csv`;
+  const fileUri = FileSystem.documentDirectory + fileName;
+
+  const csvData = convertToCSV(selectedRecord);
+
+  try {
+    // Write the file
+    await FileSystem.writeAsStringAsync(fileUri, csvData, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    // Share the file
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(fileUri);
+    } else {
+      Alert.alert('Error', 'Sharing is not available on this device');
+    }
+  } catch (error) {
+    Alert.alert('Error', 'Failed to export data');
+    console.error(error);
+  }
+};
+
+
+  const handleExportAll = async () => {
+    if (transactionData.length === 0) {
+      Alert.alert('No data to export');
+      return;
+    }
+  
+    const fileName = 'all_records_data.csv';
+    const fileUri = FileSystem.documentDirectory + fileName;
+  
+    const csvData = convertToCSV(transactionData);
+  
+    try {
+      // Write the file
+      await FileSystem.writeAsStringAsync(fileUri, csvData, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+  
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        Alert.alert('Error', 'Sharing is not available on this device');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export data');
+      console.error(error);
+    }
   };
 
   const { width } = Dimensions.get('window'); // Get screen width
@@ -169,13 +255,21 @@ export default function Records() {
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
-                  <Text style={styles.exportButtonText}>Export</Text>
+                  <Icon name="download-outline" size={24} color="#fff" />
+                  <Text style={styles.buttonText}>Export</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
       )}
+            <View style={styles.searchExportContainer}>
+        <TouchableOpacity style={styles.exportButtonAll} onPress={handleExportAll}>
+          <Icon name="download-outline" size={24} color="#fff" />
+          <Text style={styles.buttonText}>Export All Record</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
@@ -183,46 +277,84 @@ export default function Records() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFC93F",
+    backgroundColor: '#FFC93F',
     padding: 10,
   },
   navBar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginBottom: 10,
+    width: "100%"
   },
   navButton: {
+    flex: 1,
     padding: 10,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 3,
-    width: "50%",
-    borderBottomColor: 'transparent',
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
   },
   activeNavButton: {
-    borderBottomColor: '#4CAF50',
+    borderBottomColor: `green`,
+    borderBottomWidth: 2
   },
   navButtonText: {
-    textAlign: "center",
     fontSize: 16,
-    color: '#333',
+    color: '#000',
+  },
+  searchExportContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: "50%",
+    justifyContent: 'center',
+    backgroundColor: "#800000",
+  },
+  exportButtonAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: "#800000",
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: "100%",
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    marginLeft: 5,
+    fontSize: 16,
   },
   list: {
+    padding: "10",
     flex: 1,
   },
   transactionBox: {
-    backgroundColor: '#FFFFFF',
     padding: 15,
-    borderRadius: 5,
+    borderBottomWidth: 1,
+    backgroundColor: "maroon",
+    borderRadius: 10,
     marginBottom: 10,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 1,
   },
   text: {
     fontSize: 16,
-    color: '#333',
+    color: "white",
   },
   errorText: {
     color: 'red',
@@ -230,11 +362,10 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     textAlign: 'center',
-    marginTop: 20,
   },
   noDataText: {
     textAlign: 'center',
-    marginTop: 20,
+    fontStyle: 'italic',
   },
   modalBackground: {
     flex: 1,
@@ -243,55 +374,43 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
     height: "70%",
+    backgroundColor: '#fff',
+    borderRadius: 10,
     padding: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   modalContent: {
-    flexGrow: 1,
+    width: '100%',
   },
   modalDetails: {
     marginBottom: 10,
+    width: "100%",
   },
   modalText: {
-    fontSize: 16,
     fontWeight: 'bold',
   },
   modalValue: {
     fontSize: 16,
-    color: '#333',
-  },
-  closeButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: '48%',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  exportButton: {
-    backgroundColor: '#FFC107',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: '48%',
-  },
-  exportButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
   },
   modalButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 10,
+  },
+  closeButton: {
+    marginRight: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: "50%",
+  },
+  closeButtonText: {
+    fontSize: 16,
+    textAlign: "center",
   },
 });

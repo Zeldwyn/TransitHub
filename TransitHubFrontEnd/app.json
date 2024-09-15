@@ -1,27 +1,30 @@
 {
-    "expo": {
-      "name": "transithub",
-      "slug": "transithub",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "icon": "./assets/img/blackLogo.png",
-      "userInterfaceStyle": "light",
-      "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "contain",
+  "expo": {
+    "name": "transithub",
+    "slug": "transithub",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/img/blackLogo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/img/blackLogo.png",
         "backgroundColor": "#ffffff"
       },
-      "assetBundlePatterns": [
-        "**/*"
-      ],
-      "android": {
-        "adaptiveIcon": {
-          "foregroundImage": "./assets/img/blackLogo.png",
-          "backgroundColor": "#ffffff"
-        }
-      },
-      "packagerOpts": { "url": "http://localhost:8081" },
-      "permissions": ["INTERNET"]
-    }
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "packagerOpts": { "url": "http://localhost:8081" },
+    "permissions": ["INTERNET"]
   }
-  
+}
