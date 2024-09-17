@@ -56,8 +56,8 @@ export default function StartMenu () {
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.textTwoButton}>
           <Text style={styles.textTwo}>Login | </Text> 
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Location')} style={styles.textTwoButton}>
-          <Text style={styles.textTwo}>TEMP</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('RegisterEmail')} style={styles.textTwoButton}>
+          <Text style={styles.textTwo}>Register</Text>
       </TouchableOpacity>
       </View>
     </View>

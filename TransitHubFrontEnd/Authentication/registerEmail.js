@@ -65,18 +65,6 @@ export default function RegisterEmail() {
           >
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{
-            backgroundColor: 'maroon',
-            borderRadius: 5,
-            width: 300,
-            height: 40,
-            alignItems: 'center',
-            alignSelf: 'center',
-            justifyContent: 'center',
-            marginTop: 10,
-          }} onPress={() => navigation.navigate('OTP')} >
-            <Text style={styles.buttonText}>Submit Without Backend</Text>
-          </TouchableOpacity>    
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
