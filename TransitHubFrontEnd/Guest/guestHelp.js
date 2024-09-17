@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, Text, TouchableOpacity, TextInput } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import config from '../config';
 
 export default function GuestHelp() {
   const [feedback, setFeedback] = useState('');
@@ -9,7 +10,7 @@ export default function GuestHelp() {
 
   const handleFeedbackSubmit = () => {
     console.log(rate,feedback)
-    fetch('http://192.168.1.6:8080/add-Feedback', {
+    fetch(`${config.BASE_URL}/add-Feedback`, {
           method: 'POST',
           headers: {
             Accept: 'application/json',

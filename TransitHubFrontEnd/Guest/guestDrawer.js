@@ -9,6 +9,7 @@ import GuestRecords from './guestRecords';
 import GuestMap from './guestMap';
 import GuestHelp from './guestHelp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
 
 
 function Logout() {
@@ -29,7 +30,7 @@ export default function GuestDrawer(){
                 const deviceID = await AsyncStorage.getItem('deviceID'); 
                 console.log('Device ID:', deviceID); 
     
-                const response = await fetch('http://192.168.1.6:8080/add-GuestUser', {
+                const response = await fetch(`${config.BASE_URL}/add-GuestUser`, {
                     method: 'POST',
                     headers: {
                         Accept: 'application/json',
@@ -64,10 +65,10 @@ export default function GuestDrawer(){
                     options={{title: 'Home',drawerIcon: ({focused, size},) => (
                     <Ionicons name="home-outline" size={size} color={focused ? '#8A252C' : 'black'}/>
                 ),}} />
-                <Drawer.Screen name="Records" component={GuestRecords} 
+                {/*<Drawer.Screen name="Records" component={GuestRecords} 
                     options={{title: 'Records',drawerIcon: ({focused, size}) => (
                     <Feather name="file-text" size={size} color={focused ? '#8A252C' : 'black'}/>
-                ),}} />
+                ),}} />*/}
                 <Drawer.Screen name="Help" component={GuestHelp} 
                     options={{title: 'Help',drawerIcon: ({focused, size}) => (
                     <Feather name="help-circle" size={size} color={focused ? '#8A252C' : 'black'}/>

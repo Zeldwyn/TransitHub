@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, } from 'react-native';
+import config from '../config';
 
 export default function GuestRecords() {
   const [transactionData, setTransactionData] = useState([]);
@@ -17,7 +18,7 @@ export default function GuestRecords() {
   });
 
   useEffect(() => {
-    fetch('http://192.168.1.6:8080/display-TransactionGuest', {
+    fetch(`${config.BASE_URL}/display-TransactionGuest`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
