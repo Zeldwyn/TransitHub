@@ -143,24 +143,25 @@ pool.getConnection((err, connection) => {
         JOIN owner o ON p.premiumUserID = o.premiumUserID;    
         `,  
         `
-        CREATE OR REPLACE VIEW
-        bookingDetails AS
+        CREATE OR REPLACE VIEW bookingDetails AS
         SELECT
-            b.bookingID,
-            b.transactionID,
-            b.operatorID,
-            b.ownerID,
-            t.clientName,
-            t.startDate AS startDate,
-            t.endDate AS endDate,
-            o.firstName AS operatorFirstName,
-            o.lastName AS operatorLastName
+        b.bookingID,
+        b.transactionID,
+        b.operatorID,
+        b.ownerID,
+        t.clientName,
+        t.startDate AS startDate,
+        t.endDate AS endDate,
+        o.firstName AS operatorFirstName,
+        o.lastName AS operatorLastName,
+        b.status, 
+        t.expectedFee  
         FROM
-            booking b
-            JOIN operator_owner oo ON b.operatorID = oo.operatorID AND b.ownerID = oo.ownerID
-            JOIN premiumUser o ON oo.operatorID = o.premiumUserID
-            JOIN transaction t ON b.transactionID = t.transactionID;
-  
+        booking b
+        JOIN operator_owner oo ON b.operatorID = oo.operatorID AND b.ownerID = oo.ownerID
+        JOIN premiumUser o ON oo.operatorID = o.premiumUserID
+        JOIN transaction t ON b.transactionID = t.transactionID;
+    
         `,  
         `
         CREATE TABLE IF NOT EXISTS adminUser (

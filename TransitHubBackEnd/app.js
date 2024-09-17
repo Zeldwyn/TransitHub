@@ -143,7 +143,7 @@ app.post('/validate-Login', async (req, res) => {
     
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
-            res.status(500).json({ success: false, error: 'Internal server error Validate Login' });
+            res.status(500).json({ success: false, error: 'Internal server error during login validation' });
         } else {
             if (result.length > 0) {
                 console.log('Login successful');
@@ -151,9 +151,27 @@ app.post('/validate-Login', async (req, res) => {
                 const userType = result[0].userType;
                 const premiumUserID = result[0].premiumUserID;
 
-                // If user is an owner, fetch the ownerID
-                if (userType === 'owner') {
-                    const ownerSql = `SELECT ownerID FROM owner WHERE premiumUserID = ?`; // Assuming owner is related to premiumUserID
+                // Fetch operatorID for operator users
+                if (userType === 'operator') {
+                    const operatorSql = `SELECT operatorID FROM operator WHERE premiumUserID = ?`; 
+                    pool.query(operatorSql, [premiumUserID], (err, operatorResult) => {
+                        if (err) {
+                            res.status(500).json({ success: false, error: 'Internal server error fetching operatorID' });
+                        } else if (operatorResult.length > 0) {
+                            res.status(200).json({
+                                isValid: true,
+                                userType: userType,
+                                id: premiumUserID,
+                                operatorID: operatorResult[0].operatorID, 
+                            });
+                        } else {
+                            res.status(400).json({ success: false, error: 'No operatorID found for this user' });
+                        }
+                    });
+                } 
+                // Fetch ownerID for owner users
+                else if (userType === 'owner') {
+                    const ownerSql = `SELECT ownerID FROM owner WHERE premiumUserID = ?`;
                     pool.query(ownerSql, [premiumUserID], (err, ownerResult) => {
                         if (err) {
                             res.status(500).json({ success: false, error: 'Internal server error fetching ownerID' });
@@ -169,11 +187,11 @@ app.post('/validate-Login', async (req, res) => {
                         }
                     });
                 } else {
-                    // For non-owner users, just send the premiumUserID
+                    // For other user types (e.g., premium), send the premiumUserID
                     res.status(200).json({
                         isValid: true,
                         userType: userType,
-                        id: premiumUserID, // Send the premiumUserID as id
+                        id: premiumUserID,
                     });
                 }
             } else {
@@ -1201,6 +1219,60 @@ app.get('/average-feedback-rating', (req, res) => {
             const avgRating = results[0].avgRating;
             res.json({ avgRating: avgRating !== null ? avgRating : 0 });
         }
+    });
+});
+
+app.get('/completedOperatorBookings', (req, res) => {
+    const { userType, premiumUserID, operatorID } = req.query;
+    
+    let query = '';
+    let values = [];
+  
+    if (userType === 'operator') {
+        // Fetch completed bookings for the specific operator from bookingDetails view
+        query = `SELECT * FROM bookingDetails WHERE operatorID = ? AND status = 'completed'`;
+        values = [operatorID];
+    } else if (userType === 'premium') {
+        // Fetch completed bookings for premium user (only show records where the premium user owns the operator)
+        query = `SELECT * FROM bookingDetails 
+                 JOIN operator_owner ON bookingDetails.operatorID = operator_owner.operatorID
+                 WHERE operator_owner.ownerID = ? AND status = 'completed'`;
+        values = [premiumUserID];
+    }
+  
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            console.error('Error fetching completed bookings:', error);
+            return res.status(500).json({ error: 'Failed to fetch completed bookings' });
+        }
+        res.json(results);
+    });
+});
+
+app.get('/pendingOperatorBookings', (req, res) => {
+    const { userType, premiumUserID, operatorID } = req.query;
+  
+    let query = '';
+    let values = [];
+  
+    if (userType === 'operator') {
+        // Fetch pending bookings for the specific operator from bookingDetails view
+        query = `SELECT * FROM bookingDetails WHERE operatorID = ? AND status = 'pending'`;
+        values = [operatorID];
+    } else if (userType === 'premium') {
+        // Fetch pending bookings for premium user (only show records where the premium user owns the operator)
+        query = `SELECT * FROM bookingDetails 
+                 JOIN operator_owner ON bookingDetails.operatorID = operator_owner.operatorID
+                 WHERE operator_owner.ownerID = ? AND status = 'pending'`;
+        values = [premiumUserID];
+    }
+  
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            console.error('Error fetching pending bookings:', error);
+            return res.status(500).json({ error: 'Failed to fetch pending bookings' });
+        }
+        res.json(results);
     });
 });
 

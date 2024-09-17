@@ -36,11 +36,16 @@ export default function Login() {
         await AsyncStorage.setItem('userType', data.userType);
         await AsyncStorage.setItem('premiumUserID', data.id.toString());
   
+        if (data.operatorID) {
+          await AsyncStorage.setItem('operatorID', data.operatorID.toString());
+        } else {
+          await AsyncStorage.removeItem('operatorID'); 
+        }
         if (data.userType === 'owner') {
-          if (data.ownerID) {  // Ensure ownerID is available
+          if (data.ownerID) {
             await AsyncStorage.setItem('ownerID', data.ownerID.toString());
           } else {
-            console.warn('OwnerID is undefined in the backend response');  // Log if ownerID is missing
+            console.warn('OwnerID is undefined in the backend response');  
           }
           navigation.navigate('OwnerDrawer');
         } else if (data.userType === 'operator') {
@@ -54,7 +59,7 @@ export default function Login() {
     } catch (error) {
       console.error('Error during login:', error);
     }
-  };
+  };  
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);

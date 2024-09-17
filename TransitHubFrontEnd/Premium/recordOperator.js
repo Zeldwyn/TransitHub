@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Dimensions, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import config from '../config';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 
-export default function Records() {
+export default function RecordsOperator() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
   const [pID, setPID] = useState(''); 
@@ -24,14 +24,28 @@ export default function Records() {
         const oid = await AsyncStorage.getItem('operatorID');
         const type = await AsyncStorage.getItem('userType');
         console.log("Fetched premium ID:", id);
+        console.log("OperatorID:", operatorID)
         console.log("Fetched User Type:", type);
 
         setPID(id);
-        setOperatorID(oid); 
+        setOperatorID(operatorID); 
         setUserType(type);
 
+        if (!oid && id) {
+          // Fetch operatorID if it's not in AsyncStorage
+          const response = await fetch(`${config.BASE_URL}/getOperatorID?premiumUserID=${operatorID}`);
+          const data = await response.json();
+
+          if (response.ok && data.operatorID) {
+            await AsyncStorage.setItem('operatorID', data.operatorID.toString());
+            setPID(data.operatorID);
+          } else {
+            setError('Failed to fetch operator ID');
+          }
+        }
+
         if (id && type) {
-          fetchData(type, id, oid); 
+          fetchData(type, id, oid || data.operatorID); // Use fetched operatorID if available
         } else {
           setError('User data is not available');
           setLoading(false); 
@@ -49,7 +63,7 @@ export default function Records() {
   const fetchData = async (userType, premiumUserID, operatorID) => {
     setLoading(true);
     try {
-      let endpoint = activeTab === 'Pending' ? '/pendingBookings' : '/completedBookings';
+      let endpoint = activeTab === 'Pending' ? '/pendingOperatorBookings' : '/completedOperatorBookings';
       let query = `?userType=${userType}&premiumUserID=${premiumUserID}`;
       if (userType === 'operator') {
         query += `&operatorID=${operatorID}`;
@@ -100,83 +114,82 @@ export default function Records() {
     fetchData(userType, pID, operatorID); // Fetch data based on the active tab
   };
 
-const convertToCSV = (data) => {
-  if (!data || data.length === 0) return '';
+  const convertToCSV = (data) => {
+    if (!data || data.length === 0) return '';
 
-  if (Array.isArray(data)) {
-    // Handle array of objects
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(','), // Header row
-      ...data.map(row =>
-        headers.map(header => JSON.stringify(row[header] || '')).join(',')
-      ) // Data rows
-    ];
+    if (Array.isArray(data)) {
+      // Handle array of objects
+      const headers = Object.keys(data[0]);
+      const csvRows = [
+        headers.join(','), // Header row
+        ...data.map(row =>
+          headers.map(header => JSON.stringify(row[header] || '')).join(',')
+        ) // Data rows
+      ];
 
-    return csvRows.join('\n');
-  } else if (typeof data === 'object') {
-    // Handle single object
-    const headers = Object.keys(data);
-    const csvRows = [
-      headers.join(','), // Header row
-      headers.map(header => JSON.stringify(data[header] || '')).join(',')
-    ];
+      return csvRows.join('\n');
+    } else if (typeof data === 'object') {
+      // Handle single object
+      const headers = Object.keys(data);
+      const csvRows = [
+        headers.join(','), // Header row
+        headers.map(header => JSON.stringify(data[header] || '')).join(',')
+      ];
 
-    return csvRows.join('\n');
-  }
-
-  return '';
-};
-
-const handleExport = async () => {
-  if (!selectedRecord) {
-    Alert.alert('No data to export');
-    return;
-  }
-
-  const clientName = selectedRecord.clientName || 'UnknownClient';
-  const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_'); // Replace non-alphanumeric characters with underscores
-  const fileName = `${sanitizedClientName}_data.csv`;
-  const fileUri = FileSystem.documentDirectory + fileName;
-
-  const csvData = convertToCSV(selectedRecord);
-
-  try {
-    // Write the file
-    await FileSystem.writeAsStringAsync(fileUri, csvData, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Share the file
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
-    } else {
-      Alert.alert('Error', 'Sharing is not available on this device');
+      return csvRows.join('\n');
     }
-  } catch (error) {
-    Alert.alert('Error', 'Failed to export data');
-    console.error(error);
-  }
-};
 
+    return '';
+  };
+
+  const handleExport = async () => {
+    if (!selectedRecord) {
+      Alert.alert('No data to export');
+      return;
+    }
+
+    const clientName = selectedRecord.clientName || 'UnknownClient';
+    const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_'); // Replace non-alphanumeric characters with underscores
+    const fileName = `${sanitizedClientName}_data.csv`;
+    const fileUri = FileSystem.documentDirectory + fileName;
+
+    const csvData = convertToCSV(selectedRecord);
+
+    try {
+      // Write the file
+      await FileSystem.writeAsStringAsync(fileUri, csvData, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        Alert.alert('Error', 'Sharing is not available on this device');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export data');
+      console.error(error);
+    }
+  };
 
   const handleExportAll = async () => {
     if (transactionData.length === 0) {
       Alert.alert('No data to export');
       return;
     }
-  
+
     const fileName = 'all_records_data.csv';
     const fileUri = FileSystem.documentDirectory + fileName;
-  
+
     const csvData = convertToCSV(transactionData);
-  
+
     try {
       // Write the file
       await FileSystem.writeAsStringAsync(fileUri, csvData, {
         encoding: FileSystem.EncodingType.UTF8,
       });
-  
+
       // Share the file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri);
@@ -260,16 +273,16 @@ const handleExport = async () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+            </View>
         </Modal>
       )}
+
       <View style={styles.searchExportContainer}>
         <TouchableOpacity style={styles.exportButtonAll} onPress={handleExportAll}>
           <Icon name="download-outline" size={24} color="#fff" />
           <Text style={styles.buttonText}>Export All Record</Text>
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
