@@ -79,9 +79,6 @@ export default function OTP(){
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button,{marginTop: 10}]} onPress={() => navigation.navigate('RegisterDetails')}>
-          <Text style={styles.buttonText}>Submit without backend</Text>
-        </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>   
