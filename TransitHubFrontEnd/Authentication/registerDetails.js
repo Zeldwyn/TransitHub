@@ -15,30 +15,38 @@ export default function RegisterDetails(){
   const [showPassword, setShowPassword] = useState(false);
   const [checked, setChecked] = React.useState('');
 
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     console.log(firstName, lastName, password);
     fetch(`${config.BASE_URL}/add-PremiumUser`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        'firstName': firstName,
-        'lastName': lastName,
-        'password': password,
-        'userType': checked,
-      }),
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'firstName': firstName,
+            'lastName': lastName,
+            'password': password,
+            'userType': checked,
+        }),
     })
-      .then(response => response.json())
-      .then(data => {
-        console.log('Response from Express backend:', data);
-        navigation.navigate('Login');
-      })
-      .catch(error => {
-        console.error('Error posting data to Express backend:', error);
-      });
-  };
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response from Express backend:', data);
+            // Check for a successful response (adjust condition based on your API's response structure)
+            if (data.success) {
+                navigation.navigate('Login');
+            } else {
+                // Handle error, e.g., display a message
+                alert(data.message || 'Registration failed, please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error posting data to Express backend:', error);
+            alert('An error occurred. Please try again.');
+        });
+};
+
   const handlePassword = (text) => {
     setPassword(text)
     setSuggestions(CheckPasswordValidity(text));

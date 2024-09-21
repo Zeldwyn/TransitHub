@@ -1,5 +1,5 @@
 export default config = {
-    BASE_URL: 'http://192.168.5.45:8080'
+    BASE_URL: 'https://transithub-backend-935314559871.asia-southeast1.run.app'
 };
   
 //

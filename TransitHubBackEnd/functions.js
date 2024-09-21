@@ -75,7 +75,18 @@ function getGuestID(deviceID, callback) {
 };
 
 function setUser(userType, premiumUserID, callback) {
-    const sql = `INSERT INTO ${userType} (premiumUserID) VALUES (?)`;
+    let sql;
+
+    // Use if/else or switch to handle different user types
+    if (userType === 'operator') {
+        sql = `INSERT INTO operator (premiumUserID) VALUES (?)`;
+    } else if (userType === 'owner') {
+        sql = `INSERT INTO owner (premiumUserID) VALUES (?)`;
+    } else {
+        // If userType doesn't match expected values, return false
+        return callback(false);
+    }
+
     pool.query(sql, [premiumUserID], (err, res) => {
         if (err) {
             console.log('Server Side Error:', err);
@@ -84,10 +95,10 @@ function setUser(userType, premiumUserID, callback) {
             callback(true);
         }
     });
-};
+}
 
 function getPremiumID(email, callback) {
-    const sql = `SELECT premiumUserID FROM premiumUser WHERE email = ?`;
+    const sql = `SELECT premiumUserID FROM premiumuser WHERE email = ?`;
     pool.query(sql, [email], (err, res) => {
         if (err) {
             console.log('Server Side Error:', err);

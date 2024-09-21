@@ -19,9 +19,18 @@ app.use(session ({
     cookie: {secure: false}
 }));
 
+    //tried to combine transithubadmin and backend in 1 but failed miserably, so i just created 2 services
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke! Or did it? jk... or am I?');
+});
+
 app.post('/send-OTP', async (req, res) => { 
     const { email } = req.body;
-    const sql = `SELECT email FROM premiumUser WHERE email = ?`;
+    const sql = `SELECT email FROM premiumuser WHERE email = ?`;
     pool.query(sql, [email], (err, result) => {
         if (err) {
             res.status(500).json({ success: false, error: 'Internal server error Send - OTP' });
@@ -75,31 +84,42 @@ app.post('/resend-OTP', async (req, res) => {
 });
 
 app.post('/add-PremiumUser', async (req, res) => {
-    const {firstName, lastName, password, userType} = req.body;
-    console.log(req.session.email)
-    const sql = `INSERT INTO premiumUser (email, firstName, lastName, password, userType) VALUES (?, ?, ?, ?, ?)`;
-    pool.query(sql, [req.session.email, firstName, lastName, password, userType], (err, result) => {
+    const { firstName, lastName, password, userType } = req.body;
+    const email = req.session.email;
+
+    if (!email) {
+        return res.status(400).json({ error: 'No email found in session' });
+    }
+
+    const sql = `INSERT INTO premiumuser (email, firstName, lastName, password, userType) VALUES (?, ?, ?, ?, ?)`;
+    
+    pool.query(sql, [email, firstName, lastName, password, userType], (err, result) => {
         if (err) {
-            res.status(500).json({ error: 'Fail adding Premium User' }); 
-        } else {
-            getPremiumID(req.session.email, (exists, premiumUserID) => { 
-                if(exists) {
-                    setUser(userType, premiumUserID, (success) => {
-                        if(success)
-                            console.log('Successful setUser');
-                        else
-                            console.log('Unsuccessful setUser');
-                    })
-                }
-            })
-            res.status(200).json({ message: 'Success adding Premium User' }); 
+            console.error('Error inserting into premiumuser:', err);
+            return res.status(500).json({ error: 'Fail adding Premium User' });
         }
+
+        getPremiumID(email, (exists, premiumUserID) => {
+            if (!exists) {
+                return res.status(500).json({ error: 'Failed to retrieve Premium User ID' });
+            }
+
+            setUser(userType, premiumUserID, (success) => {
+                if (success) {
+                    console.log('Successful setUser');
+                    return res.status(200).json({ message: 'Success adding Premium User' });
+                } else {
+                    console.log('Unsuccessful setUser');
+                    return res.status(500).json({ error: 'Failed to assign user role' });
+                }
+            });
+        });
     });
 });
 
 app.post('/validate-AdminLogin', (req, res) => {
     const { username, password } = req.body;
-    const sql = `SELECT username, password, email, firstname, lastname, phonenumber, adminUserID FROM adminUser WHERE username = ?`;
+    const sql = `SELECT username, password, email, firstname, lastname, phonenumber, adminUserID FROM adminuser WHERE username = ?`;
 
     pool.query(sql, [username], (err, result) => {
         if (err) {
@@ -139,7 +159,7 @@ app.post('/validate-AdminLogin', (req, res) => {
 
 app.post('/validate-Login', async (req, res) => {
     const { email, password } = req.body;
-    const sql = `SELECT email, password, userType, premiumUserID FROM premiumUser WHERE email = ? AND password = ?`;
+    const sql = `SELECT email, password, userType, premiumUserID FROM premiumuser WHERE email = ? AND password = ?`;
     
     pool.query(sql, [email, password], (err, result) => {
         if (err) {
@@ -205,7 +225,7 @@ app.post('/validate-Login', async (req, res) => {
 
 app.post('/user-Details', async (req, res) => {
     const { premiumUserID } = req.body;
-    const sql = `SELECT firstName, lastName, password FROM premiumUser WHERE premiumUserID = ?`;
+    const sql = `SELECT firstName, lastName, password FROM premiumuser WHERE premiumUserID = ?`;
     pool.query(sql, [premiumUserID] , (err, result) => {
         if(err) {
             res.status(500).json({ success: false, error: 'Internal server error User-Details' })
@@ -222,7 +242,7 @@ app.post('/user-Details', async (req, res) => {
 
 app.put('/update-UserDetails', async (req, res) => {
     const { email, firstName, lastName, password  } = req.body;
-    const sql = `UPDATE premiumUser SET firstName = ?, lastName = ?, password = ? WHERE email = ?`;
+    const sql = `UPDATE premiumuser SET firstName = ?, lastName = ?, password = ? WHERE email = ?`;
     pool.query(sql, [firstName, lastName, password, email], (err, result) => {
         if(err) {
             res.status(500).json({ success: false, error: 'Internal server error Update User Details' });
@@ -242,7 +262,7 @@ app.post('/add-GuestUser', async (req, res) => {
         if(exists)
             res.status(200).json({ message: 'DeviceID already exists' });
         else {
-            const insertQuery = `INSERT INTO guestUser (deviceID) VALUES (?)`;
+            const insertQuery = `INSERT INTO guestuser (deviceID) VALUES (?)`;
             pool.query(insertQuery, [deviceID], (insertErr, insertResult) => {
                 if (insertErr) {
                     res.status(400).json({ error: 'Failed Adding Guest User' }); 
@@ -481,7 +501,7 @@ app.get('/search-Operator', async (req, res) => {
             try {
                 const sql = `
                     SELECT * 
-                    FROM OperatorDetails od
+                    FROM Operatordetails od
                     WHERE od.email LIKE ?
                     AND NOT EXISTS (
                         SELECT 1 
@@ -555,13 +575,13 @@ app.get('/list-Operator', async (req, res) => {
 
                 const operatorIDs = results.map(row => row.operatorID);
 
-                const sql2 = `SELECT * FROM operatorDetails WHERE operatorID IN (?)`;
-                pool.query(sql2, [operatorIDs], (err, operatorDetails) => {
+                const sql2 = `SELECT * FROM operatordetails WHERE operatorID IN (?)`;
+                pool.query(sql2, [operatorIDs], (err, operatordetails) => {
                     if (err) {
                         return res.status(500).json({ error: 'Failed to retrieve operator details' });
                     }
 
-                    res.status(200).json(operatorDetails);
+                    res.status(200).json(operatordetails);
                 });
             });
         } else {
@@ -585,13 +605,13 @@ app.get('/list-Owner', async (req, res) => {
 
                 const ownerIDs = results.map(row => row.ownerID);
 
-                const sql2 = `SELECT * FROM ownerDetails WHERE ownerID IN (?)`;
-                pool.query(sql2, [ownerIDs], (err, ownerDetails) => {
+                const sql2 = `SELECT * FROM ownerdetails WHERE ownerID IN (?)`;
+                pool.query(sql2, [ownerIDs], (err, ownerdetails) => {
                     if (err) {
                         return res.status(500).json({ error: 'Failed to retrieve operator details' });
                     }
 
-                    res.status(200).json(ownerDetails);
+                    res.status(200).json(ownerdetails);
                 });
             });
         } else {
@@ -648,7 +668,7 @@ app.post('/add-Feedback', async (req, res) => {
 
 
 app.get('/premiumUsers', (req, res) => {
-    pool.query('SELECT * FROM premiumUser', (err, results) => {
+    pool.query('SELECT * FROM premiumuser', (err, results) => {
         if (err) {
             console.error('Error fetching premium users:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -660,7 +680,7 @@ app.get('/premiumUsers', (req, res) => {
 
 app.post('/premiumUsers', (req, res) => {
     const { firstName, lastName, email, password, userType } = req.body;
-    pool.query('INSERT INTO premiumUser (firstName, lastName, email, password, userType) VALUES (?, ?, ?, ?, ?)', [firstName, lastName, email,password, userType], (err, results) => {
+    pool.query('INSERT INTO premiumuser (firstName, lastName, email, password, userType) VALUES (?, ?, ?, ?, ?)', [firstName, lastName, email,password, userType], (err, results) => {
         if (err) {
             console.error('Error adding premium user:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -673,7 +693,7 @@ app.post('/premiumUsers', (req, res) => {
 app.put('/premiumUsers/:id', (req, res) => {
     const premiumUserID = req.params.id;
     const { firstName, lastName, email, userType } = req.body;
-    pool.query('UPDATE premiumUser SET firstName=?, lastName=?, email=?, userType=? WHERE premiumUserID=?', 
+    pool.query('UPDATE premiumuser SET firstName=?, lastName=?, email=?, userType=? WHERE premiumUserID=?', 
         [firstName, lastName, email, userType, premiumUserID], 
         (err, results) => {
             if (err) {
@@ -688,7 +708,7 @@ app.put('/premiumUsers/:id', (req, res) => {
 
 app.get('/premiumUsers/:id', (req, res) => {
     const premiumUserID = req.params.id;
-    pool.query('SELECT * FROM premiumUser WHERE premiumUserID = ?', [premiumUserID], (err, results) => {
+    pool.query('SELECT * FROM premiumuser WHERE premiumUserID = ?', [premiumUserID], (err, results) => {
         if (err) {
             console.error('Error fetching premium user:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -705,7 +725,7 @@ app.get('/premiumUsers/:id', (req, res) => {
 
 app.delete('/premiumUsers/:id', (req, res) => {
     const userId = req.params.id;
-    pool.query('DELETE FROM premiumUser WHERE premiumUserID = ?', [userId], (err, results) => {
+    pool.query('DELETE FROM premiumuser WHERE premiumUserID = ?', [userId], (err, results) => {
         if (err) {
             console.error('Error deleting premium user:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -722,7 +742,7 @@ app.put('/update-AdminDetails', (req, res) => {
         return res.status(400).json({ success: false, error: 'Admin User ID is required' });
     }
 
-    const sql = `UPDATE adminUser SET username = ?, email = ?, password = ?, firstname = ?, lastname = ?, phonenumber = ?, role = ? WHERE adminUserID = ?`;
+    const sql = `UPDATE adminuser SET username = ?, email = ?, password = ?, firstname = ?, lastname = ?, phonenumber = ?, role = ? WHERE adminUserID = ?`;
     pool.query(sql, [username, email, password, firstname, lastname, phonenumber, role, adminUserID], (err, result) => {
         if (err) {
             return res.status(500).json({ success: false, error: 'Internal server error' });
@@ -743,7 +763,7 @@ app.get('/admin-details', (req, res) => {
         return res.status(400).json({ success: false, error: 'Admin User ID is required' });
     }
 
-    const sql = `SELECT * FROM adminUser WHERE adminUserID = ?`;
+    const sql = `SELECT * FROM adminuser WHERE adminUserID = ?`;
     pool.query(sql, [adminUserID], (err, result) => {
         if (err) {
             return res.status(500).json({ success: false, error: 'Internal server error' });
@@ -802,13 +822,13 @@ app.post('/available-Operators', (req, res) => {
                     }
                     bookedOperators = result.map(row => row.operatorID);
                     const availableOperators = allOperators.filter(operatorID => !bookedOperators.includes(operatorID));
-                    const sql3 = `SELECT * FROM operatorDetails WHERE operatorID IN (?)`;
-                    pool.query(sql3, [availableOperators], (err, operatorDetails) => {
+                    const sql3 = `SELECT * FROM operatordetails WHERE operatorID IN (?)`;
+                    pool.query(sql3, [availableOperators], (err, operatordetails) => {
                         if (err) {
                             return res.status(500).json({ error: 'Failed to retrieve operator details' });
                         }
 
-                        res.status(200).json(operatorDetails);
+                        res.status(200).json(operatordetails);
                     });
                 });
             });
@@ -839,7 +859,7 @@ app.get('/bookingsOperator', (req, res) => {
         FROM
             booking b
             JOIN operator_owner oo ON b.operatorID = oo.operatorID AND b.ownerID = oo.ownerID
-            JOIN premiumUser o ON oo.operatorID = o.premiumUserID
+            JOIN premiumuser o ON oo.operatorID = o.premiumUserID
             JOIN transaction t ON b.transactionID = t.transactionID
         WHERE 
             oo.ownerID = ? AND
@@ -1079,7 +1099,7 @@ app.get('/bookingDetails/:bookingID', (req, res) => {
             booking b
             JOIN transaction t ON b.transactionID = t.transactionID
             JOIN operator o ON b.operatorID = o.operatorID
-            JOIN premiumUser op ON o.premiumUserID = op.premiumUserID
+            JOIN premiumuser op ON o.premiumUserID = op.premiumUserID
         WHERE
             b.bookingID = ?;
     `;
@@ -1107,7 +1127,7 @@ app.get('/weekly-sales', (req, res) => {
             SELECT
                 COUNT(*) AS totalUsers
             FROM
-                premiumUser
+                premiumuser
             WHERE
                 created_at >= CURDATE() - INTERVAL 7 DAY
         `, (error, userResults) => {

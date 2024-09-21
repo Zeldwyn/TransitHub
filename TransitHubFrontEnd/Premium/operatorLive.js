@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Animated, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import haversine from 'haversine';
 import * as Location from 'expo-location';
@@ -216,6 +217,7 @@ export default function OperatorLive({ route, navigation }) {
     return (
         <View style={styles.container}>
             <MapView
+                provider={PROVIDER_GOOGLE}
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={{

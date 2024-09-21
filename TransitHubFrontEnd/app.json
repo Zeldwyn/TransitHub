@@ -4,7 +4,7 @@
     "slug": "transithub",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/img/blackLogo.png",
+    "icon": "./assets/img/transithubicon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -21,10 +21,36 @@
       },
       "permissions": [
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET"
+      ],
+      "package": "com.kidikon05.transithub",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBwCJKoPldxvy-AFdKo-mDnDJY1rIKUnqA" 
+        }
+      }
     },
-    "packagerOpts": { "url": "http://localhost:8081" },
-    "permissions": ["INTERNET"]
+    "packagerOpts": {
+      "url": "http://localhost:8081"
+    },
+    "permissions": [
+      "INTERNET"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "542ea8ab-a17b-4466-a280-064c91115bba"
+      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ]
+    ]
   }
 }

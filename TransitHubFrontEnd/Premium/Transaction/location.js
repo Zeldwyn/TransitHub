@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker } from 'react-native-maps';
+import { PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Geocoder from 'react-native-geocoding';
 import { GOOGLE_MAPS_API_KEY } from '@env';
@@ -12,6 +13,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useRegion, calculateDistance, computeDateRange, getFormattedDateRange, calculateFee} from './transacFunctions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+console.log('GOOGLE_MAPS_API_KEY:', GOOGLE_MAPS_API_KEY);
 Geocoder.init(GOOGLE_MAPS_API_KEY);
 
 export default function Location() {
@@ -192,6 +194,7 @@ export default function Location() {
     const renderMapScreen = () => (
         <>
             <MapView
+                provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 region={region}
                 onRegionChangeComplete={setRegion}

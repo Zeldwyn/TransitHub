@@ -1,12 +1,11 @@
 //database.js
 const mysql = require('mysql2');
-
 const pool = mysql.createPool({
     connectionLimit: 10,
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'transithub'
+    socketPath: `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`, // Cloud SQL connection name
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
 pool.getConnection((err, connection) => {
@@ -15,7 +14,7 @@ pool.getConnection((err, connection) => {
         return;
     }
     console.log('Connected to the Database');
-    const createTableQueries = [
+    /*     const createTableQueries = [
         `
         CREATE TABLE IF NOT EXISTS premiumUser (
             premiumUserID INT AUTO_INCREMENT PRIMARY KEY,
@@ -176,7 +175,7 @@ pool.getConnection((err, connection) => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         `
-    ];    
+    ]; */   
     
     pool.getConnection((err, connection) => {
         if (err) {
@@ -184,7 +183,8 @@ pool.getConnection((err, connection) => {
             return;
         }
         console.log('Connected to the Database');
-        createTableQueries.forEach(query => {
+        /*
+                createTableQueries.forEach(query => {
             connection.query(query, (err, results) => {
                 if (err) {
                     console.error('Error creating table:', err);
@@ -193,6 +193,7 @@ pool.getConnection((err, connection) => {
                 }
             });
         });
+        */
     
         connection.release();
     }); 
