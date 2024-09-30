@@ -5,6 +5,8 @@ import { useNavigation } from "@react-navigation/native";
 import config from "../config";
 import { GOOGLE_MAPS_API_KEY } from '@env';
 
+console.log(GOOGLE_MAPS_API_KEY);
+
 export default function OperatorHome() {
     const [pID, setPID] = useState('');
     const [userType, setUserType] = useState('');

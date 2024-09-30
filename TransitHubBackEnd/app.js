@@ -107,7 +107,7 @@ app.post('/add-PremiumUser', async (req, res) => {
             setUser(userType, premiumUserID, (success) => {
                 if (success) {
                     console.log('Successful setUser');
-                    return res.status(200).json({ message: 'Success adding Premium User' });
+                    return res.status(200).json({ success: true });
                 } else {
                     console.log('Unsuccessful setUser');
                     return res.status(500).json({ error: 'Failed to assign user role' });

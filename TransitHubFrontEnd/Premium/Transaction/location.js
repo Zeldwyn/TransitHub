@@ -13,7 +13,6 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useRegion, calculateDistance, computeDateRange, getFormattedDateRange, calculateFee} from './transacFunctions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-console.log('GOOGLE_MAPS_API_KEY:', GOOGLE_MAPS_API_KEY);
 Geocoder.init(GOOGLE_MAPS_API_KEY);
 
 export default function Location() {
@@ -190,51 +189,16 @@ export default function Location() {
         setFormattedDateRange(formattedRange);
     }, [markedDates]);
     
-
     const renderMapScreen = () => (
-        <>
-            <MapView
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                region={region}
-                onRegionChangeComplete={setRegion}
-            >
-                {fromCoords && (
-                    <Marker
-                        coordinate={fromCoords}
-                        title="From Location"
-                        pinColor="blue" 
-                    />
-                )}
-                {toCoords && (
-                    <Marker
-                        coordinate={toCoords}
-                        title="To Location"
-                        pinColor="red" 
-                    />
-                )}
-                {fromCoords && toCoords && (
-                    <MapViewDirections
-                        origin={fromCoords}
-                        destination={toCoords}
-                        apikey={GOOGLE_MAPS_API_KEY}
-                        strokeWidth={5}
-                        strokeColor="hotpink"
-                        optimizeWaypoints={true}
-                        travelMode="DRIVING"
-                        waypoints={[]} 
-                    />
-                )}
-            </MapView>
-            
+        <View style={styles.detailContainer}>
+             <Image style={styles.logoImage2} source={require('../../assets/img/blackText.png')} />
             <View style={styles.mapControls}>
-            {/* <Text>Pickup:</Text> */}
+            <Text style={styles.sectionTitle}>Enter Pickup Location:</Text>
                 <GooglePlacesAutocomplete
-                    placeholder='Enter pickup location'
+                    placeholder='Enter location'
                     onPress={(data, details = null) => {
                         if (details) {
                             const location = details.geometry.location;
-                            console.log("Selected From Location:", location);
                             setFromCoords({
                                 latitude: parseFloat(location.lat),
                                 longitude: parseFloat(location.lng),
@@ -246,54 +210,50 @@ export default function Location() {
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
                         bounds: {
-                            southwest: { lat: 8.0, lng: 123.0 }, // Southwest corner
-                            northeast: { lat: 11.5, lng: 125.0 }, // Northeast corner
+                            southwest: { lat: 8.0, lng: 123.0 },
+                            northeast: { lat: 11.5, lng: 125.0 },
                         },
                         strictBounds: true,
                     }}
-                    styles={styles.autocomplete}   
-                    debounce={500} 
+                    styles={styles.autocomplete}
+                    debounce={500}
                     enablePoweredByContainer={false}
                 />
-                
-                {/* <Text>Delivery Address:</Text> */}
+                <Text style={styles.sectionTitle}>Enter Destination:</Text>
                 <GooglePlacesAutocomplete
                     placeholder='Enter destination'
                     onPress={(data, details = null) => {
                         if (details) {
                             const location = details.geometry.location;
-                            console.log("Selected To Location:", location);
                             setToCoords({
                                 latitude: parseFloat(location.lat),
                                 longitude: parseFloat(location.lng),
                             });
                         }
                     }}
-        
                     fetchDetails={true}
                     query={{
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
                         bounds: {
-                            southwest: { lat: 8.0, lng: 123.0 }, // Southwest corner
-                            northeast: { lat: 11.5, lng: 125.0 }, // Northeast corner
+                            southwest: { lat: 8.0, lng: 123.0 },
+                            northeast: { lat: 11.5, lng: 125.0 },
                         },
                     }}
-                    styles={styles.autocomplete}  
+                    styles={styles.autocomplete}
                     debounce={500}
                     enablePoweredByContainer={false}
                 />
                 <View style={styles.buttonContainer}>
-                    <Image style={{width: 210,height: 100,marginBottom: -20, marginTop: -20}} source={require('../../assets/img/blackText.png')} />
-                    <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')} >
-                        {/* disabled={isButtonDisabled} */}
+
+                    <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
                 </View>
             </View>
-        </>
+        </View>
     );
-
+    
     const renderDetailsScreen = () => (
         <ScrollView 
             style={styles.detailContainer} 
@@ -484,26 +444,31 @@ export default function Location() {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
     },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 10,
+        color: '#333',
+    },
     autocomplete: {
         container: {
             flex: 0,
             width: '100%',
-            marginTop: 5,
-            zIndex: 1,
+            marginBottom: 10,
         },
         textInput: {
-            height: 45,
+            height: 50,
             borderColor: '#ccc',
-            zIndex: 1,
-        },
-        activeRow: {
-            backgroundColor: '#E3B130', // Change this to the color you want when active
+            borderWidth: 1,
+            borderRadius: 5,
+            paddingHorizontal: 10,
+            backgroundColor: 'white',
+            color: 'black',
         },
     },
     button: {
@@ -538,11 +503,17 @@ const styles = StyleSheet.create({
         height: 100,
         marginBottom: -20,
     },
+    logoImage2: {
+        width: '100%',
+        height: 100,
+        marginBottom: -20,
+        marginBottom: 10,
+    },
     map: {
-        zIndex: 0,
         flex: 1,
         width: '100%',
         height: '80%',
+        zIndex: 0, // Lower zIndex for MapView
     },
     icons: {
         position: 'absolute',

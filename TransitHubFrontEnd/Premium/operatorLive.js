@@ -7,7 +7,7 @@ import haversine from 'haversine';
 import * as Location from 'expo-location';
 import { GOOGLE_MAPS_API_KEY } from '@env';
 import config from "../config";
-
+console.log(GOOGLE_MAPS_API_KEY);
 export default function OperatorLive({ route, navigation }) {
     const { deliveryId, operatorID } = route.params;
     const [routeVisible, setRouteVisible] = useState(false);

@@ -30,21 +30,18 @@ export default function RegisterDetails(){
             'userType': checked,
         }),
     })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Response from Express backend:', data);
-            // Check for a successful response (adjust condition based on your API's response structure)
-            if (data.success) {
-                navigation.navigate('Login');
-            } else {
-                // Handle error, e.g., display a message
-                alert(data.message || 'Registration failed, please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error posting data to Express backend:', error);
-            alert('An error occurred. Please try again.');
-        });
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response from Express backend:', data);
+        if (data.success) {
+            navigation.navigate('Login');
+        } else {
+            console.error('Registration failed:', data.message || 'An error occurred');
+        }
+    })
+    .catch(error => {
+        console.error('Error posting data to Express backend:', error);
+    });
 };
 
   const handlePassword = (text) => {
@@ -95,10 +92,9 @@ export default function RegisterDetails(){
             {showPassword ? <Feather name="eye-off" size={24} color="black" /> : <Feather name="eye" size={24} color="black" />}
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.suggestion}>   
+          <Text style={styles.suggestion}>   
             {suggestions}
-        </Text> 
+          </Text> 
 
         <Text style={[styles.inputLabel, {marginTop: -15}]}>User Type</Text>
         <View style={styles.radioButtonContainer}>
@@ -176,6 +172,8 @@ suggestion: {
   fontSize: 12,
   marginTop: -10,
   marginBottom: 10,
+  textAlign: 'center', 
+  alignSelf: 'center', 
 },
 radioButtonContainer: {
   flexDirection: 'row',
