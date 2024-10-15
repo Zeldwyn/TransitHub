@@ -10,7 +10,7 @@ export default function RecordsOperator() {
   const [transactionData, setTransactionData] = useState([]);
   const [error, setError] = useState(null);
   const [pID, setPID] = useState(''); 
-  const [operatorID, setOperatorID] = useState(''); // Added for operatorID
+  const [operatorID, setOperatorID] = useState(''); 
   const [userType, setUserType] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -19,73 +19,70 @@ export default function RecordsOperator() {
 
   useEffect(() => {
     const getUserID = async () => {
-      try {
-        const id = await AsyncStorage.getItem('premiumUserID');
-        const oid = await AsyncStorage.getItem('operatorID');
-        const type = await AsyncStorage.getItem('userType');
-        console.log("Fetched premium ID:", id);
-        console.log("OperatorID:", operatorID)
-        console.log("Fetched User Type:", type);
+        try {
+            const id = await AsyncStorage.getItem('premiumUserID');
+            const oid = await AsyncStorage.getItem('operatorID'); 
+            const type = await AsyncStorage.getItem('userType');
+            console.log("Fetched premium ID:", id);
+            console.log("Fetched OperatorID:", oid);
+            console.log("Fetched User Type:", type);
 
-        setPID(id);
-        setOperatorID(operatorID); 
-        setUserType(type);
+            setPID(id);
+            setOperatorID(oid); 
+            setUserType(type);
 
-        if (!oid && id) {
-          // Fetch operatorID if it's not in AsyncStorage
-          const response = await fetch(`${config.BASE_URL}/getOperatorID?premiumUserID=${operatorID}`);
-          const data = await response.json();
+            if (!oid && id) {
+                const response = await fetch(`${config.BASE_URL}/getOperatorID?premiumUserID=${id}`);
+                const data = await response.json();
 
-          if (response.ok && data.operatorID) {
-            await AsyncStorage.setItem('operatorID', data.operatorID.toString());
-            setPID(data.operatorID);
-          } else {
-            setError('Failed to fetch operator ID');
-          }
+                if (response.ok && data.operatorID) {
+                    await AsyncStorage.setItem('operatorID', data.operatorID.toString());
+                    setOperatorID(data.operatorID); 
+                } else {
+                    setError('Failed to fetch operator ID');
+                }
+            }
+
+            if (id && type) {
+                fetchData(type, id, oid); 
+            } else {
+                setError('User data is not available');
+                setLoading(false); 
+            }
+        } catch (error) {
+            setError('Failed to get user data');
+            console.error('AsyncStorage error:', error);
+            setLoading(false); 
         }
-
-        if (id && type) {
-          fetchData(type, id, oid || data.operatorID); // Use fetched operatorID if available
-        } else {
-          setError('User data is not available');
-          setLoading(false); 
-        }
-      } catch (error) {
-        setError('Failed to get user data');
-        console.error('AsyncStorage error:', error);
-        setLoading(false); 
-      }
     };
 
     getUserID();
-  }, [activeTab]);
+}, [activeTab, userType, pID, operatorID]);
 
-  const fetchData = async (userType, premiumUserID, operatorID) => {
-    setLoading(true);
-    try {
-      let endpoint = activeTab === 'Pending' ? '/pendingOperatorBookings' : '/completedOperatorBookings';
-      let query = `?userType=${userType}&premiumUserID=${premiumUserID}`;
-      if (userType === 'operator') {
-        query += `&operatorID=${operatorID}`;
-      }
+const fetchData = async (type, id, oid) => {
+  setLoading(true);
+  try {
+    let endpoint = activeTab === 'Pending' ? '/pendingBookings' : '/completedBookings';
+    let query = `?userType=${type}&premiumUserID=${id}`;
+    if (userType === 'operator') {
+      query += `&operatorID=${oid}`;
+    } 
+    const response = await fetch(`${config.BASE_URL}${endpoint}${query}`);
+    const data = await response.json();
 
-      const response = await fetch(`${config.BASE_URL}${endpoint}${query}`);
-      const data = await response.json();
+    if (response.ok) {
+      setTransactionData(data);
+    } else {
 
-      console.log("Fetched transaction data:", data); // Debugging line
-
-      if (response.ok) {
-        setTransactionData(data);
-      } else {
-        setError('Failed to fetch data');
-      }
-    } catch (err) {
-      setError('Failed to fetch data');
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    setError('Failed to fetch data');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchBookingDetails = async (bookingID) => {
     try {
@@ -111,8 +108,7 @@ export default function RecordsOperator() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    fetchData(userType, pID, operatorID); // Fetch data based on the active tab
-  };
+};
 
   const convertToCSV = (data) => {
     if (!data || data.length === 0) return '';
@@ -129,10 +125,9 @@ export default function RecordsOperator() {
 
       return csvRows.join('\n');
     } else if (typeof data === 'object') {
-      // Handle single object
       const headers = Object.keys(data);
       const csvRows = [
-        headers.join(','), // Header row
+        headers.join(','), 
         headers.map(header => JSON.stringify(data[header] || '')).join(',')
       ];
 
@@ -185,12 +180,9 @@ export default function RecordsOperator() {
     const csvData = convertToCSV(transactionData);
 
     try {
-      // Write the file
       await FileSystem.writeAsStringAsync(fileUri, csvData, {
         encoding: FileSystem.EncodingType.UTF8,
       });
-
-      // Share the file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri);
       } else {
@@ -202,7 +194,7 @@ export default function RecordsOperator() {
     }
   };
 
-  const { width } = Dimensions.get('window'); // Get screen width
+  const { width } = Dimensions.get('window'); 
 
   return (
     <View style={styles.container}>
@@ -247,11 +239,11 @@ export default function RecordsOperator() {
               <Text style={styles.modalTitle}>Transaction Details</Text>
               <ScrollView contentContainerStyle={styles.modalContent}>
                 <View style={styles.modalDetails}>
-                  <Text style={styles.modalText}>Operator Name:</Text>
+                  <Text style={styles.modalText}>OPERATOR NAME:</Text>
                   <Text style={styles.modalValue}>{selectedRecord.operatorFirstName} {selectedRecord.operatorLastName || 'N/A'}</Text>
                 </View>
                 <View style={styles.modalDetails}>
-                  <Text style={styles.modalText}>Operator Email:</Text>
+                  <Text style={styles.modalText}>OPERATOR EMAIL:</Text>
                   <Text style={styles.modalValue}>{selectedRecord.operatorEmail || 'N/A'}</Text>
                 </View>
                 {Object.entries(selectedRecord).map(([key, value]) => (

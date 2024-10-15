@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import config from "../config";
 import { GOOGLE_MAPS_API_KEY } from '@env';
 
@@ -15,6 +15,7 @@ export default function OperatorHome() {
     const [expandedItemId, setExpandedItemId] = useState(null);
     const [locationCache, setLocationCache] = useState({});
     const navigation = useNavigation();
+    const route = useRoute(); // Use route to access parameters
 
     useEffect(() => {
         const getType = async () => {
@@ -25,7 +26,7 @@ export default function OperatorHome() {
                     setUserType(type);
                     if (ownerID) {
                         console.log('Owner ID:', ownerID);
-                        setPID(ownerID); 
+                        setPID(ownerID);
                     } else {
                         console.log('Owner ID not found');
                     }
@@ -37,7 +38,9 @@ export default function OperatorHome() {
                             const response = await fetch(`${config.BASE_URL}/getOperatorID?premiumUserID=${premiumUserID}`);
                             const data = await response.json();
                             if (response.ok) {
-                                setPID(data.operatorID); 
+                                const operatorID = data.operatorID; // Assuming this is what you get from the API
+                                setPID(operatorID);
+                                await AsyncStorage.setItem('operatorID', operatorID.toString()); // Save operatorID to AsyncStorage
                             } else {
                                 console.log('Operator ID not found:', data.error);
                             }
@@ -56,27 +59,30 @@ export default function OperatorHome() {
         };
         getType();
     }, []);
-    
-    useEffect(() => {
-        if (pID) { 
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0]; 
-            fetchDeliveries(formattedDate);
-        } else {
-            console.log('pID is not set, skipping delivery fetch');
-        }
-    }, [pID]); 
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (pID) {
+                const today = new Date();
+                const formattedDate = today.toISOString().split('T')[0]; 
+                fetchDeliveries(formattedDate);
+            } else {
+                console.log('pID is not set, skipping delivery fetch');
+            }
+
+            // Fetch deliveries if the refresh parameter is present
+            if (route.params?.refresh) {
+                fetchDeliveries(new Date().toISOString().split('T')[0]);
+            }
+        }, [pID, route.params?.refresh])
+    );
 
     useEffect(() => {
         const today = new Date();
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = today.toLocaleDateString('en-US', options);
         setCurrentDate(formattedDate);
-
-        if (pID) {
-            fetchDeliveries(today.toISOString().split('T')[0]);
-        }
-    }, [pID]); 
+    }, []); 
 
     const fetchDeliveries = async (date) => {
         try {

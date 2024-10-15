@@ -845,27 +845,30 @@ app.get('/bookingsOperator', (req, res) => {
         return res.status(400).json({ error: 'Month, year, and ownerID parameters are required' });
     }
 
-    const query = `
+        const query = `
         SELECT
             b.bookingID,
             b.transactionID,
             b.operatorID,
             b.ownerID,
+            b.status,
             t.clientName,
             t.startDate,
             t.endDate,
-            o.firstName AS operatorFirstName,
-            o.lastName AS operatorLastName
+            p.firstName AS operatorFirstName,
+            p.lastName AS operatorLastName
         FROM
             booking b
             JOIN operator_owner oo ON b.operatorID = oo.operatorID AND b.ownerID = oo.ownerID
-            JOIN premiumuser o ON oo.operatorID = o.premiumUserID
+            JOIN operator op ON oo.operatorID = op.operatorID
+            JOIN premiumuser p ON op.premiumUserID = p.premiumUserID
             JOIN transaction t ON b.transactionID = t.transactionID
         WHERE 
             oo.ownerID = ? AND
             ((MONTH(t.startDate) = ? AND YEAR(t.startDate) = ?) OR 
             (MONTH(t.endDate) = ? AND YEAR(t.endDate) = ?))
     `;
+
 
     pool.query(query, [ownerID, parseInt(month, 10), parseInt(year, 10), parseInt(month, 10), parseInt(year, 10)], (error, results) => {
         if (error) {
@@ -893,7 +896,7 @@ app.get('/deliveries', (req, res) => {
             CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromCoords,
             CONCAT(t.toLatitude, ", ", t.toLongitude) AS toCoords,
             b.finalFee,
-            b.status  -- Ensure this field is selected
+            b.status  
         FROM
             booking b
         JOIN
@@ -901,7 +904,7 @@ app.get('/deliveries', (req, res) => {
         WHERE
             t.startDate = ? AND
             b.operatorID = ? AND
-            b.status = 'Pending';  -- Ensure this filter is applied
+            b.status = 'Pending'; 
     `;
 
     pool.query(query, [date, operatorID], (error, results) => {
@@ -940,6 +943,7 @@ app.get('/delivery/:bookingID', (req, res) => {
     const query = `
         SELECT
             b.bookingID AS id,
+            b.status,
             t.clientName,
             CONCAT(t.fromLatitude, ", ", t.fromLongitude) AS fromCoords,
             CONCAT(t.toLatitude, ", ", t.toLongitude) AS toCoords,
@@ -982,10 +986,36 @@ app.put('/update-Deliverystatus', (req, res) => {
     });
 });
 
-app.get('/completedBookings', (req, res) => {
-    const { userType, premiumUserID, operatorID } = req.query;
+app.get('/getUserType', (req, res) => {
+    const { premiumUserID } = req.query;
+    if (!premiumUserID) {
+        return res.status(400).json({ error: 'premiumUserID is required' });
+    }
+    pool.query('SELECT operatorID FROM operator WHERE premiumUserID = ?', [premiumUserID], (error, operatorResults) => {
+        if (error) {
+            console.error('Error fetching operator ID:', error.message);
+            return res.status(500).json({ error: 'Internal server error', details: error.message });
+        }
+        if (operatorResults.length > 0) {
+            return res.json({ userType: 'operator', operatorID: operatorResults[0].operatorID });
+        }
+        pool.query('SELECT ownerID FROM owner WHERE premiumUserID = ?', [premiumUserID], (ownerError, ownerResults) => {
+            if (ownerError) {
+                console.error('Error fetching owner ID:', ownerError.message);
+                return res.status(500).json({ error: 'Internal server error', details: ownerError.message });
+            }
+            if (ownerResults.length > 0) {
+                return res.json({ userType: 'owner', ownerID: ownerResults[0].ownerID });
+            }
+            return res.status(404).json({ error: 'User not found' });
+        });
+    });
+});
 
-    if (!userType || !premiumUserID) {
+app.get('/completedBookings', (req, res) => {
+    const { userType, ownerID, operatorID } = req.query;
+
+    if (!userType || (!ownerID && !operatorID)) {
         return res.status(400).json({ error: 'Missing required query parameters' });
     }
 
@@ -1003,15 +1033,15 @@ app.get('/completedBookings', (req, res) => {
             b.ownerID
         FROM booking b
         JOIN transaction t ON b.transactionID = t.transactionID
-        WHERE b.status = 'completed'
+        WHERE b.status = 'Completed'
     `;
     const queryParams = [];
 
     if (userType === 'owner') {
         query += ' AND b.ownerID = ?';
-        queryParams.push(premiumUserID);
+        queryParams.push(ownerID);
     } else if (userType === 'operator') {
-        query += ' AND t.operatorID = ?';
+        query += ' AND b.operatorID = ?';
         queryParams.push(operatorID);
     }
 
@@ -1025,9 +1055,9 @@ app.get('/completedBookings', (req, res) => {
 });
 
 app.get('/pendingBookings', (req, res) => {
-    const { userType, premiumUserID, operatorID } = req.query;
+    const { userType, ownerID, operatorID } = req.query;
 
-    if (!userType || !premiumUserID) {
+    if (!userType || (!ownerID && !operatorID)) {
         return res.status(400).json({ error: 'Missing required query parameters' });
     }
 
@@ -1045,15 +1075,15 @@ app.get('/pendingBookings', (req, res) => {
             b.ownerID
         FROM booking b
         JOIN transaction t ON b.transactionID = t.transactionID
-        WHERE b.status = 'pending'
+        WHERE b.status = 'Pending'
     `;
     const queryParams = [];
 
     if (userType === 'owner') {
         query += ' AND b.ownerID = ?';
-        queryParams.push(premiumUserID);
+        queryParams.push(ownerID);
     } else if (userType === 'operator') {
-        query += ' AND t.operatorID = ?';
+        query += ' AND b.operatorID = ?';
         queryParams.push(operatorID);
     }
 
@@ -1296,5 +1326,65 @@ app.get('/pendingOperatorBookings', (req, res) => {
     });
 });
 
+app.get('/operator-location/check/:operatorID', (req, res) => {
+    const operatorID = req.params.operatorID;
+
+    pool.query('SELECT latitude, longitude FROM operator_owner WHERE operatorID = ?', [operatorID], (error, results) => {
+        if (error) {
+            return res.status(500).json({ message: 'Error checking operator location', error });
+        }
+
+        if (results.length > 0) {
+            res.status(200).json({ exists: true, location: results[0] });
+        } else {
+            res.status(200).json({ exists: false });
+        }
+    });
+});
+
+app.put('/operator-location/update/:operatorID', (req, res) => {
+    const operatorID = req.params.operatorID;
+    const { latitude, longitude } = req.body;
+
+    pool.query('UPDATE operator_owner SET latitude = ?, longitude = ? WHERE operatorID = ?', [latitude, longitude, operatorID], (error) => {
+        if (error) {
+            return res.status(500).json({ message: 'Error updating operator location', error });
+        }
+        res.status(200).json({ message: 'Location updated successfully' });
+    });
+});
+
+app.post('/operator-location/insert', (req, res) => {
+    const { operatorID, ownerID, latitude, longitude } = req.body;
+
+    pool.query('INSERT INTO operator_owner (operatorID, ownerID, latitude, longitude) VALUES (?, ?, ?, ?)', [operatorID, ownerID, latitude, longitude], (error) => {
+        if (error) {
+            return res.status(500).json({ message: 'Error inserting operator location', error });
+        }
+        res.status(200).json({ message: 'Location inserted successfully' });
+    });
+});
+
+app.get('/operator-location/:operatorID', (req, res) => {
+    const operatorID = req.params.operatorID;
+    const query = `SELECT latitude, longitude FROM operator_owner WHERE operatorID = ?`;
+
+    pool.query(query, [operatorID], (error, results) => {
+        if (error) {
+            console.error('Error fetching operator location:', error);
+            return res.status(500).json({ error: 'Failed to fetch operator location' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Operator not found' });
+        }
+
+        const operatorLocation = results[0];
+        res.json({
+            latitude: operatorLocation.latitude,
+            longitude: operatorLocation.longitude
+        });
+    });
+});
 
 module.exports = app;

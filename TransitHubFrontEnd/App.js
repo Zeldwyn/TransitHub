@@ -18,6 +18,7 @@ import Location from './Premium/Transaction/location';
 import OperatorHome from './Premium/OperatorHome';
 import OperatorLive from './Premium/operatorLive';
 import MessageOwner from './Premium/MessageOwner';
+import TrackOperator from './Premium/TrackOperator';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,7 @@ const MyStack = () => {
       <Stack.Screen name="OperatorHome" component={OperatorHome} options={{headerShown: false}}/>
       <Stack.Screen name="OperatorLive" component={OperatorLive} options={{headerShown: false}}/>
       <Stack.Screen name="MessageOwner" component={MessageOwner} options={{headerShown: false}}/>
+      <Stack.Screen name="TrackOperator" component={TrackOperator} options={{headerShown: false}}/>
     </Stack.Navigator> 
   );
 }
