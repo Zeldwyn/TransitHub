@@ -48,7 +48,7 @@ export default function RegisterEmail() {
             style={{ alignSelf: 'center', width: 350, height: 350, }}
             source={require('../assets/img/blackText.png')}
           />    
-          <Text style={{fontSize: 18, alignSelf: 'center', marginBottom: 20, marginTop: -50}}>Register using Google Email</Text>
+          <Text style={{fontSize: 18, alignSelf: 'center', marginBottom: 20, marginTop: -50}}>Enter your Email Address</Text>
           <TextInput
               style={styles.input}
               value={email}

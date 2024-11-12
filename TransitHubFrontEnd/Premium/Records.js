@@ -16,50 +16,63 @@ export default function Records() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [activeTab, setActiveTab] = useState('Pending');
   const [loading, setLoading] = useState(true);
+  const [ownerID, setOwnerID] = useState('');
 
   useEffect(() => {
     const getUserID = async () => {
       try {
         const id = await AsyncStorage.getItem('premiumUserID');
-        const oid = await AsyncStorage.getItem('operatorID');
-        const type = await AsyncStorage.getItem('userType');
-        console.log("Fetched premium ID:", id);
-        console.log("Fetched User Type:", type);
-
-        setPID(id);
-        setOperatorID(oid); 
-        setUserType(type);
-
-        if (id && type) {
-          fetchData(type, id, oid); 
+        
+        if (id) {
+          const response = await fetch(`${config.BASE_URL}/getUserType?premiumUserID=${id}`);
+          const data = await response.json();
+          
+          if (response.ok) {
+            setUserType(data.userType);
+            
+            if (data.userType === 'operator') {
+              setOperatorID(data.operatorID);
+              fetchData('operator', id, data.operatorID, null);
+            } else if (data.userType === 'owner') {
+              setOwnerID(data.ownerID);
+              fetchData('owner', id, null, data.ownerID);
+            }
+          } else {
+            setError('Failed to get user type');
+          }
         } else {
-          setError('User data is not available');
-          setLoading(false); 
+          setError('premiumUserID is not available');
         }
       } catch (error) {
-        setError('Failed to get user data');
-        console.error('AsyncStorage error:', error);
-        setLoading(false); 
+        setError('Failed to get user type');
+        console.error(error);
       }
     };
-
+    
     getUserID();
   }, [activeTab]);
 
-  const fetchData = async (userType, premiumUserID, operatorID) => {
+  const fetchData = async (userType, premiumUserID, operatorID, ownerID) => {
     setLoading(true);
     try {
+      // Determine the endpoint based on the active tab
       let endpoint = activeTab === 'Pending' ? '/pendingBookings' : '/completedBookings';
+      
+      // Construct the query string
       let query = `?userType=${userType}&premiumUserID=${premiumUserID}`;
+  
+      // Add operatorID or ownerID based on userType
       if (userType === 'operator') {
         query += `&operatorID=${operatorID}`;
+      } else if (userType === 'owner') {
+        query += `&ownerID=${ownerID}`;
       }
-
+  
+      // Fetch the data from the constructed URL
       const response = await fetch(`${config.BASE_URL}${endpoint}${query}`);
       const data = await response.json();
-
-      console.log("Fetched transaction data:", data); // Debugging line
-
+  
+      // Check the response status and set the data or error
       if (response.ok) {
         setTransactionData(data);
       } else {
@@ -72,6 +85,7 @@ export default function Records() {
       setLoading(false);
     }
   };
+  
 
   const fetchBookingDetails = async (bookingID) => {
     try {
@@ -234,11 +248,11 @@ const handleExport = async () => {
               <Text style={styles.modalTitle}>Transaction Details</Text>
               <ScrollView contentContainerStyle={styles.modalContent}>
                 <View style={styles.modalDetails}>
-                  <Text style={styles.modalText}>Operator Name:</Text>
+                  <Text style={styles.modalText}>OPERATOR NAME:</Text>
                   <Text style={styles.modalValue}>{selectedRecord.operatorFirstName} {selectedRecord.operatorLastName || 'N/A'}</Text>
                 </View>
                 <View style={styles.modalDetails}>
-                  <Text style={styles.modalText}>Operator Email:</Text>
+                  <Text style={styles.modalText}>OPERATOR EMAIL:</Text>
                   <Text style={styles.modalValue}>{selectedRecord.operatorEmail || 'N/A'}</Text>
                 </View>
                 {Object.entries(selectedRecord).map(([key, value]) => (

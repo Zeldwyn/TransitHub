@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Text, FlatList, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, StyleSheet, Text, FlatList, TouchableOpacity, Modal, TextInput, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'; 
 import { Calendar } from 'react-native-calendars';
@@ -21,13 +21,18 @@ const monthMapping = {
     December: 12
 };
 
-export default function Bookings() {
-    const [selectedMonth, setSelectedMonth] = useState('September');
+export default function Bookings({ navigation }) { 
+    const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+    const [selectedMonth, setSelectedMonth] = useState(currentMonth); 
     const [isCalendarVisible, setCalendarVisible] = useState(false);
     const [isSearchVisible, setSearchVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [bookings, setBookings] = useState([]);
-    const [ownerID, setOwnerID] = useState(null); // Ensure ownerID state
+    const [ownerID, setOwnerID] = useState(null); 
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isStatusModalVisible, setStatusModalVisible] = useState(false);
+    const [isCompletedModalVisible, setCompletedModalVisible] = useState(false);
 
     useEffect(() => {
         const fetchOwnerID = async () => {
@@ -39,29 +44,54 @@ export default function Bookings() {
         };
     
         fetchOwnerID();
-    }, [selectedMonth]); // Fetch bookings when selectedMonth changes
+    }, [selectedMonth]); 
 
     const fetchBookingsForMonth = async (ownerID) => {
         try {
             const month = monthMapping[selectedMonth];
-            const year = new Date().getFullYear(); // Current year or set a specific year if needed
+            const year = new Date().getFullYear(); 
       
             const response = await fetch(`${config.BASE_URL}/bookingsOperator?month=${month}&year=${year}&ownerID=${ownerID}`);
             const data = await response.json();
       
-            console.log('API Response:', data); // Debug log to see the response data
-      
             if (Array.isArray(data) && data.length > 0) {
-                setBookings(data); // Assuming you have a state variable for the bookings list
+                setBookings(data);
             } else {
-                setBookings([]); // Set to empty array if no bookings
-                console.log('No bookings found for this month.');
+                setBookings([]); 
             }
         } catch (error) {
             console.error('Error fetching bookings:', error);
         }
     };
 
+    const openModal = (booking) => {
+        setSelectedBooking(booking);
+        setModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setSelectedBooking(null);
+    };
+
+    const handleTrackOperator = () => {
+        if (selectedBooking) {
+            console.log('Selected Booking:', selectedBooking);
+            setModalVisible(false);
+    
+            if (selectedBooking.status === "Pending") {
+                setStatusModalVisible(true);
+            } else if (selectedBooking.status === "Ongoing") {
+                navigation.navigate('TrackOperator', { 
+                    operatorID: selectedBooking.operatorID,
+                    deliveryId: selectedBooking.deliveryId
+                });
+            } else if (selectedBooking.status === "Completed") {
+                setCompletedModalVisible(true); 
+            }
+        }
+    };
+    
     const filteredBookings = bookings.filter(booking => {
         const startDate = new Date(booking.startDate);
         const endDate = new Date(booking.endDate);
@@ -129,18 +159,20 @@ export default function Bookings() {
                     onChangeText={(text) => setSearchText(text)}
                 />
             )}
-            {/* Display filtered bookings */}
+            
             {filteredBookings.length > 0 ? (
                 <FlatList
                     data={filteredBookings}
                     keyExtractor={item => item.bookingID.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.bookingItem}>
-                            <View style={styles.details}>
-                                <Text style={styles.name}>{item.operatorFirstName} {item.operatorLastName}</Text>
-                                <Text style={styles.date}>{`${item.startDate.split('T')[0]} - ${item.endDate.split('T')[0]}`}</Text>
+                        <TouchableOpacity onPress={() => openModal(item)}>
+                            <View style={styles.bookingItem}>
+                                <View style={styles.details}>
+                                    <Text style={styles.name}>{item.operatorFirstName} {item.operatorLastName}</Text>
+                                    <Text style={styles.date}>{`${item.startDate.split('T')[0]} - ${item.endDate.split('T')[0]}`}</Text>
+                                </View>
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     )}
                 />
             ) : (
@@ -148,6 +180,63 @@ export default function Bookings() {
                     <Text style={styles.noBookingsText}>No bookings found for the selected month.</Text>
                 </View>
             )}
+            {selectedBooking && (
+                <Modal
+                    transparent={true}
+                    visible={isModalVisible}
+                    animationType="slide"
+                    onRequestClose={closeModal}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Operator Details</Text>
+                            <Text>Operator Name: {selectedBooking.operatorFirstName} {selectedBooking.operatorLastName}</Text>
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity onPress={handleTrackOperator} style={styles.trackButton}>
+                                    <Text style={styles.buttonText}>Check location</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                                    <Text style={styles.buttonText}>Close</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+            <Modal
+                transparent={true}
+                visible={isStatusModalVisible}
+                animationType="slide"
+                onRequestClose={() => setStatusModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Booking Status</Text>
+                        <Text>This booking is currently pending. Please wait until it is confirmed.</Text>
+                        <TouchableOpacity onPress={() => setStatusModalVisible(false)} style={styles.closeButton2}>
+                            <Text style={styles.buttonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* New modal for completed bookings */}
+            <Modal
+                transparent={true}
+                visible={isCompletedModalVisible}
+                animationType="slide"
+                onRequestClose={() => setCompletedModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Booking Status</Text>
+                        <Text>This booking is completed.</Text>
+                        <TouchableOpacity onPress={() => setCompletedModalVisible(false)} style={styles.closeButton2}>
+                            <Text style={styles.buttonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
             <Modal
                 transparent={true}
@@ -158,12 +247,13 @@ export default function Bookings() {
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <Calendar
-                            markingType={'period'}
+                            current={new Date().toISOString().split('T')[0]}
                             markedDates={markedDates}
+                            onDayPress={(day) => {
+                                setCalendarVisible(false);
+                            }}
                         />
-                        <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                            <Text style={styles.closeModal}>Close</Text>
-                        </TouchableOpacity>
+                        <Button title="Close" onPress={() => setCalendarVisible(false)} />
                     </View>
                 </View>
             </Modal>
@@ -211,17 +301,17 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 5,
         padding: 10,
-        marginBottom: 10,
-        elevation: 1,
+        marginVertical: 5,
+        flexDirection: 'row',
         borderColor: "maroon",
         borderWidth: 2,
     },
     details: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flex: 1,
+        borderColor: "maroon",
     },
     name: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
     },
     date: {
@@ -229,12 +319,12 @@ const styles = StyleSheet.create({
         color: 'gray',
     },
     noBookingsContainer: {
-        flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
     },
     noBookingsText: {
-        fontSize: 16,
+        fontSize: 18,
         color: 'gray',
     },
     modalContainer: {
@@ -244,13 +334,48 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        backgroundColor: '#ffffff',
-        padding: 20,
+        backgroundColor: '#fff',
         borderRadius: 10,
-        alignItems: 'center',
+        padding: 20,
+        width: '80%',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    trackButton: {
+        backgroundColor: '#FFC93F',
+        borderRadius: 5,
+        padding: 10,
+        flex: 1,
+        marginRight: 5,
+    },
+    closeButton: {
+        backgroundColor: 'maroon',
+        borderRadius: 5,
+        padding: 10,
+        flex: 1,
+    },
+    closeButton2: {
+        backgroundColor: 'maroon',
+        borderRadius: 5,
+        padding: 10,
+        marginTop: 10,
+    },
+    buttonText: {
+        textAlign: 'center',
+        color: '#fff',
+        fontWeight: 'bold',
     },
     closeModal: {
-        marginTop: 10,
-        color: 'blue',
+        marginTop: 20,
+        color: '#007BFF',
+        textAlign: 'center',
     },
 });

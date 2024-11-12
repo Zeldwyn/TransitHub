@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Geocoder from 'react-native-geocoding';
@@ -191,61 +191,131 @@ export default function Location() {
     
     const renderMapScreen = () => (
         <View style={styles.detailContainer}>
-             <Image style={styles.logoImage2} source={require('../../assets/img/blackText.png')} />
+            <View style={styles.mapContainer}>
+                <MapView
+                    provider={PROVIDER_GOOGLE}
+                    style={styles.map}
+                    region={region}
+                    onRegionChangeComplete={setRegion}
+                    showsUserLocation={true}
+                    showsMyLocationButton={true}
+                    zoomControlEnabled={false}
+                >
+                    {fromCoords && (
+                        <Marker
+                            coordinate={fromCoords}
+                            title="Pickup Location"
+                        />
+                    )}
+                    {toCoords && (
+                        <Marker
+                            coordinate={toCoords}
+                            title="Destination"
+                        />
+                    )}
+                    {fromCoords && toCoords && (
+                        <MapViewDirections
+                            origin={fromCoords}
+                            destination={toCoords}
+                            apikey={GOOGLE_MAPS_API_KEY}
+                            strokeWidth={4}
+                            strokeColor="blue"
+                            onError={(errorMessage) => {
+                                console.error("MapViewDirections error: ", errorMessage);
+                            }}
+                            onReady={result => {
+                                setExpectedDistance(result.distance);
+                                setExpectedDuration(result.duration);
+                                // Optionally set region to show the route on the map
+                                setRegion({
+                                    latitude: (fromCoords.latitude + toCoords.latitude) / 2,
+                                    longitude: (fromCoords.longitude + toCoords.longitude) / 2,
+                                    latitudeDelta: Math.abs(fromCoords.latitude - toCoords.latitude) + 0.1,
+                                    longitudeDelta: Math.abs(fromCoords.longitude - toCoords.longitude) + 0.1,
+                                });
+                            }}
+                        />
+                    )}
+                </MapView>
+            </View>
             <View style={styles.mapControls}>
-            <Text style={styles.sectionTitle}>Enter Pickup Location:</Text>
+                <Text style={styles.sectionTitle}>Enter Pickup Location:</Text>
                 <GooglePlacesAutocomplete
                     placeholder='Enter location'
                     onPress={(data, details = null) => {
-                        if (details) {
-                            const location = details.geometry.location;
-                            setFromCoords({
-                                latitude: parseFloat(location.lat),
-                                longitude: parseFloat(location.lng),
-                            });
+                        try {
+                            if (details) {
+                                const location = details.geometry.location;
+                                setFromCoords({
+                                    latitude: parseFloat(location.lat),
+                                    longitude: parseFloat(location.lng),
+                                });
+                                setRegion({
+                                    latitude: parseFloat(location.lat),
+                                    longitude: parseFloat(location.lng),
+                                    latitudeDelta: 0.0922, // Adjust as needed
+                                    longitudeDelta: 0.0421, // Adjust as needed
+                                });
+                            } else {
+                                console.error("Details not found for the selected place.");
+                            }
+                        } catch (error) {
+                            console.error("Error processing the selected location: ", error);
                         }
                     }}
                     fetchDetails={true}
                     query={{
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
-                        bounds: {
-                            southwest: { lat: 8.0, lng: 123.0 },
-                            northeast: { lat: 11.5, lng: 125.0 },
-                        },
-                        strictBounds: true,
                     }}
                     styles={styles.autocomplete}
-                    debounce={500}
+                    onFail={(error) => {
+                        console.error("GooglePlacesAutocomplete error: ", error);
+                    }}
                     enablePoweredByContainer={false}
+                    debounce={500}
                 />
+    
                 <Text style={styles.sectionTitle}>Enter Destination:</Text>
                 <GooglePlacesAutocomplete
                     placeholder='Enter destination'
                     onPress={(data, details = null) => {
-                        if (details) {
-                            const location = details.geometry.location;
-                            setToCoords({
-                                latitude: parseFloat(location.lat),
-                                longitude: parseFloat(location.lng),
-                            });
+                        try {
+                            if (details) {
+                                const location = details.geometry.location;
+                                setToCoords({
+                                    latitude: parseFloat(location.lat),
+                                    longitude: parseFloat(location.lng),
+                                });
+                                // Update the region to center the map on the destination location
+                                setRegion({
+                                    latitude: parseFloat(location.lat),
+                                    longitude: parseFloat(location.lng),
+                                    latitudeDelta: 0.0922, // Adjust as needed
+                                    longitudeDelta: 0.0421, // Adjust as needed
+                                });
+                            } else {
+                                console.error("Details not found for the selected place.");
+                            }
+                        } catch (error) {
+                            console.error("Error processing the selected location: ", error);
                         }
                     }}
                     fetchDetails={true}
                     query={{
                         key: GOOGLE_MAPS_API_KEY,
                         language: 'en',
-                        bounds: {
-                            southwest: { lat: 8.0, lng: 123.0 },
-                            northeast: { lat: 11.5, lng: 125.0 },
-                        },
                     }}
                     styles={styles.autocomplete}
-                    debounce={500}
+                    onFail={(error) => {
+                        console.error("GooglePlacesAutocomplete error: ", error);
+                    }}
                     enablePoweredByContainer={false}
+                    debounce={500}
                 />
+    
                 <View style={styles.buttonContainer}>
-
+                    <Image style={{ width: 180, height: 100, marginBottom: -20, marginTop: -20 }} source={require('../../assets/img/blackText.png')} />
                     <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
@@ -253,6 +323,7 @@ export default function Location() {
             </View>
         </View>
     );
+    
     
     const renderDetailsScreen = () => (
         <ScrollView 
@@ -327,7 +398,6 @@ export default function Location() {
         </ScrollView>
     );
             
-
     const renderFinalScreen = () => (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.detailContainer}>
@@ -445,6 +515,15 @@ export default function Location() {
 }
 
 const styles = StyleSheet.create({
+    mapContainer: {
+        flex: 1,
+        width: '100%',
+        height: '60%', 
+    },
+    map: {
+        flex: 1,
+        width: '100%',
+    },
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',

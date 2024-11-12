@@ -16,6 +16,7 @@ export default function OwnerHome() {
         const getType = async () => {
             const type = await AsyncStorage.getItem('userType');
             const id = await AsyncStorage.getItem('premiumUserID');
+            const oid = await AsyncStorage.getItem('operatorID');
             console.log("Inner:", type, "PremiumUserID:", id);
             if (type === "owner") {
                 setIsOwner(true);

@@ -14,6 +14,7 @@ export default function OperatorLive({ route, navigation }) {
     const [finishButtonEnabled, setFinishButtonEnabled] = useState(false);
     const [deliveryStatus, setDeliveryStatus] = useState('In Progress');
     const [currentPosition, setCurrentPosition] = useState(null);
+    const [previousPosition, setPreviousPosition] = useState(null);
     const [estimatedTime, setEstimatedTime] = useState(null);
     const [distance, setDistance] = useState(null);
     const [note, setNote] = useState(''); // Set note here
@@ -23,6 +24,7 @@ export default function OperatorLive({ route, navigation }) {
     const [locationPromptVisible, setLocationPromptVisible] = useState(false);
     const [deliveryAddress, setDeliveryAddress] = useState(null);
     const mapRef = useRef(null);
+    const LOCATION_UPDATE_THRESHOLD = 10;
 
     useEffect(() => {
         const fetchDeliveryDetails = async () => {
@@ -65,38 +67,93 @@ export default function OperatorLive({ route, navigation }) {
         fetchDeliveryDetails();
     }, [deliveryId, route.params?.refresh]);
 
+    let updateTimeout;
+
     const startTrackingLocation = async () => {
         let locationSubscription;
+    
         (async () => {
             const servicesEnabled = await Location.hasServicesEnabledAsync();
             if (!servicesEnabled) {
                 setLocationPromptVisible(true);
                 return;
             }
-
+    
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 Alert.alert('Permission Required', 'Location permission is needed to track delivery.');
                 return;
             }
-
+    
             locationSubscription = await Location.watchPositionAsync(
-                { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
-                (location) => {
-                    setCurrentPosition({
+                { accuracy: Location.Accuracy.High, timeInterval: 10000, distanceInterval: 10 },
+                async (location) => {
+                    const newPosition = {
                         latitude: location.coords.latitude,
                         longitude: location.coords.longitude,
-                    });
+                    };
+                    setCurrentPosition(newPosition);
+    
+                    // Check if we should update the location based on distance
+                    if (shouldUpdateLocation(newPosition, previousPosition)) {
+                        if (updateTimeout) clearTimeout(updateTimeout);
+    
+                        updateTimeout = setTimeout(async () => {
+                            await updateOperatorLocation(operatorID, newPosition.latitude, newPosition.longitude);
+                            setPreviousPosition(newPosition);
+                        }, 10000);
+                    }
                 }
             );
         })();
-
+    
         return () => {
-            if (locationSubscription) {
-                locationSubscription.remove();
-            }
+            if (locationSubscription) locationSubscription.remove();
+            if (updateTimeout) clearTimeout(updateTimeout);
         };
     };
+
+    const shouldUpdateLocation = (newPosition, prevPosition) => {
+        if (!prevPosition) return true; 
+
+        const distance = haversine(newPosition, prevPosition, { unit: 'meter' });
+        return distance >= LOCATION_UPDATE_THRESHOLD; 
+    };
+
+    const updateOperatorLocation = async (operatorID, latitude, longitude) => {
+        try {
+            const checkResponse = await fetch(`${config.BASE_URL}/operator-location/check/${operatorID}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const checkData = await checkResponse.json();
+    
+            if (checkData.exists) {
+                // Update the operator's location
+                await fetch(`${config.BASE_URL}/operator-location/update/${operatorID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ latitude, longitude }),
+                });
+            } else {
+                // Insert new location if not found
+                await fetch(`${config.BASE_URL}/operator-location/insert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ operatorID, latitude, longitude }),
+                });
+            }
+        } catch (error) {
+            console.error('Error sending location to server:', error);
+        }
+    };
+    
 
     useEffect(() => {
         if (currentPosition && mapRef.current) {
@@ -118,17 +175,33 @@ export default function OperatorLive({ route, navigation }) {
 
     const handleStartDelivery = async () => {
         setRouteVisible(true);
-        setPanelExpanded(true); 
+        setPanelExpanded(true);
+        
+        // Start delivery tracking and update status
+        try {
+            const response = await fetch(`${config.BASE_URL}/update-Deliverystatus`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    deliveryId: deliveryId,
+                    status: 'Ongoing', 
+                }),
+            });
     
-        Animated.timing(panelHeight, {
-            toValue: 300,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
+            // Start location tracking after updating status
+            startTrackingLocation();
+        } catch (error) {
+            console.error('Error starting delivery:', error);
+            Alert.alert('Error', 'Unable to update delivery status to ongoing.');
+            return;
+        }
     
         await calculateETA();
     };
-
+    
+    
     const calculateETA = async () => {
         if (currentPosition && deliveryAddress && routeVisible) {
             const origins = `${currentPosition.latitude},${currentPosition.longitude}`;
@@ -166,6 +239,17 @@ export default function OperatorLive({ route, navigation }) {
         }
     };
 
+    useEffect(() => {
+        return () => {
+            if (locationSubscription) {
+                locationSubscription.remove();
+                locationSubscription = null;
+            }
+        };
+    }, []);
+
+    let locationSubscription = null; 
+
     const handleFinishDelivery = async () => {
         try {
             const response = await fetch(`${config.BASE_URL}/update-Deliverystatus`, {
@@ -187,9 +271,12 @@ export default function OperatorLive({ route, navigation }) {
     
             setDeliveryStatus("Completed");
             setRouteVisible(false);
-            Alert.alert('Success', 'Delivery has been marked as completed.');
-            
-            // Navigate back and pass the refresh parameter
+    
+            if (locationSubscription) {
+                locationSubscription.remove();  
+                locationSubscription = null;    
+            }
+    
             navigation.navigate('OperatorDrawer', { refresh: true });
     
         } catch (error) {
@@ -197,6 +284,7 @@ export default function OperatorLive({ route, navigation }) {
             Alert.alert('Error', 'Unable to finish delivery.');
         }
     };
+    
 
     const togglePanel = () => {
         const toPanelHeight = panelExpanded ? 80 : 280; 
@@ -258,7 +346,7 @@ export default function OperatorLive({ route, navigation }) {
     <TouchableOpacity style={styles.expandButton} onPress={togglePanel}>
         <Text style={styles.expandButtonText}>{panelExpanded ? 'Status' : 'Status'}</Text>
     </TouchableOpacity>
-    {panelExpanded && ( // Show only when the panel is expanded
+    {panelExpanded && (
         <>
             <View style={styles.statusTextContainer}>
                 {routeVisible && (
