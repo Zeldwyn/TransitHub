@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Image, SafeAreaView, Animated, TextInput, Modal, TouchableWithoutFeedback, ScrollView, FlatList, SectionList } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
@@ -19,13 +19,13 @@ export default function Location() {
     const navigation = useNavigation();
     const [fromCoords, setFromCoords] = useState(null);
     const [toCoords, setToCoords] = useState(null);
-    
     const [markedDates, setMarkedDates] = useState({});
     const [isCalendarVisible, setCalendarVisible] = useState(false);
     const [isOperatorVisible, setIsOperatorVisible] = useState(false);
     const [currentScreen, setCurrentScreen] = useState('map');
     const isButtonDisabled = !fromCoords || !toCoords;
     const [clientName, setClientName] = useState('');
+    const [clientEmail, setClientEmail] = useState('');
     const [itemDescription, setItemDescription] = useState('');
     const [packageWeight, setPackageWeight] = useState('');
     const [itemQuantity, setItemQuantity] = useState('');
@@ -41,10 +41,11 @@ export default function Location() {
     const { region, setRegion } = useRegion();
     const [formattedDateRange, setFormattedDateRange] = useState('');
     const [availableOperators, setAvailableOperators] = useState([]);
+    const [availableAllOperators, setAvailableAllOperators] = useState([]);
     const [pID, setPID] = useState('');
     const [selectedOperatorID, setSelectedOperatorID] = useState(null);
     const [selectedOperatorDetails, setSelectedOperatorDetails] = useState('');
-
+    const [checker, setChecker] = useState(true);
     useEffect(() => {
         const getUserID = async () => {
           const id = await AsyncStorage.getItem('premiumUserID');
@@ -56,6 +57,10 @@ export default function Location() {
 
     const handleSubmit = async () => {
         try {
+            if (checker === false) {
+                console.log('Adding operator-owner relationship...');
+                await addOperator();
+            }
             const transactionData = {
                 toCoords: {
                     latitude: toCoords.latitude,
@@ -64,11 +69,23 @@ export default function Location() {
                 fromCoords: {
                     latitude: fromCoords.latitude,
                     longitude: fromCoords.longitude,
-                },        
-                clientName, itemDescription, packageWeight, itemQuantity,
-                vehicleFee, notes, first2km, succeedingKm,
-                expectedDistance, startDate,  endDate, expectedDuration, expectedFee,               
+                },
+                clientName,
+                clientEmail,
+                itemDescription,
+                packageWeight,
+                itemQuantity,
+                vehicleFee,
+                notes,
+                first2km,
+                succeedingKm,
+                expectedDistance,
+                startDate,
+                endDate,
+                expectedDuration,
+                expectedFee,
             };
+    
             const transactionResponse = await fetch(`${config.BASE_URL}/add-Transaction`, {
                 method: 'POST',
                 headers: {
@@ -84,6 +101,7 @@ export default function Location() {
             if (transactionResponse.status === 200 && transactionResult.status === 1) {
                 console.log('TransactionID:', transactionResult.transactionID);
     
+                // Step 3: Add the booking
                 const bookingData = {
                     finalFee: expectedFee,
                     transactionID: transactionResult.transactionID,
@@ -117,6 +135,7 @@ export default function Location() {
         }
     };
     
+    
     useEffect(() => {
         if (isOperatorVisible === true) {
           fetch(`${config.BASE_URL}/available-Operators`, {
@@ -145,9 +164,61 @@ export default function Location() {
           .catch(error => {
             console.error('Error fetching data from Express backend:', error);
           });
+          //ALL OPERATORS
+          fetch(`${config.BASE_URL}/available-AllOperators`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                premiumUserID: parseInt(pID),
+                startDate: startDate,
+                endDate: endDate
+            }),
+          })
+          .then(response => {
+            if (!response.ok) {
+              console.error(`Error: ${response.status} - ${response.statusText}`);
+              throw new Error('Network response was not ok in operator');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log(data)
+            setAvailableAllOperators(data);
+          })
+          .catch(error => {
+            console.error('Error fetching data from Express backend:', error);
+          });
+
         }
       }, [isOperatorVisible]);
-      
+    
+    const addOperator = async () => {
+        try {
+          const response = await fetch(`${config.BASE_URL}/add-Operator`, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              premiumUserID: parseInt(pID),
+              operatorID: selectedOperatorID,
+            }),
+          });
+          const data = await response.json();
+          console.log('Response from Express backend:', data);
+          if (data.status === '1') {
+            console.log('Operator added successfully');   
+          } else if (data.status === '0') {
+            console.log('Error adding operator');
+          }
+        } catch (error) {
+          console.error('Error posting data to Express backend:', error);
+        }
+      };
     
     const handleCalculate = async () => {
         await calculateDistance(fromCoords, toCoords, setExpectedDistance, setExpectedDuration, GOOGLE_MAPS_API_KEY);
@@ -249,10 +320,14 @@ export default function Location() {
                                 setFromCoords({
                                     latitude: parseFloat(location.lat),
                                     longitude: parseFloat(location.lng),
+                                    // latitude: 10.3072,
+                                    // longitude: 123.8880, di mo work e hard code ang coordinates kay e check gihapon sa API
                                 });
                                 setRegion({
                                     latitude: parseFloat(location.lat),
                                     longitude: parseFloat(location.lng),
+                                    // latitude: 10.3072,
+                                    // longitude: 123.8880, di mo work e hard code ang coordinates kay e check gihapon sa API
                                     latitudeDelta: 0.0922, // Adjust as needed
                                     longitudeDelta: 0.0421, // Adjust as needed
                                 });
@@ -282,15 +357,19 @@ export default function Location() {
                     onPress={(data, details = null) => {
                         try {
                             if (details) {
-                                const location = details.geometry.location;
+                                const location = details.geometry.location;       
                                 setToCoords({
                                     latitude: parseFloat(location.lat),
                                     longitude: parseFloat(location.lng),
+                                    // latitude: 10.3157, di mo work e hard code ang coordinates kay e check gihapon sa API
+                                    // longitude: 123.8854, di mo work e hard code ang coordinates kay e check gihapon sa API
                                 });
                                 // Update the region to center the map on the destination location
                                 setRegion({
                                     latitude: parseFloat(location.lat),
                                     longitude: parseFloat(location.lng),
+                                    // latitude: 10.3157, 
+                                    // longitude: 123.8854, di mo work e hard code ang coordinates kay e check gihapon sa API
                                     latitudeDelta: 0.0922, // Adjust as needed
                                     longitudeDelta: 0.0421, // Adjust as needed
                                 });
@@ -315,7 +394,10 @@ export default function Location() {
                 />
     
                 <View style={styles.buttonContainer}>
-                    <Image style={{ width: 180, height: 100, marginBottom: -20, marginTop: -20 }} source={require('../../assets/img/blackText.png')} />
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Image style={{ width: 180, height: 100, marginBottom: -20, marginTop: -20 }} source={require('../../assets/img/blackText.png')} />
+                    </TouchableOpacity>
+                    
                     <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('details')}>
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
@@ -333,11 +415,23 @@ export default function Location() {
         >
             <Image style={styles.logoImage} source={require('../../assets/img/blackText.png')} />
             <Text style={styles.label}>Input Additional Details</Text>
-    
+
+            <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginBottom: 10}}>
+                <TouchableOpacity style={styles.operatorIcon} onPress={() => {setIsOperatorVisible(true);}}>
+                    <FontAwesome5 name="user-alt" size={40} color="white" /> 
+                </TouchableOpacity>
+                <View style={{width: '70%'}}>
+                    <Text style={styles.microLabel}>Choose Operator:</Text>
+                    <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false} value={selectedOperatorDetails}/>
+                </View>         
+            </View>  
+            
             <View style={styles.detailsColumn}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.microLabel}>Client Name:</Text>
                         <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setClientName(text)} value={clientName}/>
+                    <Text style={styles.microLabel}>Client Email:</Text>
+                        <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setClientEmail(text)} value={clientEmail}/>
                     <Text style={styles.microLabel}>Item Description</Text>
                         <TextInput style={[styles.input, {textAlign: 'left'}]} onChangeText={text => setItemDescription(text)} value={itemDescription}/>        
                     <Text style={styles.microLabel}>Weight</Text>
@@ -370,15 +464,7 @@ export default function Location() {
                 </View>
             </View>
     
-            <View style={{flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10}}>
-                <TouchableOpacity style={styles.operatorIcon} onPress={() => {setIsOperatorVisible(true);}}>
-                    <FontAwesome5 name="user-alt" size={40} color="white" /> 
-                </TouchableOpacity>
-                <View style={{width: '70%'}}>
-                    <Text style={styles.microLabel}>Choose Operator:</Text>
-                    <TextInput style={[styles.input, {width:'100%', textAlign: 'left'}]} placeholder='Operator Name' editable={false} value={selectedOperatorDetails}/>
-                </View>         
-            </View>  
+            
     
             <View style={styles.buttonRow}>
                 <TouchableOpacity style={styles.button} onPress={() => setCurrentScreen('map')}>
@@ -407,6 +493,9 @@ export default function Location() {
                 <Text style={styles.microLabel}>Client Name:</Text>
                 <TextInput style={styles.input} value={clientName} editable={false} />
                 
+                <Text style={styles.microLabel}>Client Email:</Text>
+                <TextInput style={styles.input} value={clientEmail} editable={false} />
+
                 <Text style={styles.microLabel}>Date:</Text>
                 <TextInput style={styles.input} editable={false} value={formattedDateRange}/>
                 
@@ -436,12 +525,28 @@ export default function Location() {
     
     const renderChooseOperator = ({ item }) => {
         const isSelected = item.operatorID === selectedOperatorID;
-
+        console.log(checker);
         return (
             <TouchableOpacity style={[
                 styles.itemContainer,
                 isSelected && { borderBottomColor: 'green' }]}
-                onPress={() => {setSelectedOperatorID(item.operatorID); setSelectedOperatorDetails(item.firstName + ' ' + item.lastName);}}
+                onPress={() => {setSelectedOperatorID(item.operatorID); setSelectedOperatorDetails(item.firstName + ' ' + item.lastName); setChecker(true);}}
+            >
+                <View style={styles.textContainer}>
+                    <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
+                    <Text style={styles.email}>{item.email}</Text>
+                </View> 
+            </TouchableOpacity>
+        );
+    };
+    const renderChooseNoOperator = ({ item }) => {
+        const isSelected = item.operatorID === selectedOperatorID;
+        console.log(checker);
+        return (
+            <TouchableOpacity style={[
+                styles.itemContainer,
+                isSelected && { borderBottomColor: 'green' }]}
+                onPress={() => {setSelectedOperatorID(item.operatorID); setSelectedOperatorDetails(item.firstName + ' ' + item.lastName); setChecker(false);}}
             >
                 <View style={styles.textContainer}>
                     <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
@@ -491,15 +596,25 @@ export default function Location() {
                 onRequestClose={() => setIsOperatorVisible(false)}
             >
                 <View style={styles.operatorModal}>
-                    <Text style={[styles.miniLabel, {marginTop: 0}]}>Available Operators on</Text>
-                    <Text style={styles.label}>{formattedDateRange}</Text>
-                    <View style={styles.operatorModalContent}>
-                        <FlatList
-                            data={availableOperators}
-                            renderItem={renderChooseOperator}
-                            keyExtractor={(item) => item.operatorID.toString()}
-                        />
-                    </View>
+                    <Text style={[styles.miniLabel, {marginTop: -10}]}>Available Operators on</Text>
+                    <Text style={[styles.label, {fontSize: 18, marginTop: 0}]}>{formattedDateRange}</Text>  
+                    <SectionList
+                        sections={[
+                            { title: 'Associated Operators', data: availableOperators },
+                            { title: 'Not Associated Operators', data: availableAllOperators }
+                        ]}
+                        renderItem={({ item, section }) => 
+                            section.title === 'Associated Operators' 
+                            ? renderChooseOperator({ item }) 
+                            : renderChooseNoOperator({ item })
+                        }
+                        renderSectionHeader={({ section: { title } }) => (
+                            <Text style={{ fontWeight: 'bold', padding: 10, alignSelf: 'center', marginTop: 10}}>{title}</Text>
+                        )}
+                        keyExtractor={(item) => item.operatorID.toString()}
+            
+                        style={styles.operatorModalContent}
+                    />
                     <View style={styles.buttonRow}>
                         <TouchableOpacity style={styles.button} onPress={() => setIsOperatorVisible(false)}>
                             <Text style={styles.buttonText}>Back</Text>
@@ -693,14 +808,18 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'white',
+        backgroundColor: '#E3B130',
         padding: 10,
-        borderRadius: 10,
-        margin: 10,
+        // minHeight: '50%',
+        // borderRadius: 10,
+        // margin: 10,
     },
     operatorModalContent: {
-        height: '70%',
-        width: '100%',
+        width: '95%', 
+        maxHeight: '70%',
+        backgroundColor: 'white', 
+        borderRadius: 10, 
+        padding: 10,
     },
     email: {
         fontSize: 12.5,

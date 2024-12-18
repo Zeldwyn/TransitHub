@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const {sendOTP} = require('./mail');
+const { sendDeliveryCompletionEmail } = require('./mail');
 const {generateOTP, isDeviceIDExists, getGuestID, isConversationExists, setUser, getPremiumID, isInviteExists, getOwnerOperatorID} = require('./functions');
 const {pool} = require('./database');
 
@@ -279,20 +280,20 @@ app.post('/add-GuestUser', async (req, res) => {
 //TRANSACTIONS
 app.post('/add-Transaction', async (req, res) => {
     const {
-        toCoords, fromCoords, clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
+        toCoords, fromCoords, clientName, clientEmail, itemDescription, packageWeight, itemQuantity, vehicleFee,
         notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
     } = req.body;
 
     const sql = `
         INSERT INTO transaction (
-            toLatitude, toLongitude, fromLatitude, fromLongitude, clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
+            toLatitude, toLongitude, fromLatitude, fromLongitude, clientName, clientEmail, itemDescription, packageWeight, itemQuantity, vehicleFee,
             notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     pool.query(sql, [
         toCoords.latitude, toCoords.longitude, fromCoords.latitude, fromCoords.longitude, 
-        clientName, itemDescription, packageWeight, itemQuantity, vehicleFee,
+        clientName,clientEmail, itemDescription, packageWeight, itemQuantity, vehicleFee,
         notes, first2km, succeedingKm, expectedDistance, startDate, endDate, expectedDuration, expectedFee
     ], (err, result) => {
         if (err) { 
@@ -525,6 +526,33 @@ app.get('/search-Operator', async (req, res) => {
     }); 
 });
 
+app.get('/list-Operator', async (req, res) => {
+    const { premiumUserID } = req.query;  
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, ownerID) => { 
+        if (exists) {
+            try {
+                const sql = `
+                    SELECT * 
+                    FROM Operatordetails od
+                    WHERE NOT EXISTS (
+                        SELECT 1 
+                        FROM operator_owner oo
+                        WHERE oo.operatorID = od.operatorID
+                    )
+                `;
+                
+                pool.query(sql, [], (err, results) => {
+                    if (err) {
+                        return res.status(500).send('Internal Server Error: Search Operator');
+                    }
+                    return res.json(results);
+                });
+            } catch (error) {
+                return res.status(500).send('Internal Server Error: Search Operator Outer');
+            }
+        } 
+    }); 
+});
 
 app.post('/add-Operator', async (req, res) => {
     const { premiumUserID, operatorID } = req.body;
@@ -558,7 +586,7 @@ app.post('/add-Operator', async (req, res) => {
     }); 
 });
 
-app.get('/list-Operator', async (req, res) => {
+app.get('/list-OperatorOwner', async (req, res) => {
     const { premiumUserID } = req.query; 
 
     getOwnerOperatorID(premiumUserID, 'owner', (exists, id) => {
@@ -838,6 +866,62 @@ app.post('/available-Operators', (req, res) => {
     }); 
 });
 
+app.post('/available-AllOperators', (req, res) => {
+    const { premiumUserID, startDate, endDate } = req.body;
+    let unassociatedOperators = [];
+    let bookedOperators = [];
+
+    getOwnerOperatorID(premiumUserID, 'owner', (exists, ownerID) => {
+        if (exists) {
+            const sql1 = `
+                SELECT operatorID 
+                FROM operatordetails od
+                WHERE NOT EXISTS (
+                    SELECT 1 
+                    FROM operator_owner oo 
+                    WHERE oo.operatorID = od.operatorID 
+                    AND oo.ownerID = ?
+                )
+            `;
+            pool.query(sql1, [ownerID], (err, result) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Internal server error while fetching unassociated operators' });
+                }
+                unassociatedOperators = result.map(row => row.operatorID);
+
+                const sql2 = `
+                    SELECT operatorID 
+                    FROM bookingDetails 
+                    WHERE startDate <= ? 
+                    AND endDate >= ?
+                `;
+                pool.query(sql2, [endDate, startDate], (err, result) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Internal server error while fetching booked operators' });
+                    }
+                    bookedOperators = result.map(row => row.operatorID);
+
+                    // Filter out operators who are booked from the unassociated operators
+                    const availableOperators = unassociatedOperators.filter(operatorID => !bookedOperators.includes(operatorID));
+
+                    // Get details of available unassociated operators
+                    const sql3 = `SELECT * FROM operatordetails WHERE operatorID IN (?)`;
+                    pool.query(sql3, [availableOperators], (err, operatordetails) => {
+                        if (err) {
+                            return res.status(500).json({ error: 'Failed to retrieve operator details' });
+                        }
+
+                        res.status(200).json(operatordetails);
+                    });
+                });
+            });
+        } else {
+            res.status(404).json({ error: 'Owner not found' });
+        }
+    });
+});
+
+
 app.get('/bookingsOperator', (req, res) => {
     const { month, year, ownerID } = req.query; // Capture ownerID from the query params
 
@@ -982,6 +1066,31 @@ app.put('/update-Deliverystatus', (req, res) => {
             return res.status(500).json({ error: 'Internal server error' });
         } else {
             res.status(200).json({ message: 'Delivery status updated successfully' });
+        }
+    });
+});
+
+app.get('/send-delivery-email', async (req, res) => {
+    const { deliveryId } = req.query;
+    if (!deliveryId) {
+        return res.status(400).json({ error: 'deliveryId is required' });
+    }
+    const query = 'SELECT clientEmail FROM transaction WHERE transactionID = ?';
+    pool.query(query, [deliveryId], async (error, results) => {
+        if (error) {
+            console.error('Error executing query:', error);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No clientEmail found for the given deliveryId' });
+        }
+        const clientEmail = results[0].clientEmail;
+        try {
+            await sendDeliveryCompletionEmail({ email: clientEmail, deliveryId });
+            res.status(200).json({ clientEmail, message: 'Delivery completion email sent successfully' });
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+            res.status(500).json({ error: 'Failed to send delivery completion email' });
         }
     });
 });

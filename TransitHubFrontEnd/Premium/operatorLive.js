@@ -252,6 +252,7 @@ export default function OperatorLive({ route, navigation }) {
 
     const handleFinishDelivery = async () => {
         try {
+            // First, update the delivery status
             const response = await fetch(`${config.BASE_URL}/update-Deliverystatus`, {
                 method: 'PUT',
                 headers: {
@@ -269,12 +270,24 @@ export default function OperatorLive({ route, navigation }) {
                 throw new Error('Failed to update delivery status.');
             }
     
+            // Step 2: Send email notification after updating status
+            const emailResponse = await fetch(`${config.BASE_URL}/send-delivery-email?deliveryId=${deliveryId}`);
+            const emailData = await emailResponse.json();
+    
+            if (emailResponse.ok) {
+                console.log('Email sent successfully:', emailData.message);
+            } else {
+                console.error('Error sending email:', emailData.error);
+                throw new Error('Failed to send delivery completion email.');
+            }
+    
+            // Update the UI after success
             setDeliveryStatus("Completed");
             setRouteVisible(false);
     
             if (locationSubscription) {
-                locationSubscription.remove();  
-                locationSubscription = null;    
+                locationSubscription.remove();
+                locationSubscription = null;
             }
     
             navigation.navigate('OperatorDrawer', { refresh: true });
@@ -284,6 +297,7 @@ export default function OperatorLive({ route, navigation }) {
             Alert.alert('Error', 'Unable to finish delivery.');
         }
     };
+    
     
 
     const togglePanel = () => {

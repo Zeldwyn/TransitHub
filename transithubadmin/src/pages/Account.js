@@ -116,7 +116,7 @@ export default function Account() {
                 <div className="mainContainer">
                     <div className="cardContainer">
                         <div className="titlesContainer">
-                            <h1 className="header">Account Information</h1>
+                            <h1 className="header">Public Information</h1>
                             <p className="header">Name: {accountDetails.firstname} {accountDetails.lastname}</p>
                             <p className="header">Username: {accountDetails.username}</p>
                             <p className="header">Email: {accountDetails.email}</p>

@@ -30,7 +30,7 @@ export default function AddOperator() {
 
   useEffect(() => {
     if (pID) {
-      fetch(`${config.BASE_URL}/list-Operator?premiumUserID=${parseInt(pID)}`, {
+      fetch(`${config.BASE_URL}/list-OperatorOwner?premiumUserID=${parseInt(pID)}`, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
@@ -184,7 +184,7 @@ export default function AddOperator() {
         <Text style={styles.email}>{item.email}</Text>
       </View>
       <TouchableOpacity style={styles.inviteBtn} onPress={() => addOperator(item.operatorID)} >
-        <Text style={styles.status}>{clickedButtons[item.operatorID] ? "Sent" : "Invite"}</Text>
+        <Text style={styles.status}>{clickedButtons[item.operatorID] ? "Done" : "Add"}</Text>
       </TouchableOpacity>
     </View>
   );

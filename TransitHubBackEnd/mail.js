@@ -21,4 +21,13 @@ const sendOTP = async({email, otp}) => {
     });
 };
 
-module.exports = {sendOTP};
+const sendDeliveryCompletionEmail = async({email, deliveryId}) => {
+    return await transport.sendMail({
+        from: 'no-reply@example.com',
+        to: email,
+        subject: `Delivery #${deliveryId} Completed`,
+        text: `Your delivery with ID #${deliveryId} has been completed successfully.`,
+        html: `<p>Your delivery with ID <strong>#${deliveryId}</strong> has been completed successfully.</p>`,
+    });
+};
+module.exports = {sendOTP,sendDeliveryCompletionEmail};
